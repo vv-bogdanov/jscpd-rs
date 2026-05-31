@@ -278,23 +278,7 @@ mod tests {
         let mut clones = vec![clone_with_lines("a.js", 1, 2, "b.js", 1, 2)];
         let mut skipped_clones = Vec::new();
 
-        add_secondary_clones(
-            "javascript",
-            repeated_windows([
-                Occurrence {
-                    source_id: SourceId(0),
-                    token_start: 2,
-                },
-                Occurrence {
-                    source_id: SourceId(1),
-                    token_start: 2,
-                },
-            ]),
-            &prepared_files,
-            &options,
-            &mut clones,
-            &mut skipped_clones,
-        );
+        add_test_secondary_clones(&prepared_files, &options, &mut clones, &mut skipped_clones);
 
         assert_eq!(clones.len(), 2);
         assert_eq!(clones[1].duplication_a.source_id, "a.js");
@@ -302,6 +286,17 @@ mod tests {
         assert_eq!(clones[1].duplication_a.end.line, 6);
         assert_eq!(clones[1].duplication_b.source_id, "b.js");
 
+        add_test_secondary_clones(&prepared_files, &options, &mut clones, &mut skipped_clones);
+
+        assert_eq!(clones.len(), 2);
+    }
+
+    fn add_test_secondary_clones(
+        prepared_files: &[PreparedSource],
+        options: &Options,
+        clones: &mut Vec<CloneMatch>,
+        skipped_clones: &mut Vec<SkippedClone>,
+    ) {
         add_secondary_clones(
             "javascript",
             repeated_windows([
@@ -314,13 +309,11 @@ mod tests {
                     token_start: 2,
                 },
             ]),
-            &prepared_files,
-            &options,
-            &mut clones,
-            &mut skipped_clones,
+            prepared_files,
+            options,
+            clones,
+            skipped_clones,
         );
-
-        assert_eq!(clones.len(), 2);
     }
 
     fn repeated_windows<const N: usize>(

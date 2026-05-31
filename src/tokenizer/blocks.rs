@@ -10,6 +10,7 @@ use super::embedded::{
 use super::markup_attrs::{
     append_inline_style_attr_tokens, find_inline_style_attrs, inline_style_attr_ranges,
 };
+use super::scan::line_spans;
 use super::{
     DetectionToken, LineIndex, TokenMap, find_ignore_regions, is_oxc_format, tokenize_generic,
     tokenize_oxc_maps,
@@ -472,33 +473,6 @@ fn astro_frontmatter_block(content: &str) -> Option<TagBlock> {
         inner_end: inner_end.max(inner_start),
         block_end: lines[close_idx].next_start.min(content.len()),
     })
-}
-
-#[derive(Clone, Copy)]
-struct LineSpan {
-    start: usize,
-    end: usize,
-    next_start: usize,
-}
-
-fn line_spans(content: &str) -> Vec<LineSpan> {
-    let mut spans = Vec::new();
-    let mut start = 0usize;
-    while start < content.len() {
-        let rest = &content[start..];
-        let newline = rest.find('\n');
-        let end = newline
-            .map(|offset| start + offset)
-            .unwrap_or(content.len());
-        let next_start = newline.map(|offset| start + offset + 1).unwrap_or(end);
-        spans.push(LineSpan {
-            start,
-            end,
-            next_start,
-        });
-        start = next_start;
-    }
-    spans
 }
 
 fn attr_value(attrs: &str, name: &str) -> Option<String> {

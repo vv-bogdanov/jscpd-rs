@@ -7,6 +7,7 @@ use super::embedded::{
     assign_sequential_positions, blank_ranges_preserve_newlines, offset_tokens,
     tokenize_generic_with_whitespace,
 };
+use super::scan::line_spans;
 use super::{
     ByteSpan, DetectionToken, LineIndex, TokenContext, TokenKind, TokenMap, find_ignore_regions,
     is_oxc_format, push_token, tokenize_generic, tokenize_oxc_maps,
@@ -233,33 +234,6 @@ fn scan_markdown_gap_whitespace(content: &str, start: usize, limit: usize) -> (u
         end += ch.len_utf8();
     }
     (end, TokenKind::Empty)
-}
-
-#[derive(Clone, Copy)]
-struct LineSpan {
-    start: usize,
-    end: usize,
-    next_start: usize,
-}
-
-fn line_spans(content: &str) -> Vec<LineSpan> {
-    let mut spans = Vec::new();
-    let mut start = 0usize;
-    while start < content.len() {
-        let rest = &content[start..];
-        let newline = rest.find('\n');
-        let end = newline
-            .map(|offset| start + offset)
-            .unwrap_or(content.len());
-        let next_start = newline.map(|offset| start + offset + 1).unwrap_or(end);
-        spans.push(LineSpan {
-            start,
-            end,
-            next_start,
-        });
-        start = next_start;
-    }
-    spans
 }
 
 struct MarkdownFenceOpen<'a> {

@@ -81,7 +81,7 @@ fn compare_dates(first: &str, second: &str) -> &'static str {
 mod tests {
     use super::*;
     use crate::report::console_common::clone_header;
-    use crate::report::test_support::make_test_result_with_clone;
+    use crate::report::test_support::{make_test_result_with_clone, single_line_blame};
 
     #[test]
     fn console_full_header_matches_upstream_shape() {
@@ -108,32 +108,18 @@ mod tests {
     #[test]
     fn console_full_fragment_table_uses_blame_columns_when_available() {
         let mut result = make_test_result_with_clone("src/a.js", "src/b.js");
-        result.clones[0].duplication_a.blame = Some(
-            [(
-                "2".to_string(),
-                crate::detector::BlamedLine {
-                    rev: "a".to_string(),
-                    author: "Alice".to_string(),
-                    date: "2024-01-01 00:00:00 +0000".to_string(),
-                    line: "2".to_string(),
-                },
-            )]
-            .into_iter()
-            .collect(),
-        );
-        result.clones[0].duplication_b.blame = Some(
-            [(
-                "8".to_string(),
-                crate::detector::BlamedLine {
-                    rev: "b".to_string(),
-                    author: "Bob".to_string(),
-                    date: "2024-01-02 00:00:00 +0000".to_string(),
-                    line: "8".to_string(),
-                },
-            )]
-            .into_iter()
-            .collect(),
-        );
+        result.clones[0].duplication_a.blame = Some(single_line_blame(
+            "2",
+            "a",
+            "Alice",
+            "2024-01-01 00:00:00 +0000",
+        ));
+        result.clones[0].duplication_b.blame = Some(single_line_blame(
+            "8",
+            "b",
+            "Bob",
+            "2024-01-02 00:00:00 +0000",
+        ));
 
         let table = fragment_table(&result, &result.clones[0]);
 

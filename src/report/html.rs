@@ -296,24 +296,14 @@ fn escape_html(value: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::report::test_support::make_test_result_with_clone;
-    use crate::report::write_reports;
+    use crate::report::test_support::{
+        make_test_result_with_clone, write_test_report, write_test_report_output,
+    };
 
     #[test]
     fn html_report_writes_upstream_layout_files() {
-        let output = crate::report::test_support::temp_output("html-report");
-        let options = Options {
-            output: output.clone(),
-            reporters: vec!["html".to_string()],
-            silent: true,
-            ..Options::default()
-        };
-        let result = make_test_result_with_clone("src/a.js", "src/b.js");
-
-        write_reports(&result, &options).unwrap();
-        let html = std::fs::read_to_string(output.join("html").join("index.html")).unwrap();
-        let json = std::fs::read_to_string(output.join("html").join("jscpd-report.json")).unwrap();
-        let _ = std::fs::remove_dir_all(output);
+        let html = write_test_report("html", "html-report", &["html", "index.html"]);
+        let json = write_test_report("html", "html-report-json", &["html", "jscpd-report.json"]);
 
         assert!(html.contains("<title>Copy/Paste Detector Report</title>"));
         assert!(html.contains("jscpd - copy/paste report"));
@@ -334,16 +324,7 @@ mod tests {
 
     #[test]
     fn html_report_writes_static_assets() {
-        let output = crate::report::test_support::temp_output("html-assets");
-        let options = Options {
-            output: output.clone(),
-            reporters: vec!["html".to_string()],
-            silent: true,
-            ..Options::default()
-        };
-        let result = make_test_result_with_clone("src/a.js", "src/b.js");
-
-        write_reports(&result, &options).unwrap();
+        let output = write_test_report_output("html", "html-assets");
         let tailwind = output.join("html").join("styles").join("tailwind.css");
         let prism_css = output.join("html").join("styles").join("prism.css");
         let prism_js = output.join("html").join("js").join("prism.js");

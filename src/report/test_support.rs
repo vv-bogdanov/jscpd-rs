@@ -1,7 +1,11 @@
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::path::PathBuf;
 
-use crate::detector::{CloneMatch, DetectionResult, FormatStatistic, Fragment, StatisticRow};
+use crate::cli::Options;
+use crate::detector::{
+    BlamedLine, CloneMatch, DetectionResult, FormatStatistic, Fragment, StatisticRow,
+};
+use crate::report::write_reports;
 use crate::tokenizer::Location;
 
 pub(super) fn make_test_statistics() -> crate::detector::Statistics {
@@ -10,34 +14,27 @@ pub(super) fn make_test_statistics() -> crate::detector::Statistics {
         "javascript".to_string(),
         FormatStatistic {
             sources: HashMap::new(),
-            total: StatisticRow {
-                sources: 2,
-                lines: 20,
-                tokens: 100,
-                clones: 1,
-                duplicated_lines: 5,
-                duplicated_tokens: 30,
-                percentage: 25.0,
-                percentage_tokens: 30.0,
-                new_duplicated_lines: 0,
-                new_clones: 0,
-            },
+            total: test_statistic_row(),
         },
     );
     crate::detector::Statistics {
-        total: StatisticRow {
-            sources: 2,
-            lines: 20,
-            tokens: 100,
-            clones: 1,
-            duplicated_lines: 5,
-            duplicated_tokens: 30,
-            percentage: 25.0,
-            percentage_tokens: 30.0,
-            new_duplicated_lines: 0,
-            new_clones: 0,
-        },
+        total: test_statistic_row(),
         formats,
+    }
+}
+
+fn test_statistic_row() -> StatisticRow {
+    StatisticRow {
+        sources: 2,
+        lines: 20,
+        tokens: 100,
+        clones: 1,
+        duplicated_lines: 5,
+        duplicated_tokens: 30,
+        percentage: 25.0,
+        percentage_tokens: 30.0,
+        new_duplicated_lines: 0,
+        new_clones: 0,
     }
 }
 
@@ -82,6 +79,49 @@ pub(super) fn temp_output(label: &str) -> PathBuf {
         .unwrap()
         .as_nanos();
     std::env::temp_dir().join(format!("jscpd-rs-{label}-{}-{nonce}", std::process::id()))
+}
+
+pub(super) fn write_test_report(reporter: &str, label: &str, path: &[&str]) -> String {
+    let output = write_test_report_output(reporter, label);
+    let report_path = path
+        .iter()
+        .fold(output.clone(), |path, segment| path.join(segment));
+    let report = std::fs::read_to_string(report_path).unwrap();
+    let _ = std::fs::remove_dir_all(output);
+    report
+}
+
+pub(super) fn write_test_report_output(reporter: &str, label: &str) -> PathBuf {
+    let output = temp_output(label);
+    let options = Options {
+        output: output.clone(),
+        reporters: vec![reporter.to_string()],
+        silent: true,
+        ..Options::default()
+    };
+    let result = make_test_result_with_clone("src/a.js", "src/b.js");
+
+    write_reports(&result, &options).unwrap();
+    output
+}
+
+pub(super) fn single_line_blame(
+    line: &str,
+    rev: &str,
+    author: &str,
+    date: &str,
+) -> BTreeMap<String, BlamedLine> {
+    [(
+        line.to_string(),
+        BlamedLine {
+            rev: rev.to_string(),
+            author: author.to_string(),
+            date: date.to_string(),
+            line: line.to_string(),
+        },
+    )]
+    .into_iter()
+    .collect()
 }
 
 fn location(line: usize, column: usize, position: usize) -> Location {

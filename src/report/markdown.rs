@@ -1,7 +1,7 @@
 use anyhow::Result;
 
 use super::file_output::write_file_report;
-use super::summary::statistic_to_summary_row;
+use super::summary::{silent_summary, summary_rows};
 use crate::cli::Options;
 use crate::detector::DetectionResult;
 
@@ -18,33 +18,13 @@ struct MarkdownReport {
 impl MarkdownReport {
     fn from_detection(result: &DetectionResult) -> Self {
         let stats = &result.statistics;
-        let clone_count = result.clones.len();
-        let total = &stats.total;
-        let format_count = stats.formats.len();
-
-        let summary_line = format!(
-            "> Duplications detection: Found {} exact clones with {}({}%) duplicated lines in {} ({} formats) files.",
-            clone_count, total.duplicated_lines, total.percentage, total.sources, format_count,
-        );
-
-        let mut rows: Vec<[String; 7]> = vec![[
-            "Format".to_string(),
-            "Files analyzed".to_string(),
-            "Total lines".to_string(),
-            "Total tokens".to_string(),
-            "Clones found".to_string(),
-            "Duplicated lines".to_string(),
-            "Duplicated tokens".to_string(),
-        ]];
-
-        let mut formats: Vec<_> = stats.formats.iter().collect();
-        formats.sort_by_key(|(format, _)| *format);
-        for (format, statistic) in formats {
-            rows.push(statistic_to_summary_row(format, &statistic.total));
+        let summary_line = format!("> {}", silent_summary(result));
+        let mut rows = summary_rows(stats);
+        if let Some(total) = rows.last_mut() {
+            for cell in total {
+                *cell = format!("**{cell}**");
+            }
         }
-        rows.push(
-            statistic_to_summary_row("Total:", &stats.total).map(|cell| format!("**{cell}**")),
-        );
 
         Self { summary_line, rows }
     }
@@ -104,23 +84,11 @@ fn write_markdown_separator(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::report::test_support::make_test_result_with_clone;
-    use crate::report::write_reports;
+    use crate::report::test_support::write_test_report;
 
     #[test]
     fn write_reports_writes_markdown_report() {
-        let output = crate::report::test_support::temp_output("markdown-report");
-        let options = Options {
-            output: output.clone(),
-            reporters: vec!["markdown".to_string()],
-            silent: true,
-            ..Options::default()
-        };
-        let result = make_test_result_with_clone("src/a.js", "src/b.js");
-
-        write_reports(&result, &options).unwrap();
-        let md = std::fs::read_to_string(output.join("jscpd-report.md")).unwrap();
-        let _ = std::fs::remove_dir_all(output);
+        let md = write_test_report("markdown", "markdown-report", &["jscpd-report.md"]);
 
         assert!(md.starts_with("\n# Copy/paste detection report"));
         assert!(md.contains("> Duplications detection:"));

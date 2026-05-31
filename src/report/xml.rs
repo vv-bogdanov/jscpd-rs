@@ -1,5 +1,6 @@
 use anyhow::Result;
 
+use super::escape::escape_xml;
 use super::file_output::write_file_report;
 use super::source::clone_fragment;
 use crate::cli::Options;
@@ -86,15 +87,6 @@ impl std::fmt::Display for XmlReport {
     }
 }
 
-fn escape_xml(value: &str) -> String {
-    value
-        .replace('&', "&amp;")
-        .replace('<', "&lt;")
-        .replace('>', "&gt;")
-        .replace('\'', "&apos;")
-        .replace('"', "&quot;")
-}
-
 fn cdata_fragment(value: &str) -> String {
     value.replacen("]]>", "CDATA_END", 1)
 }
@@ -102,8 +94,7 @@ fn cdata_fragment(value: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::report::test_support::make_test_result_with_clone;
-    use crate::report::write_reports;
+    use crate::report::test_support::{make_test_result_with_clone, write_test_report};
 
     #[test]
     fn xml_report_matches_upstream_pmd_cpd_shape() {
@@ -120,18 +111,7 @@ mod tests {
 
     #[test]
     fn write_reports_writes_xml_report() {
-        let output = crate::report::test_support::temp_output("xml-report");
-        let options = Options {
-            output: output.clone(),
-            reporters: vec!["xml".to_string()],
-            silent: true,
-            ..Options::default()
-        };
-        let result = make_test_result_with_clone("src/a.js", "src/b.js");
-
-        write_reports(&result, &options).unwrap();
-        let xml = std::fs::read_to_string(output.join("jscpd-report.xml")).unwrap();
-        let _ = std::fs::remove_dir_all(output);
+        let xml = write_test_report("xml", "xml-report", &["jscpd-report.xml"]);
 
         assert!(xml.contains("<pmd-cpd>"));
         assert!(xml.contains(r#"<file path="src/a.js" line="2">"#));

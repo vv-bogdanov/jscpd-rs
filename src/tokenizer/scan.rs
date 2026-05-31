@@ -1,3 +1,30 @@
+#[derive(Clone, Copy)]
+pub(super) struct LineSpan {
+    pub start: usize,
+    pub end: usize,
+    pub next_start: usize,
+}
+
+pub(super) fn line_spans(content: &str) -> Vec<LineSpan> {
+    let mut spans = Vec::new();
+    let mut start = 0usize;
+    while start < content.len() {
+        let rest = &content[start..];
+        let newline = rest.find('\n');
+        let end = newline
+            .map(|offset| start + offset)
+            .unwrap_or(content.len());
+        let next_start = newline.map(|offset| start + offset + 1).unwrap_or(end);
+        spans.push(LineSpan {
+            start,
+            end,
+            next_start,
+        });
+        start = next_start;
+    }
+    spans
+}
+
 pub(super) fn scan_line_comment(bytes: &[u8], start: usize, limit: usize) -> usize {
     let mut idx = start + 2;
     while idx < limit && bytes[idx] != b'\n' {

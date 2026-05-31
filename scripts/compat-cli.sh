@@ -2,6 +2,8 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# shellcheck source=scripts/common.sh
+source "$ROOT/scripts/common.sh"
 TARGET_REL="${TARGET_REL:-jscpd/fixtures/clike/file2.c}"
 TARGET_FILE="${TARGET_FILE:-$ROOT/$TARGET_REL}"
 TARGET_FILE_ABS="$(cd "$(dirname "$TARGET_FILE")" && pwd)/$(basename "$TARGET_FILE")"
@@ -11,32 +13,8 @@ MAX_SIZE="${MAX_SIZE:-1mb}"
 TMP_ROOT="${TMP_ROOT:-$(mktemp -d "${TMPDIR:-/tmp}/jscpd-rs-cli.XXXXXX")}"
 LAST_CASE_DIR=""
 
-cleanup() {
-  if [[ "${KEEP:-0}" != "1" ]]; then
-    rm -rf "$TMP_ROOT"
-  fi
-}
-trap cleanup EXIT
-
-if [[ -f "$HOME/.cargo/env" ]]; then
-  # shellcheck source=/dev/null
-  source "$HOME/.cargo/env"
-fi
-
-if command -v corepack >/dev/null 2>&1; then
-  corepack prepare pnpm@10.28.0 --activate >/dev/null
-fi
-
-cd "$ROOT"
-cargo build --release >/dev/null
-
-if [[ ! -d "$ROOT/jscpd/node_modules" ]]; then
-  pnpm --dir "$ROOT/jscpd" install --frozen-lockfile
-fi
-
-if [[ ! -f "$ROOT/jscpd/apps/jscpd/dist/bin/jscpd.js" ]]; then
-  pnpm --dir "$ROOT/jscpd" build
-fi
+jscpd_rs_trap_tmp_root_cleanup
+jscpd_rs_prepare_release_tools
 
 run_command() {
   local code_file="$1"

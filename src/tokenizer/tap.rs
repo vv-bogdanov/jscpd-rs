@@ -1,6 +1,7 @@
 use crate::cli::Options;
 
 use super::embedded::{assign_sequential_positions, blank_ranges_preserve_newlines, offset_tokens};
+use super::scan::line_spans;
 use super::{
     ByteSpan, DetectionToken, LineIndex, TokenContext, TokenKind, TokenMap, find_ignore_regions,
     push_token, tokenize_generic,
@@ -146,26 +147,4 @@ fn trim_line_end(line: &str) -> usize {
         .rposition(|byte| !matches!(byte, b' ' | b'\t'))
         .map(|idx| idx + 1)
         .unwrap_or(0)
-}
-
-#[derive(Clone, Copy)]
-struct LineSpan {
-    start: usize,
-    end: usize,
-}
-
-fn line_spans(content: &str) -> Vec<LineSpan> {
-    let mut spans = Vec::new();
-    let mut start = 0usize;
-    while start < content.len() {
-        let rest = &content[start..];
-        let newline = rest.find('\n');
-        let end = newline
-            .map(|offset| start + offset)
-            .unwrap_or(content.len());
-        let next_start = newline.map(|offset| start + offset + 1).unwrap_or(end);
-        spans.push(LineSpan { start, end });
-        start = next_start;
-    }
-    spans
 }

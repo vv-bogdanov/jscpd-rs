@@ -77,6 +77,8 @@ mod tests {
 
     use super::*;
 
+    const DUPLICATE_JS: &str = "const alpha = 1;\nconst beta = 2;\nconst gamma = alpha + beta;\n";
+
     fn fixture_options(path: &str) -> Options {
         Options {
             paths: vec![PathBuf::from(path)],
@@ -87,6 +89,25 @@ mod tests {
             min_lines: 3,
             max_size_bytes: 1024 * 1024,
             ..Options::default()
+        }
+    }
+
+    fn in_memory_options() -> Options {
+        Options {
+            reporters: Vec::new(),
+            silent: true,
+            no_tips: true,
+            min_tokens: 5,
+            min_lines: 2,
+            ..Options::default()
+        }
+    }
+
+    fn javascript_source(source_id: &str, content: &str) -> SourceFile {
+        SourceFile {
+            source_id: source_id.to_string(),
+            format: "javascript".to_string(),
+            content: content.to_string(),
         }
     }
 
@@ -217,29 +238,12 @@ mod tests {
 
     #[test]
     fn public_api_detects_from_in_memory_sources() {
-        let options = Options {
-            reporters: Vec::new(),
-            silent: true,
-            no_tips: true,
-            min_tokens: 5,
-            min_lines: 2,
-            ..Options::default()
-        };
-        let content = "const alpha = 1;\nconst beta = 2;\nconst gamma = alpha + beta;\n";
         let files = vec![
-            SourceFile {
-                source_id: "snippet.js".to_string(),
-                format: "javascript".to_string(),
-                content: content.to_string(),
-            },
-            SourceFile {
-                source_id: "src/match.js".to_string(),
-                format: "javascript".to_string(),
-                content: content.to_string(),
-            },
+            javascript_source("snippet.js", DUPLICATE_JS),
+            javascript_source("src/match.js", DUPLICATE_JS),
         ];
 
-        let result = detect_source_files(files, &options);
+        let result = detect_source_files(files, &in_memory_options());
 
         assert_eq!(result.clones.len(), 1);
         assert_eq!(result.statistics.total.sources, 2);
@@ -247,23 +251,14 @@ mod tests {
 
     #[test]
     fn public_api_exposes_streaming_detector() {
-        let options = Options {
-            reporters: Vec::new(),
-            silent: true,
-            no_tips: true,
-            min_tokens: 5,
-            min_lines: 2,
-            ..Options::default()
-        };
-        let content = "const alpha = 1;\nconst beta = 2;\nconst gamma = alpha + beta;\n";
-        let mut detector = Detector::new(options);
+        let mut detector = Detector::new(in_memory_options());
 
         assert!(
             detector
-                .detect("first.js", content, "javascript")
+                .detect("first.js", DUPLICATE_JS, "javascript")
                 .is_empty()
         );
-        let clones = detector.detect("second.js", content, "javascript");
+        let clones = detector.detect("second.js", DUPLICATE_JS, "javascript");
 
         assert_eq!(clones.len(), 1);
         assert_eq!(detector.sources().len(), 2);
@@ -275,29 +270,12 @@ mod tests {
 
     #[test]
     fn public_api_exposes_statistic_collector() {
-        let options = Options {
-            reporters: Vec::new(),
-            silent: true,
-            no_tips: true,
-            min_tokens: 5,
-            min_lines: 2,
-            ..Options::default()
-        };
-        let content = "const alpha = 1;\nconst beta = 2;\nconst gamma = alpha + beta;\n";
         let result = detect_source_files(
             vec![
-                SourceFile {
-                    source_id: "first.js".to_string(),
-                    format: "javascript".to_string(),
-                    content: content.to_string(),
-                },
-                SourceFile {
-                    source_id: "second.js".to_string(),
-                    format: "javascript".to_string(),
-                    content: content.to_string(),
-                },
+                javascript_source("first.js", DUPLICATE_JS),
+                javascript_source("second.js", DUPLICATE_JS),
             ],
-            &options,
+            &in_memory_options(),
         );
         let mut statistic = Statistic::new();
 

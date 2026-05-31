@@ -96,27 +96,19 @@ impl JsonDuplicate {
 
 #[cfg(test)]
 mod tests {
-    use crate::detector::BlamedLine;
-    use crate::report::test_support::make_test_result_with_clone;
+    use crate::report::test_support::{make_test_result_with_clone, single_line_blame};
 
     use super::to_pretty_json;
 
     #[test]
     fn json_report_includes_blame_when_present() {
         let mut result = make_test_result_with_clone("src/a.js", "src/b.js");
-        result.clones[0].duplication_a.blame = Some(
-            [(
-                "2".to_string(),
-                BlamedLine {
-                    rev: "abc123".to_string(),
-                    author: "Alice".to_string(),
-                    date: "2024-01-01 00:00:00 +0000".to_string(),
-                    line: "2".to_string(),
-                },
-            )]
-            .into_iter()
-            .collect(),
-        );
+        result.clones[0].duplication_a.blame = Some(single_line_blame(
+            "2",
+            "abc123",
+            "Alice",
+            "2024-01-01 00:00:00 +0000",
+        ));
 
         let json = to_pretty_json(&result).unwrap();
 

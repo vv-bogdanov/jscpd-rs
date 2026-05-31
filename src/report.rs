@@ -9,6 +9,7 @@ mod console;
 mod console_common;
 mod console_full;
 mod csv;
+mod escape;
 mod file_output;
 mod html;
 mod json;

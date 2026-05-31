@@ -2,35 +2,13 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# shellcheck source=scripts/common.sh
+source "$ROOT/scripts/common.sh"
 TMP_ROOT="${TMP_ROOT:-$(mktemp -d "${TMPDIR:-/tmp}/jscpd-rs-blame.XXXXXX")}"
 PROJECT="$TMP_ROOT/project"
 
-cleanup() {
-  if [[ "${KEEP:-0}" != "1" ]]; then
-    rm -rf "$TMP_ROOT"
-  fi
-}
-trap cleanup EXIT
-
-if [[ -f "$HOME/.cargo/env" ]]; then
-  # shellcheck source=/dev/null
-  source "$HOME/.cargo/env"
-fi
-
-if command -v corepack >/dev/null 2>&1; then
-  corepack prepare pnpm@10.28.0 --activate >/dev/null
-fi
-
-cd "$ROOT"
-cargo build --release >/dev/null
-
-if [[ ! -d "$ROOT/jscpd/node_modules" ]]; then
-  pnpm --dir "$ROOT/jscpd" install --frozen-lockfile
-fi
-
-if [[ ! -f "$ROOT/jscpd/apps/jscpd/dist/bin/jscpd.js" ]]; then
-  pnpm --dir "$ROOT/jscpd" build
-fi
+jscpd_rs_trap_tmp_root_cleanup
+jscpd_rs_prepare_release_tools
 
 mkdir -p "$PROJECT/src" "$PROJECT/rust" "$PROJECT/upstream"
 cat >"$PROJECT/src/a.js" <<'EOF_JS'

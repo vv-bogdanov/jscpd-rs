@@ -2,6 +2,8 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# shellcheck source=scripts/common.sh
+source "$ROOT/scripts/common.sh"
 TARGET_PATH="${1:-$ROOT/jscpd/fixtures}"
 RUNS="${RUNS:-5}"
 MIN_TOKENS="${MIN_TOKENS:-20}"
@@ -11,25 +13,7 @@ FORMAT="${FORMAT:-}"
 RUST_TIMEOUT="${RUST_TIMEOUT:-}"
 UPSTREAM_TIMEOUT="${UPSTREAM_TIMEOUT:-}"
 
-if [[ -f "$HOME/.cargo/env" ]]; then
-  # shellcheck source=/dev/null
-  source "$HOME/.cargo/env"
-fi
-
-if command -v corepack >/dev/null 2>&1; then
-  corepack prepare pnpm@10.28.0 --activate >/dev/null
-fi
-
-cd "$ROOT"
-cargo build --release >/dev/null
-
-if [[ ! -d "$ROOT/jscpd/node_modules" ]]; then
-  pnpm --dir "$ROOT/jscpd" install --frozen-lockfile
-fi
-
-if [[ ! -f "$ROOT/jscpd/apps/jscpd/dist/bin/jscpd.js" ]]; then
-  pnpm --dir "$ROOT/jscpd" build
-fi
+jscpd_rs_prepare_release_tools
 
 rust_cmd=("$ROOT/target/release/jscpd" "$TARGET_PATH" --silent --min-tokens "$MIN_TOKENS" --min-lines "$MIN_LINES" --max-size "$MAX_SIZE")
 node_cmd=(node "$ROOT/jscpd/apps/jscpd/bin/jscpd" "$TARGET_PATH" --silent --noTips --min-tokens "$MIN_TOKENS" --min-lines "$MIN_LINES" --max-size "$MAX_SIZE")

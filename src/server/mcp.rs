@@ -577,6 +577,27 @@ mod tests {
         (parts.status, parts.headers, value)
     }
 
+    async fn mcp_json(
+        service: ServerService,
+        session_id: Option<&str>,
+        payload: Value,
+    ) -> (StatusCode, HeaderMap, Value) {
+        response_json(handle_mcp_request(service, session_id, payload).await).await
+    }
+
+    fn initialize_payload(id: usize) -> Value {
+        json!({
+            "jsonrpc": "2.0",
+            "method": "initialize",
+            "params": {
+                "protocolVersion": "2024-11-05",
+                "capabilities": {},
+                "clientInfo": { "name": "test-client", "version": "1.0.0" },
+            },
+            "id": id,
+        })
+    }
+
     fn mcp_headers(session_id: Option<&str>) -> HeaderMap {
         let mut headers = HeaderMap::new();
         headers.insert(
@@ -602,27 +623,21 @@ mod tests {
         headers
     }
 
+    fn assert_accepted_without_session_echo(status: StatusCode, headers: &HeaderMap, body: &Value) {
+        assert_eq!(status, StatusCode::ACCEPTED);
+        assert_eq!(body, &Value::Null);
+        assert!(
+            headers.get(MCP_SESSION_ID).is_none(),
+            "upstream does not echo session IDs on accepted notifications"
+        );
+    }
+
     #[tokio::test]
     async fn mcp_initialize_creates_session() {
         let path = fixture_project();
         let service = service_for(&path);
 
-        let response = handle_mcp_request(
-            service.clone(),
-            None,
-            json!({
-                "jsonrpc": "2.0",
-                "method": "initialize",
-                "params": {
-                    "protocolVersion": "2024-11-05",
-                    "capabilities": {},
-                    "clientInfo": { "name": "test-client", "version": "1.0.0" },
-                },
-                "id": 1,
-            }),
-        )
-        .await;
-        let (status, headers, body) = response_json(response).await;
+        let (status, headers, body) = mcp_json(service.clone(), None, initialize_payload(1)).await;
 
         assert_eq!(status, StatusCode::OK);
         assert_eq!(body["jsonrpc"], "2.0");
@@ -648,7 +663,7 @@ mod tests {
         let service = service_for(&path);
         let session_id = service.create_mcp_session();
 
-        let response = handle_mcp_request(
+        let (status, _headers, body) = mcp_json(
             service,
             Some(&session_id),
             json!({
@@ -658,7 +673,6 @@ mod tests {
             }),
         )
         .await;
-        let (status, _headers, body) = response_json(response).await;
 
         assert_eq!(status, StatusCode::OK);
         for tool in body["result"]["tools"].as_array().expect("tools list") {
@@ -759,12 +773,7 @@ mod tests {
         .await;
         let (status, headers, body) = response_json(response).await;
 
-        assert_eq!(status, StatusCode::ACCEPTED);
-        assert_eq!(body, Value::Null);
-        assert!(
-            headers.get(MCP_SESSION_ID).is_none(),
-            "upstream does not echo session IDs on accepted notification-only batches"
-        );
+        assert_accepted_without_session_echo(status, &headers, &body);
         fs::remove_dir_all(path).ok();
     }
 
@@ -788,12 +797,7 @@ mod tests {
         .await;
         let (status, headers, body) = response_json(response).await;
 
-        assert_eq!(status, StatusCode::ACCEPTED);
-        assert_eq!(body, Value::Null);
-        assert!(
-            headers.get(MCP_SESSION_ID).is_none(),
-            "upstream does not echo session IDs on accepted notifications"
-        );
+        assert_accepted_without_session_echo(status, &headers, &body);
         fs::remove_dir_all(path).ok();
     }
 
@@ -801,19 +805,7 @@ mod tests {
     async fn mcp_rejects_unsupported_content_type_like_upstream_sdk() {
         let path = fixture_project();
         let service = service_for(&path);
-        let initialize_payload = Bytes::from(
-            json!({
-                "jsonrpc": "2.0",
-                "method": "initialize",
-                "params": {
-                    "protocolVersion": "2024-11-05",
-                    "capabilities": {},
-                    "clientInfo": { "name": "test-client", "version": "1.0.0" },
-                },
-                "id": 1,
-            })
-            .to_string(),
-        );
+        let initialize_payload = Bytes::from(initialize_payload(1).to_string());
 
         let response = post_mcp(
             State(service.clone()),
@@ -865,7 +857,7 @@ mod tests {
         let path = fixture_project();
         let service = service_for(&path);
 
-        let response = handle_mcp_request(
+        let (status, _headers, body) = mcp_json(
             service,
             None,
             json!({
@@ -875,7 +867,6 @@ mod tests {
             }),
         )
         .await;
-        let (status, _headers, body) = response_json(response).await;
 
         assert_eq!(status, StatusCode::BAD_REQUEST);
         assert_eq!(body["error"]["code"], -32000);
@@ -888,7 +879,7 @@ mod tests {
         let service = service_for(&path);
         let session_id = service.create_mcp_session();
 
-        let response = handle_mcp_request(
+        let (status, _headers, body) = mcp_json(
             service,
             Some(&session_id),
             json!({
@@ -906,7 +897,6 @@ mod tests {
             }),
         )
         .await;
-        let (status, _headers, body) = response_json(response).await;
 
         assert_eq!(status, StatusCode::OK);
         assert_eq!(body["id"], 3);
@@ -924,7 +914,7 @@ mod tests {
         let service = service_for(&path);
         let session_id = service.create_mcp_session();
 
-        let response = handle_mcp_request(
+        let (status, _headers, body) = mcp_json(
             service,
             Some(&session_id),
             json!({
@@ -935,7 +925,6 @@ mod tests {
             }),
         )
         .await;
-        let (status, _headers, body) = response_json(response).await;
 
         assert_eq!(status, StatusCode::OK);
         assert_eq!(body["id"], 4);

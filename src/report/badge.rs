@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use anyhow::Result;
 use serde_json::{Map, Value};
 
+use super::escape::escape_xml;
 use super::file_output::{ensure_output_dir, write_path};
 use crate::cli::Options;
 use crate::detector::DetectionResult;
@@ -126,19 +127,10 @@ fn char_width(value: char) -> usize {
     }
 }
 
-fn escape_xml(value: &str) -> String {
-    value
-        .replace('&', "&amp;")
-        .replace('<', "&lt;")
-        .replace('>', "&gt;")
-        .replace('\'', "&apos;")
-        .replace('"', "&quot;")
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::report::test_support::make_test_result_with_clone;
+    use crate::report::test_support::{make_test_result_with_clone, write_test_report};
     use crate::report::write_reports;
 
     #[test]
@@ -210,18 +202,7 @@ mod tests {
 
     #[test]
     fn write_reports_writes_badge_report() {
-        let output = crate::report::test_support::temp_output("badge-report");
-        let options = Options {
-            output: output.clone(),
-            reporters: vec!["badge".to_string()],
-            silent: true,
-            ..Options::default()
-        };
-        let result = make_test_result_with_clone("src/a.js", "src/b.js");
-
-        write_reports(&result, &options).unwrap();
-        let svg = std::fs::read_to_string(output.join("jscpd-badge.svg")).unwrap();
-        let _ = std::fs::remove_dir_all(output);
+        let svg = write_test_report("badge", "badge-report", &["jscpd-badge.svg"]);
 
         assert!(svg.contains("Copy/Paste"));
         assert!(svg.contains("25%"));

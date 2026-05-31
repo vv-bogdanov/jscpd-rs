@@ -240,8 +240,7 @@ fn sarif_source_language(format: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::report::test_support::make_test_result_with_clone;
-    use crate::report::write_reports;
+    use crate::report::test_support::{make_test_result_with_clone, write_test_report};
 
     #[test]
     fn sarif_report_matches_upstream_shape() {
@@ -294,18 +293,7 @@ mod tests {
 
     #[test]
     fn write_reports_writes_sarif_report() {
-        let output = crate::report::test_support::temp_output("sarif-report");
-        let options = Options {
-            output: output.clone(),
-            reporters: vec!["sarif".to_string()],
-            silent: true,
-            ..Options::default()
-        };
-        let result = make_test_result_with_clone("src/a.js", "src/b.js");
-
-        write_reports(&result, &options).unwrap();
-        let sarif = std::fs::read_to_string(output.join("jscpd-sarif.json")).unwrap();
-        let _ = std::fs::remove_dir_all(output);
+        let sarif = write_test_report("sarif", "sarif-report", &["jscpd-sarif.json"]);
         let json: serde_json::Value = serde_json::from_str(&sarif).unwrap();
 
         assert_eq!(json["version"], "2.1.0");

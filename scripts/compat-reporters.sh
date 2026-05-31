@@ -2,6 +2,8 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# shellcheck source=scripts/common.sh
+source "$ROOT/scripts/common.sh"
 TARGET_PATH="${1:-$ROOT/jscpd/fixtures/clike/file2.c}"
 if (($# > 0)); then
   shift
@@ -17,32 +19,8 @@ TMP_ROOT="${TMP_ROOT:-$(mktemp -d "${TMPDIR:-/tmp}/jscpd-rs-reporters.XXXXXX")}"
 RUST_OUT="$TMP_ROOT/rust"
 UPSTREAM_OUT="$TMP_ROOT/upstream"
 
-cleanup() {
-  if [[ "${KEEP:-0}" != "1" ]]; then
-    rm -rf "$TMP_ROOT"
-  fi
-}
-trap cleanup EXIT
-
-if [[ -f "$HOME/.cargo/env" ]]; then
-  # shellcheck source=/dev/null
-  source "$HOME/.cargo/env"
-fi
-
-if command -v corepack >/dev/null 2>&1; then
-  corepack prepare pnpm@10.28.0 --activate >/dev/null
-fi
-
-cd "$ROOT"
-cargo build --release >/dev/null
-
-if [[ ! -d "$ROOT/jscpd/node_modules" ]]; then
-  pnpm --dir "$ROOT/jscpd" install --frozen-lockfile
-fi
-
-if [[ ! -f "$ROOT/jscpd/apps/jscpd/dist/bin/jscpd.js" ]]; then
-  pnpm --dir "$ROOT/jscpd" build
-fi
+jscpd_rs_trap_tmp_root_cleanup
+jscpd_rs_prepare_release_tools
 
 mkdir -p "$RUST_OUT" "$UPSTREAM_OUT"
 
@@ -78,26 +56,9 @@ if [[ -n "$DETECTION_MODE" ]]; then
   rust_cmd+=(--mode "$DETECTION_MODE")
   node_cmd+=(--mode "$DETECTION_MODE")
 fi
-if ((${#EXTRA_ARGS[@]} > 0)); then
-  rust_cmd+=("${EXTRA_ARGS[@]}")
-  node_cmd+=("${EXTRA_ARGS[@]}")
-fi
+jscpd_rs_append_extra_args
 
-printf 'target: %s\n' "$TARGET_PATH"
-printf 'reporters: %s\n' "$REPORTERS"
-printf 'min tokens: %s, min lines: %s, max size: %s\n' "$MIN_TOKENS" "$MIN_LINES" "$MAX_SIZE"
-if [[ -n "$FORMAT" ]]; then
-  printf 'format: %s\n' "$FORMAT"
-fi
-if [[ -n "$DETECTION_MODE" ]]; then
-  printf 'mode: %s\n' "$DETECTION_MODE"
-fi
-if ((${#EXTRA_ARGS[@]} > 0)); then
-  printf 'extra args:'
-  printf ' %q' "${EXTRA_ARGS[@]}"
-  printf '\n'
-fi
-printf 'tmp: %s\n\n' "$TMP_ROOT"
+jscpd_rs_print_detection_header
 
 "${rust_cmd[@]}"
 "${node_cmd[@]}"
