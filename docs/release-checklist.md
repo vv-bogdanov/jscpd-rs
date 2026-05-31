@@ -33,8 +33,8 @@ Latest GitHub Actions default release-gate:
 push
 ```
 
-Passed on 2026-05-31 at code commit `41339ec`:
-https://github.com/vv-bogdanov/jscpd-rs/actions/runs/26705128270
+Passed on 2026-05-31 at code commit `71088f1`:
+https://github.com/vv-bogdanov/jscpd-rs/actions/runs/26710686373
 
 CI timing snapshot after the first cache/timing pass, from cold GitHub Actions
 run `26710415211` on commit `7bdf12f`:
@@ -47,11 +47,23 @@ run `26710415211` on commit `7bdf12f`:
 | `server compatibility` | 28s |
 | `config compatibility` | 4s |
 
-The next pushed run should be faster for the default gate because the workflow
-now restores Cargo, pnpm, and upstream build caches, resolves the pnpm store
-with upstream's `pnpm@10.28.0`, skips `clippy` installation outside release
-candidate runs, and uses a target-reuse npm package smoke. Keep the full cold
-npm source-build in `scripts/prepublish-check.sh` and release-candidate runs.
+Optimized default CI run `26710686373` on commit `71088f1` completed in
+2m18s. Current warm-cache bottlenecks:
+
+| Step | Time |
+| --- | ---: |
+| `CLI compatibility` | 36s |
+| `server compatibility` | 29s |
+| `package/install check` | 23s |
+| `cargo test` | 6s |
+| `config compatibility` | 6s |
+
+The workflow now restores Cargo, pnpm, and upstream build caches, resolves the
+pnpm store with upstream's `pnpm@10.28.0`, validates restored pnpm
+`node_modules` symlinks before using upstream builds, skips `clippy`
+installation outside release-candidate runs, and uses a target-reuse npm
+package smoke. Keep the full cold npm source-build in
+`scripts/prepublish-check.sh` and release-candidate runs.
 
 Recorded public benchmark baseline for this release candidate:
 
@@ -180,8 +192,8 @@ Keep this as part of the release plan:
 
 - Treat `package/install check`, `CLI compatibility`, `cargo test`, and
   `server compatibility` as the CI bottleneck watchlist.
-- Record the next cached GitHub Actions run after the target-reuse npm smoke
-  change and compare it with cold run `26710415211`.
+- Compare future warm-cache GitHub Actions runs with optimized run
+  `26710686373` and cold run `26710415211`.
 - Keep default push/PR CI as a fast confidence gate; keep cold npm source
   install, `clippy`, full matrix, and public benchmark coverage in
   `scripts/prepublish-check.sh` and manual release-candidate workflow runs.

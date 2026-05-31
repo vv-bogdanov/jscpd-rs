@@ -203,8 +203,8 @@ baseline. Record a fresh prepublish check here before tagging the first public
 release.
 
 Latest GitHub Actions default release-gate check:
-`push` passed on 2026-05-31 at code commit `41339ec`:
-https://github.com/vv-bogdanov/jscpd-rs/actions/runs/26705128270
+`push` passed on 2026-05-31 at code commit `71088f1`:
+https://github.com/vv-bogdanov/jscpd-rs/actions/runs/26710686373
 
 Recorded public benchmark baseline:
 
