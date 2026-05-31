@@ -1,48 +1,192 @@
 # jscpd-rs
 
 [![release-gate](https://github.com/vv-bogdanov/jscpd-rs/actions/workflows/release-gate.yml/badge.svg)](https://github.com/vv-bogdanov/jscpd-rs/actions/workflows/release-gate.yml)
+[![crates.io](https://img.shields.io/crates/v/jscpd-rs.svg?style=flat-square)](https://crates.io/crates/jscpd-rs)
+[![docs.rs](https://img.shields.io/docsrs/jscpd-rs?style=flat-square)](https://docs.rs/jscpd-rs)
+[![npm](https://img.shields.io/npm/v/jscpd-rs.svg?style=flat-square)](https://www.npmjs.com/package/jscpd-rs)
+[![license](https://img.shields.io/github/license/vv-bogdanov/jscpd-rs.svg?style=flat-square)](LICENSE)
+[![rust](https://img.shields.io/badge/rust-1.93%2B-dea584?style=flat-square)](https://www.rust-lang.org/)
 
-Fast native Rust clone of [`jscpd`](https://github.com/kucherenko/jscpd):
-same practical workflows, much lower runtime cost.
+Fast native Rust clone of [`jscpd`](https://github.com/kucherenko/jscpd)
+for copy-paste and duplicate-code detection in local development and CI/CD.
 
-The project goal is practical upstream compatibility with much lower runtime
-cost: the same CLI/config/reporting workflows should work, while the detector
-stays native Rust and does not embed or spawn JavaScript for core behavior.
+`jscpd-rs` keeps the upstream command shape, configuration formats, reports,
+exit-code workflows, and server workflow, while moving the hot path to native
+Rust. The practical goal is simple: keep duplication checks always-on without
+spending unnecessary CI minutes, developer waiting time, cloud compute budget,
+or electricity on repeated quality gates.
 
-The practical reason for the project is to make duplication checks cheap enough
-to run often. Faster scans shorten local feedback loops, reduce CI/CD wall-clock
-time, lower paid compute-minute usage, and cut the electricity spent on repeated
-quality gates across large repositories and frequent pull requests.
+Recorded public release-candidate benchmarks are currently 50x+ faster than
+upstream on the covered repositories. The compatibility gate is coverage-first:
+on the same inputs and options, `jscpd-rs` must not miss duplicated source lines
+reported by upstream `jscpd`.
 
-## Why
+## Install
 
-`jscpd` is useful enough to run in every pull request, but JavaScript startup,
-Prism tokenization, dynamic plugin loading, and repeated CI execution make large
-scans expensive. `jscpd-rs` targets the same operational role with a native
-pipeline designed for CI/CD:
+Cargo:
 
-- fast enough to keep duplication checks enabled by default;
-- compatible enough to replace common `jscpd` commands, configs, reports, and
-  exit-code workflows;
-- deterministic enough for release gates and automated refactoring workflows;
-- native-only in the detector path, with no hidden JavaScript runtime fallback.
+```bash
+cargo install jscpd-rs --locked
+jscpd --version
+```
 
-## Status
+npm/npx:
+
+```bash
+npm install -g jscpd-rs
+jscpd --version
+
+npx jscpd-rs --version
+npx jscpd-rs .
+```
+
+The first npm package is a source-build package: install/postinstall compiles
+the native Rust binaries with Cargo. A Rust toolchain must be available on the
+installing machine. Prebuilt platform packages are a planned publication
+improvement.
+
+From this repository:
+
+```bash
+git clone https://github.com/vv-bogdanov/jscpd-rs.git
+cd jscpd-rs
+cargo install --path . --bins --locked
+```
+
+Build without installing:
+
+```bash
+cargo build --release --bin jscpd
+cargo build --release --bin jscpd-server
+```
+
+## Quick Start
+
+Scan a project:
+
+```bash
+jscpd .
+```
+
+Tune the detection threshold:
+
+```bash
+jscpd --min-lines 5 --min-tokens 50 src
+```
+
+Generate reports:
+
+```bash
+jscpd --reporters console,json,html --output report src
+```
+
+Fail CI when duplication is above a threshold:
+
+```bash
+jscpd --threshold 5 --exitCode 1 src
+```
+
+Use the upstream-compatible command help and format list:
+
+```bash
+jscpd --help
+jscpd --list
+```
+
+Start the native REST/MCP server:
+
+```bash
+jscpd-server . --host 127.0.0.1 --port 3000
+curl http://127.0.0.1:3000/api/health
+```
+
+The current server exposes `/`, `/api/health`, `/api/stats`, `/api/check`,
+`/api/recheck`, and `/mcp`. Snippet checks reuse project token maps refreshed
+by `/api/recheck`.
+
+## GitHub Actions
+
+Install from crates.io after publication:
+
+```yaml
+jobs:
+  duplication:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo install jscpd-rs --locked
+      - run: jscpd src --reporters console,json --threshold 5 --exitCode 1
+```
+
+Use npm/npx when a Node-based CI environment is already available:
+
+```yaml
+jobs:
+  duplication:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - run: npx jscpd-rs src --reporters console,json --threshold 5 --exitCode 1
+```
+
+Install from a checked-out source tree:
+
+```yaml
+jobs:
+  duplication:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo install --path . --bins --locked
+      - run: jscpd src --reporters console,json --threshold 5 --exitCode 1
+```
+
+## AI Refactoring Skills
+
+Install the project skills for duplication detection and guided dry
+refactoring:
+
+```bash
+npx skills add vv-bogdanov/jscpd-rs --skill jscpd
+npx skills add vv-bogdanov/jscpd-rs --skill dry-refactoring
+```
+
+## Why jscpd-rs
+
+- **Fast CI/CD gates:** duplicate detection should be cheap enough to run on
+  every pull request.
+- **Lower operating cost:** shorter scans reduce paid compute minutes and
+  repeated developer wait time.
+- **Native detector path:** the detector does not embed or spawn JavaScript for
+  core behavior.
+- **Practical compatibility:** the CLI, config, reporter, server, and exit-code
+  workflows are designed to map onto common upstream `jscpd` usage.
+- **Small project-specific core:** use battle-tested Rust crates for CLI
+  parsing, config formats, ignore handling, serialization, token processing,
+  concurrency, and reporting wherever that keeps the implementation simpler.
+
+## What Works Today
 
 This is pre-release software. The first release target is a coverage-first
 compatible CLI replacement for common `jscpd` workflows:
 
-- command-line and config compatibility for the upstream option surface;
-- coverage-first duplicate compatibility: Rust must not miss duplicated lines
-  reported by upstream on the same inputs/options;
+- `jscpd` and `jscpd-server` binaries with upstream-compatible command names;
+- CLI and config option surface covered by compatibility scripts;
 - native built-in reporters: `ai`, `console`, `consoleFull`, `csv`, `html`,
   `json`, `markdown`, `silent`, `sarif`, `threshold`, `xcode`, `xml`, and
   `badge`;
 - upstream-synchronized format registry with native JS/TS/JSX/TSX tokenization
   and generic native tokenization for long-tail formats;
-- native blame support through Git;
-- initial native Rust library API for running detection from paths or prepared
-  in-memory sources.
+- native Git blame support;
+- native REST/MCP server workflow;
+- Rust library API for running detection from paths or prepared in-memory
+  sources.
 
 Dynamic npm reporters, stores, listeners, and plugins are intentionally out of
 scope for the first release. Unknown external reporters/stores keep
@@ -50,18 +194,18 @@ upstream-style warnings and continue where upstream continues.
 
 ## Compatibility Contract
 
-The release gate is coverage-first. For the same inputs and options, `jscpd-rs`
-must not miss duplicated lines reported by upstream `jscpd`. Extra Rust
-duplicates are allowed while compatibility converges, but compatibility reports
-keep them visible as `extra` findings.
+The release gate is coverage-first. For the same inputs and options,
+`jscpd-rs` must not miss duplicated lines reported by upstream `jscpd`. Extra
+Rust duplicates are allowed while compatibility converges, but compatibility
+reports keep them visible as `extra` findings.
 
-Exact pair ordering and token totals are quality metrics rather than the default
-blocking gate. This matters for multi-way clones: different pair selection can
-still cover the same duplicated source lines.
+Exact pair ordering and token totals are quality metrics rather than the
+default blocking gate. This matters for multi-way clones: different pair
+selection can still cover the same duplicated source lines.
 
-The upstream repository is checked out as `jscpd/` and treated as the executable
-specification. Compatibility scripts run both implementations and compare their
-reports.
+The upstream repository is checked out as `jscpd/` and treated as the
+executable specification. Compatibility scripts run both implementations and
+compare their reports.
 
 ## Performance
 
@@ -81,6 +225,31 @@ PUBLIC=1 PUBLIC_RUNS=3 scripts/release-gate.sh
 
 The release-candidate workflow reruns the public suite before publication so
 README numbers stay tied to a concrete commit and gate output.
+
+## Library API
+
+The crate exposes the detector core for native integrations:
+
+```rust
+let options = jscpd_rs::get_default_options();
+let result = jscpd_rs::detect_clones_and_statistic(&options)?;
+let clones = result.clones;
+
+let clones = jscpd_rs::jscpd(["jscpd", "src", "--silent", "--noTips"])?;
+```
+
+`detect_clones_and_statistics` is also available as the idiomatic Rust spelling.
+`jscpd` and `jscpd_with_exit_callback` provide a native embeddable argv runner
+similar to upstream `jscpd(argv, exitCallback?)`. `get_options_from_args` parses
+upstream-style argv into normalized `Options` for native integrations.
+
+`Tokenizer` provides a native generate-maps entrypoint over the same tokenizer
+used by detection. `Detector`, `Statistic`, and `MemoryStore` expose native
+counterparts for the main upstream core classes without loading JavaScript.
+`detect_source_files` accepts in-memory `SourceFile` values, which is the
+foundation for the upstream-style snippet/server workflow. Format helpers are
+available through `get_supported_formats`, `get_format_by_file`, and
+`get_format_by_file_with_mappings`.
 
 ## Architecture
 
@@ -104,93 +273,43 @@ Core crates and libraries:
 - native reporters for JSON, SARIF, XML, CSV, Markdown, HTML, console, badge,
   Xcode, threshold, silent, and AI refactoring output.
 
-## Install
+## Known First-Release Deviations
 
-Run with npm/npx:
+The first release is native-only and coverage-first. These differences from the
+JavaScript package are intentional unless a real workflow proves otherwise:
 
-```bash
-npx jscpd-rs --version
-npx jscpd-rs /path/to/source
-```
+- dynamic npm reporters, stores, listeners, and plugins are not loaded;
+- token totals and exact clone pair ordering may differ from Prism-based
+  upstream reports while duplicated upstream lines remain covered;
+- HTML reports are self-contained and practically compatible, not pixel-perfect;
+- the Rust crate exposes a native Rust API, not the upstream JavaScript package
+  API.
 
-The first npm package is a source-build package: install/postinstall compiles
-the native Rust binaries with Cargo. A Rust toolchain must be available on the
-installing machine. Prebuilt platform packages are a follow-up publication
-improvement.
+## Development
 
-AI skills for duplication detection and guided refactoring:
-
-```bash
-npx skills add vv-bogdanov/jscpd-rs --skill jscpd
-npx skills add vv-bogdanov/jscpd-rs --skill dry-refactoring
-```
-
-From this repository:
+The upstream repository is checked out as the `jscpd/` git submodule and is the
+executable specification for behavior.
 
 ```bash
-cargo install --path . --bin jscpd --locked
+git submodule update --init --recursive
+cargo test
 ```
 
-Build without installing:
+Useful focused checks:
 
 ```bash
-cargo build --release --bin jscpd
-cargo build --release --bin jscpd-server
+scripts/compat-cli.sh
+scripts/compat-config.sh
+scripts/compat-reporters.sh
+STRICT=coverage scripts/compat-matrix.sh
 ```
 
-## Usage
+Known upstream bug candidates and intentional compatibility exceptions are
+tracked in [docs/upstream-bugs.md](docs/upstream-bugs.md). GitHub-ready issue
+drafts are prepared in
+[docs/upstream-issue-drafts.md](docs/upstream-issue-drafts.md).
 
-```bash
-jscpd /path/to/source
-jscpd --format typescript --min-tokens 50 --min-lines 5 src
-jscpd --reporters json,html --output report src
-jscpd --threshold 5 --exitCode 1 src
-```
-
-The CLI intentionally uses the upstream command name and help shape:
-
-```bash
-jscpd --help
-jscpd --list
-```
-
-Start the native REST server:
-
-```bash
-jscpd-server /path/to/source --host 127.0.0.1 --port 3000
-curl http://127.0.0.1:3000/api/health
-```
-
-The current server exposes `/`, `/api/health`, `/api/stats`, `/api/check`,
-`/api/recheck`, and `/mcp`. The MCP endpoint supports the upstream server's core
-tools and statistics resource over native JSON-RPC HTTP. Snippet checks reuse
-the prepared project token maps refreshed by `/api/recheck`.
-
-## Library API
-
-The crate exposes the detector core for native integrations:
-
-```rust
-let options = jscpd_rs::get_default_options();
-let result = jscpd_rs::detect_clones_and_statistic(&options)?;
-let clones = result.clones;
-
-let clones = jscpd_rs::jscpd(["jscpd", "src", "--silent", "--noTips"])?;
-```
-
-`detect_clones_and_statistics` is also available as the idiomatic Rust spelling.
-`jscpd` and `jscpd_with_exit_callback` provide a native embeddable argv runner
-similar to upstream `jscpd(argv, exitCallback?)`. `get_options_from_args` parses
-upstream-style argv into normalized `Options` for native integrations.
-`Tokenizer` provides a native generate-maps entrypoint over the same tokenizer
-used by detection. `Detector`, `Statistic`, and `MemoryStore` expose native
-counterparts for the main upstream core classes without loading JavaScript.
-`detect_source_files` accepts in-memory `SourceFile` values, which is the
-foundation for the upstream-style snippet/server workflow. Format helpers are
-available through `get_supported_formats`, `get_format_by_file`, and
-`get_format_by_file_with_mappings`.
-
-## Compatibility Gates
+## Release Gates
 
 Fast local gate:
 
@@ -204,7 +323,7 @@ Package/install gate:
 scripts/package-check.sh
 ```
 
-Npm package/npx gate:
+npm package/npx gate:
 
 ```bash
 scripts/npm-package-check.sh
@@ -240,67 +359,6 @@ publication checklist, [CHANGELOG.md](CHANGELOG.md) for release notes, and
 [docs/release-decisions.md](docs/release-decisions.md) for approved
 first-release compatibility decisions.
 
-## CI/CD Examples
+## License
 
-Cargo install from a checked-out repository:
-
-```yaml
-jobs:
-  duplication:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - uses: dtolnay/rust-toolchain@stable
-      - run: cargo install --path . --bin jscpd --locked
-      - run: jscpd src --reporters json,console --threshold 5 --exitCode 1
-```
-
-Npm/npx source-build package:
-
-```yaml
-jobs:
-  duplication:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: actions/setup-node@v5
-        with:
-          node-version: 22
-      - run: npx jscpd-rs src --reporters json,console --threshold 5 --exitCode 1
-```
-
-## Known First-Release Deviations
-
-The first release is native-only and coverage-first. These differences from the
-JavaScript package are intentional unless a real workflow proves otherwise:
-
-- dynamic npm reporters, stores, listeners, and plugins are not loaded;
-- token totals and exact clone pair ordering may differ from Prism-based
-  upstream reports while duplicated upstream lines remain covered;
-- HTML reports are self-contained and practically compatible, not pixel-perfect;
-- the Rust crate exposes a native API, not the upstream JavaScript package API.
-
-## Development
-
-The upstream repository is checked out as the `jscpd/` git submodule and is the
-executable specification for behavior.
-
-```bash
-git submodule update --init --recursive
-cargo test
-```
-
-Useful focused checks:
-
-```bash
-scripts/compat-cli.sh
-scripts/compat-config.sh
-scripts/compat-reporters.sh
-STRICT=coverage scripts/compat-matrix.sh
-```
-
-Known upstream bug candidates and intentional compatibility exceptions are
-tracked in [docs/upstream-bugs.md](docs/upstream-bugs.md). GitHub-ready issue
-drafts are prepared in
-[docs/upstream-issue-drafts.md](docs/upstream-issue-drafts.md).
+MIT
