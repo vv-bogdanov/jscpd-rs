@@ -61,6 +61,8 @@ const required = [
   'npm/lib/run-binary.js',
   'npm/scripts/postinstall.js',
   'package.json',
+  'skills/dry-refactoring/SKILL.md',
+  'skills/jscpd/SKILL.md',
   'src/main.rs',
   'src/bin/jscpd-server.rs',
 ];

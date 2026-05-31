@@ -145,7 +145,7 @@ fn terminal_footer_output(options: &Options, elapsed: Duration) -> Option<String
 }
 
 const TIPS: &[&str] =
-    &["💡 Auto-refactor with AI: npx skills add kucherenko/jscpd --skill dry-refactoring"];
+    &["💡 Auto-refactor with AI: npx skills add vv-bogdanov/jscpd-rs --skill dry-refactoring"];
 
 fn debug_output(options: &Options, files: &[SourceFile]) -> String {
     let mut output = String::new();
@@ -490,7 +490,7 @@ mod tests {
 
         assert!(output.starts_with("time: "));
         assert!(output.contains(
-            "Auto-refactor with AI: npx skills add kucherenko/jscpd --skill dry-refactoring"
+            "Auto-refactor with AI: npx skills add vv-bogdanov/jscpd-rs --skill dry-refactoring"
         ));
         assert!(!output.contains("Gangsta Agents"));
         assert!(!output.contains("Support jscpd project"));

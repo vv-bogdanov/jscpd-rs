@@ -21,6 +21,8 @@ required_files=(
   "Cargo.toml"
   "LICENSE"
   "README.md"
+  "skills/dry-refactoring/SKILL.md"
+  "skills/jscpd/SKILL.md"
   "src/bin/jscpd-server.rs"
   "src/lib.rs"
   "src/main.rs"

@@ -23,6 +23,7 @@ That script verifies:
 
 - `package.json` version matches `Cargo.toml`;
 - `npm pack` includes the expected Rust source and npm shim files;
+- `npm pack` includes the advertised `skills/` files used by the terminal tip;
 - forbidden paths such as `jscpd/`, `target/`, `report/`, `scripts/`, and
   `node_modules/` are not packed;
 - `npm publish --dry-run --json` succeeds without publishing;

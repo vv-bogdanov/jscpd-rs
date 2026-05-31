@@ -6,6 +6,11 @@ The project goal is practical upstream compatibility with much lower runtime
 cost: the same CLI/config/reporting workflows should work, while the detector
 stays native Rust and does not embed or spawn JavaScript for core behavior.
 
+The practical reason for the project is to make duplication checks cheap enough
+to run often. Faster scans shorten local feedback loops, reduce CI/CD wall-clock
+time, lower paid compute-minute usage, and cut the electricity spent on repeated
+quality gates across large repositories and frequent pull requests.
+
 ## Status
 
 This is pre-release software. The first release target is a coverage-first
@@ -40,6 +45,13 @@ The first npm package is a source-build package: install/postinstall compiles
 the native Rust binaries with Cargo. A Rust toolchain must be available on the
 installing machine. Prebuilt platform packages are a follow-up publication
 improvement.
+
+AI skills for duplication detection and guided refactoring:
+
+```bash
+npx skills add vv-bogdanov/jscpd-rs --skill jscpd
+npx skills add vv-bogdanov/jscpd-rs --skill dry-refactoring
+```
 
 From this repository:
 
