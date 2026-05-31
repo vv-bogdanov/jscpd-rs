@@ -45,7 +45,7 @@ fi
 cd "$ROOT"
 cargo build --release --bin jscpd-server >/dev/null
 
-if [[ ! -d "$ROOT/jscpd/node_modules" ]]; then
+if [[ ! -e "$ROOT/jscpd/node_modules/@jscpd/core" ]]; then
   pnpm --dir "$ROOT/jscpd" install --frozen-lockfile
 fi
 
