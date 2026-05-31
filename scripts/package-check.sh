@@ -48,8 +48,7 @@ printf 'package file count: %s\n' "$(wc -l <"$PACKAGE_LIST" | tr -d ' ')"
 cargo package --allow-dirty --locked
 
 INSTALL_ROOT="$TMP_ROOT/install"
-cargo install --path . --bin jscpd --root "$INSTALL_ROOT" --force --locked >/dev/null
-cargo install --path . --bin jscpd-server --root "$INSTALL_ROOT" --force --locked >/dev/null
+cargo install --path . --bins --root "$INSTALL_ROOT" --force --locked >/dev/null
 
 EXPECTED_VERSION="$(
   cargo metadata --no-deps --format-version 1 \

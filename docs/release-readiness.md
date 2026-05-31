@@ -23,7 +23,7 @@ current implementation status.
 | Native Rust API | ready | `jscpd`, `jscpd_with_exit_callback`, `Tokenizer`, `Detector`, `Statistic`, `MemoryStore`, `detect_clones`, `detect_clones_and_statistic`, `detect_clones_and_statistics`, `detect_source_files`, default options, argv option parsing, supported formats, and format lookup helpers expose the app, tokenizer, detector, statistics, and store core for path-based and in-memory integrations. See `docs/api-parity.md`. |
 | Native server | partial | `jscpd-server` exposes `/`, `/api/health`, `/api/stats`, `/api/check`, `/api/recheck`, and `/mcp`; exact help text, stable CLI, HTTP success/error, and MCP contracts are gated; `/api/check` reuses prepared project token maps; exact upstream Streamable HTTP SDK behavior remains follow-up. |
 | Performance harness | ready | Local benchmark script and public benchmark suite with pinned output recording and speedup gates. |
-| Release gates | ready | Default CI gate, full compatibility matrix, Cargo/npm package checks, reporter/config/CLI/blame gates. |
+| Release gates | ready | Default CI gate, full compatibility matrix, Cargo/npm package checks, reporter/config/CLI/blame gates. The default gate now prints per-step timings and the workflow caches Cargo, pnpm, and upstream build artifacts. |
 
 ## Partial Or Follow-Up
 
@@ -37,7 +37,7 @@ current implementation status.
 | Upstream JavaScript API parity | follow-up | Native Rust helpers cover the practical app/tokenizer/detector/statistics/store concepts, including an embeddable argv runner and tokenizer map generation; exact JS package export shape is not implemented in the Rust crate. See `docs/api-parity.md`. |
 | Server snippet matching | optimized baseline | Native `/api/check` and MCP `check_duplication` are functional and reuse project token maps from the last scan; add a dedicated window index only if real server benchmarks require it. |
 | Npm prebuilt binaries | follow-up | The first npm package is source-build: install/postinstall compiles with Cargo. Add platform-specific prebuilt packages before broad npm promotion if install speed or Rust toolchain requirements become a blocker. |
-| Latest full publication gate | ready | `scripts/prepublish-check.sh` passed locally on code commit `41339ec`, including `scripts/release-candidate.sh`, package/install verification, crate/tag availability checks, npm package/name/npx verification, and `cargo publish --dry-run --locked`. GitHub Actions default `release-gate` passed on code commit `41339ec` in run `26705128270`. |
+| Latest full publication gate | refresh required | `scripts/prepublish-check.sh` passed locally on code commit `41339ec`, including `scripts/release-candidate.sh`, package/install verification, crate/tag availability checks, npm package/name/npx verification, and `cargo publish --dry-run --locked`. GitHub Actions default `release-gate` passed on code commit `41339ec` in run `26705128270`. CI/package/README release-prep changes after that commit require a fresh prepublish run before publication. |
 
 ## Post-MVP
 

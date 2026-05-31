@@ -56,6 +56,17 @@ jobs:
           rustup component add clippy --toolchain 1.93.0
           rustup default 1.93.0
 
+      - name: Cache Cargo registry and target
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-1.93.0-${{ hashFiles('Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-1.93.0-
+
       - name: Install Node
         uses: actions/setup-node@v5
         with:
@@ -63,6 +74,28 @@ jobs:
 
       - name: Enable pnpm through corepack
         run: corepack enable
+
+      - name: Resolve pnpm store path
+        run: echo "PNPM_STORE_PATH=$(pnpm store path --silent)" >> "$GITHUB_ENV"
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.PNPM_STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('jscpd/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+
+      - name: Cache upstream jscpd install and build
+        uses: actions/cache@v4
+        with:
+          path: |
+            jscpd/node_modules
+            jscpd/apps/**/dist
+            jscpd/packages/**/dist
+          key: ${{ runner.os }}-jscpd-upstream-${{ hashFiles('jscpd/pnpm-lock.yaml', 'jscpd/apps/**', 'jscpd/packages/**') }}
+          restore-keys: |
+            ${{ runner.os }}-jscpd-upstream-
 
       - name: Release gate
         run: |

@@ -127,9 +127,9 @@ scripts/package-check.sh
 This release-surface check verifies the crate package file list, rejects
 accidental publication of the upstream `jscpd/` submodule, `target/`,
 `node_modules`, and internal scripts, runs `cargo package --locked`, installs
-the `jscpd` and `jscpd-server` binaries into a temporary Cargo root, and checks
-the installed binaries' versions and the CLI binary's upstream-compatible
-command name.
+the `jscpd` and `jscpd-server` binaries into a temporary Cargo root with
+`cargo install --bins`, and checks the installed binaries' versions and the CLI
+binary's upstream-compatible command name.
 
 Native API smoke tests are covered by the Rust test suite. They verify the
 path-based detector API, in-memory source API, upstream singular
@@ -183,10 +183,11 @@ CI gate:
 ```
 
 The GitHub Actions workflow checks out the upstream submodule, installs Rust
-and Node, and runs the default release gate on pushes and pull requests. Manual
-workflow dispatch exposes `full`, `public`, `release_candidate`, and
-`public_runs` inputs for the pre-release full matrix, public benchmark, and
-release-candidate gates.
+and Node, restores Cargo/pnpm/upstream-build caches, and runs the default
+release gate on pushes and pull requests. The gate prints per-step timings so
+CI regressions are visible in logs. Manual workflow dispatch exposes `full`,
+`public`, `release_candidate`, and `public_runs` inputs for the pre-release
+full matrix, public benchmark, and release-candidate gates.
 
 Latest local prepublish check: `scripts/prepublish-check.sh` passed on
 2026-05-31 at code commit `41339ec`, covering
@@ -194,6 +195,10 @@ Latest local prepublish check: `scripts/prepublish-check.sh` passed on
 coverage matrix, the public benchmark/coverage suite, package/install
 verification, crate/tag availability checks, npm package/name/npx verification,
 and `cargo publish --dry-run --locked`.
+
+CI/package/README release-prep changes after `41339ec` make this a historical
+baseline. Record a fresh prepublish check here before tagging the first public
+release.
 
 Latest GitHub Actions default release-gate check:
 `push` passed on 2026-05-31 at code commit `41339ec`:

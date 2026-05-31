@@ -19,6 +19,10 @@ availability checks, npm package/name/npx verification, and
 this evidence if they do not change code, scripts, package metadata, or
 benchmark configuration.
 
+This evidence is historical after the CI/package/README release-prep changes
+made after `41339ec`. Before publication, rerun `scripts/prepublish-check.sh`
+and replace this section with evidence from the exact commit being tagged.
+
 GitHub Actions default `release-gate` must pass on the exact pushed commit
 being published. Check the current run in GitHub Actions after the final push;
 the publish blocker below is the authoritative gate.
@@ -138,6 +142,9 @@ cargo install --path . --bin jscpd-server --root /tmp/jscpd-rs-install --force -
 /tmp/jscpd-rs-install/bin/jscpd --help
 /tmp/jscpd-rs-install/bin/jscpd-server --version
 ```
+
+The package gate itself installs both binaries with `cargo install --bins`; the
+two explicit commands above are a manual smoke equivalent for post-tag checks.
 
 ## Next Release Themes
 

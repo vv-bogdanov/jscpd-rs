@@ -1,6 +1,9 @@
 # jscpd-rs
 
-Fast native Rust clone of [`jscpd`](https://github.com/kucherenko/jscpd).
+[![release-gate](https://github.com/vv-bogdanov/jscpd-rs/actions/workflows/release-gate.yml/badge.svg)](https://github.com/vv-bogdanov/jscpd-rs/actions/workflows/release-gate.yml)
+
+Fast native Rust clone of [`jscpd`](https://github.com/kucherenko/jscpd):
+same practical workflows, much lower runtime cost.
 
 The project goal is practical upstream compatibility with much lower runtime
 cost: the same CLI/config/reporting workflows should work, while the detector
@@ -10,6 +13,19 @@ The practical reason for the project is to make duplication checks cheap enough
 to run often. Faster scans shorten local feedback loops, reduce CI/CD wall-clock
 time, lower paid compute-minute usage, and cut the electricity spent on repeated
 quality gates across large repositories and frequent pull requests.
+
+## Why
+
+`jscpd` is useful enough to run in every pull request, but JavaScript startup,
+Prism tokenization, dynamic plugin loading, and repeated CI execution make large
+scans expensive. `jscpd-rs` targets the same operational role with a native
+pipeline designed for CI/CD:
+
+- fast enough to keep duplication checks enabled by default;
+- compatible enough to replace common `jscpd` commands, configs, reports, and
+  exit-code workflows;
+- deterministic enough for release gates and automated refactoring workflows;
+- native-only in the detector path, with no hidden JavaScript runtime fallback.
 
 ## Status
 
@@ -31,6 +47,62 @@ compatible CLI replacement for common `jscpd` workflows:
 Dynamic npm reporters, stores, listeners, and plugins are intentionally out of
 scope for the first release. Unknown external reporters/stores keep
 upstream-style warnings and continue where upstream continues.
+
+## Compatibility Contract
+
+The release gate is coverage-first. For the same inputs and options, `jscpd-rs`
+must not miss duplicated lines reported by upstream `jscpd`. Extra Rust
+duplicates are allowed while compatibility converges, but compatibility reports
+keep them visible as `extra` findings.
+
+Exact pair ordering and token totals are quality metrics rather than the default
+blocking gate. This matters for multi-way clones: different pair selection can
+still cover the same duplicated source lines.
+
+The upstream repository is checked out as `jscpd/` and treated as the executable
+specification. Compatibility scripts run both implementations and compare their
+reports.
+
+## Performance
+
+Latest recorded public benchmark baseline:
+
+| Repo | Format | Rust avg | Upstream avg | Speedup |
+| --- | --- | ---: | ---: | ---: |
+| React | JavaScript | 0.192475s | 10.179825s | 52.89x |
+| Next.js | TypeScript | 0.250453s | 14.849955s | 59.29x |
+| Prometheus | Go | 0.084240s | 4.643329s | 55.12x |
+
+Reproduce the public benchmark and coverage suite:
+
+```bash
+PUBLIC=1 PUBLIC_RUNS=3 scripts/release-gate.sh
+```
+
+The release-candidate workflow reruns the public suite before publication so
+README numbers stay tied to a concrete commit and gate output.
+
+## Architecture
+
+The implementation keeps the hot path small and native:
+
+```text
+paths/config
+  -> ignore-aware discovery
+  -> native token maps
+  -> parallel duplicate detection
+  -> reporters / exit codes / server API
+```
+
+Core crates and libraries:
+
+- `clap`, `serde`, and config parsers for the CLI/config surface;
+- `ignore`, `globset`, and Git ignore handling for file discovery;
+- Oxc-backed JS/TS/JSX/TSX token processing for the highest-volume languages;
+- native generic tokenizers for long-tail formats and embedded code blocks;
+- `rayon` and Rust data structures for parallel discovery/detection work;
+- native reporters for JSON, SARIF, XML, CSV, Markdown, HTML, console, badge,
+  Xcode, threshold, silent, and AI refactoring output.
 
 ## Install
 
@@ -161,20 +233,42 @@ Manual workflow runs can enable the full compatibility matrix and public
 benchmark suite before a release, or set `release_candidate=true` to run the
 full release-candidate gate in CI.
 
-Latest recorded public benchmark baseline:
-
-| Repo | Format | Rust avg | Upstream avg | Speedup |
-| --- | --- | ---: | ---: | ---: |
-| React | JavaScript | 0.192475s | 10.179825s | 52.89x |
-| Next.js | TypeScript | 0.250453s | 14.849955s | 59.29x |
-| Prometheus | Go | 0.084240s | 4.643329s | 55.12x |
-
 See [docs/compat-baseline.md](docs/compat-baseline.md) for the current gate
 baseline, [docs/release-readiness.md](docs/release-readiness.md) for component
 status, [docs/release-checklist.md](docs/release-checklist.md) for the
 publication checklist, [CHANGELOG.md](CHANGELOG.md) for release notes, and
 [docs/release-decisions.md](docs/release-decisions.md) for approved
 first-release compatibility decisions.
+
+## CI/CD Examples
+
+Cargo install from a checked-out repository:
+
+```yaml
+jobs:
+  duplication:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo install --path . --bin jscpd --locked
+      - run: jscpd src --reporters json,console --threshold 5 --exitCode 1
+```
+
+Npm/npx source-build package:
+
+```yaml
+jobs:
+  duplication:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - run: npx jscpd-rs src --reporters json,console --threshold 5 --exitCode 1
+```
 
 ## Known First-Release Deviations
 
