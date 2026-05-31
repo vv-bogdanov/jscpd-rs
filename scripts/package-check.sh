@@ -19,6 +19,8 @@ required_files=(
   "CHANGELOG.md"
   "Cargo.lock"
   "Cargo.toml"
+  "docs/user-guide.md"
+  "examples/library_api.rs"
   "LICENSE"
   "README.md"
   "skills/dry-refactoring/SKILL.md"

@@ -54,6 +54,8 @@ const files = pack.files.map((file) => file.path).sort();
 const required = [
   'Cargo.toml',
   'Cargo.lock',
+  'docs/user-guide.md',
+  'examples/library_api.rs',
   'LICENSE',
   'README.md',
   'npm/bin/jscpd-rs.js',

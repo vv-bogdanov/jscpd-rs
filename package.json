@@ -31,6 +31,8 @@
     "CHANGELOG.md",
     "Cargo.lock",
     "Cargo.toml",
+    "docs/**",
+    "examples/**",
     "LICENSE",
     "README.md",
     "npm/**",

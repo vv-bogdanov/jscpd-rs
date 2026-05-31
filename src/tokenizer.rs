@@ -22,36 +22,60 @@ use line_index::LineIndex;
 use oxc::{is_oxc_format, tokenize_oxc_maps};
 use scan::count_prism_whitespace_tokens;
 
+/// One-based source location used in tokens, fragments, and reports.
 #[derive(Clone, Debug, Serialize)]
 pub struct Location {
+    /// One-based line number.
     pub line: usize,
+    /// Zero-based column number.
     pub column: usize,
+    /// Zero-based byte position in the original source text.
     pub position: usize,
 }
 
+/// Detection token after mode filtering and jscpd-compatible hashing.
 #[derive(Clone, Debug)]
 pub struct DetectionToken {
+    /// Stable token hash used by the duplicate detector.
     pub hash: u64,
+    /// Start location of the token.
     pub start: Location,
+    /// End location of the token.
     pub end: Location,
+    /// Byte range in the original source text.
     pub range: [usize; 2],
 }
 
+/// Token map for a single detected format block.
+///
+/// Embedded formats can produce more than one map for one source document, for
+/// example script/style blocks extracted from markup-like files.
 #[derive(Clone, Debug)]
 pub struct TokenMap {
+    /// Format name associated with this token map.
     pub format: String,
+    /// Detection tokens in source order.
     pub tokens: Vec<DetectionToken>,
     positions_assigned: bool,
 }
 
+/// Token map associated with a source identifier and line count.
 #[derive(Clone, Debug)]
 pub struct SourceTokenMap {
+    /// Stable source identifier, usually a file path.
     pub source_id: String,
+    /// Format name associated with this token map.
     pub format: String,
+    /// Detection tokens in source order.
     pub tokens: Vec<DetectionToken>,
+    /// Total source lines represented by this map.
     pub lines: usize,
 }
 
+/// Native tokenizer used by the detector.
+///
+/// JS/TS/JSX/TSX formats use Oxc-backed tokenization. Long-tail formats use
+/// the generic native tokenizer unless a format has a dedicated implementation.
 #[derive(Clone, Debug)]
 pub struct Tokenizer {
     options: Options,
@@ -64,24 +88,32 @@ impl Default for Tokenizer {
 }
 
 impl Tokenizer {
+    /// Create a tokenizer with default detector options.
     pub fn new() -> Self {
         Self {
             options: Options::default(),
         }
     }
 
+    /// Create a tokenizer with caller-provided options.
     pub fn with_options(options: Options) -> Self {
         Self { options }
     }
 
+    /// Return the options used by this tokenizer.
     pub fn options(&self) -> &Options {
         &self.options
     }
 
+    /// Mutably access tokenizer options.
     pub fn options_mut(&mut self) -> &mut Options {
         &mut self.options
     }
 
+    /// Tokenize a source string and return the first token stream.
+    ///
+    /// Use [`Tokenizer::tokenize_maps`] when a format can produce multiple
+    /// embedded token maps.
     pub fn tokenize(&self, content: &str, format: &str) -> Vec<DetectionToken> {
         self.tokenize_maps(content, format)
             .into_iter()
@@ -90,10 +122,12 @@ impl Tokenizer {
             .unwrap_or_default()
     }
 
+    /// Tokenize source text into one or more format-specific token maps.
     pub fn tokenize_maps(&self, content: &str, format: &str) -> Vec<TokenMap> {
         tokenize_maps_for_detection(content, format, &self.options)
     }
 
+    /// Tokenize source text and attach a source identifier to each generated map.
     pub fn generate_maps(
         &self,
         source_id: impl Into<String>,

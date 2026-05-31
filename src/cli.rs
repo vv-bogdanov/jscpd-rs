@@ -323,6 +323,12 @@ impl ExitCode {
     }
 }
 
+/// Normalized detector options shared by the CLI, server, and Rust API.
+///
+/// Values are usually created with `get_default_options`,
+/// `get_options_from_args`, or the `jscpd` binary. Fields are public so native
+/// integrations can construct focused option sets without going through CLI
+/// parsing.
 #[derive(Debug, Clone)]
 pub struct Options {
     pub execution_id: Option<String>,
@@ -363,10 +369,15 @@ pub struct Options {
     pub tokens_to_skip: Vec<String>,
 }
 
+/// Additional format mappings from extensions or exact filenames to formats.
+///
+/// This is the Rust API counterpart of the CLI `--formats-exts` and
+/// `--formats-names` options.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct FormatMappings(Vec<(String, Vec<String>)>);
 
 impl FormatMappings {
+    /// Build mappings from `(format, values)` pairs.
     pub fn from_pairs<I, S, V, T>(pairs: I) -> Self
     where
         I: IntoIterator<Item = (S, V)>,
@@ -384,14 +395,17 @@ impl FormatMappings {
         )
     }
 
+    /// Return true when no mappings are defined.
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
     }
 
+    /// Iterate through `(format, values)` pairs.
     pub fn iter(&self) -> impl Iterator<Item = (&String, &Vec<String>)> {
         self.0.iter().map(|(format, values)| (format, values))
     }
 
+    /// Return the format mapped to an extension or exact filename.
     pub fn find_format_for_value(&self, value: &str) -> Option<&str> {
         self.0.iter().find_map(|(format, values)| {
             values

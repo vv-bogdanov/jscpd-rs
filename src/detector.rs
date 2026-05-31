@@ -30,6 +30,11 @@ use model::{FormatId, PreparedSource, SourceId, TokenStream};
 use prepare::{assign_formats, prepare_file_maps};
 use statistics::{finalize_percentages, update_clone_statistics, update_source_statistics};
 
+/// Incremental detector facade for native integrations.
+///
+/// For one-shot detection, prefer `detect_source_files` or
+/// `detect_clones_and_statistics`. Use this type when an integration wants to
+/// keep options and previously submitted in-memory sources together.
 #[derive(Clone, Debug)]
 pub struct Detector {
     options: Options,
@@ -37,6 +42,7 @@ pub struct Detector {
 }
 
 impl Detector {
+    /// Create an empty detector with the provided options.
     pub fn new(options: Options) -> Self {
         Self {
             options,
@@ -44,26 +50,32 @@ impl Detector {
         }
     }
 
+    /// Create a detector preloaded with in-memory sources.
     pub fn with_sources(options: Options, sources: Vec<SourceFile>) -> Self {
         Self { options, sources }
     }
 
+    /// Return detector options.
     pub fn options(&self) -> &Options {
         &self.options
     }
 
+    /// Mutably access detector options.
     pub fn options_mut(&mut self) -> &mut Options {
         &mut self.options
     }
 
+    /// Return sources currently held by this detector.
     pub fn sources(&self) -> &[SourceFile] {
         &self.sources
     }
 
+    /// Remove all remembered sources.
     pub fn clear(&mut self) {
         self.sources.clear();
     }
 
+    /// Add one source and return clones involving that new source.
     pub fn detect(
         &mut self,
         source_id: impl Into<String>,
@@ -77,6 +89,7 @@ impl Detector {
         })
     }
 
+    /// Add one prepared source and return clones involving that new source.
     pub fn detect_source_file(&mut self, source: SourceFile) -> Vec<CloneMatch> {
         let source_id = source.source_id.clone();
         self.sources.push(source);
@@ -91,6 +104,7 @@ impl Detector {
             .collect()
     }
 
+    /// Run one-shot detection against the provided prepared sources.
     pub fn detect_files(&self, files: Vec<SourceFile>) -> DetectionResult {
         detect(files, &self.options)
     }

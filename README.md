@@ -104,6 +104,9 @@ The current server exposes `/`, `/api/health`, `/api/stats`, `/api/check`,
 `/api/recheck`, and `/mcp`. Snippet checks reuse project token maps refreshed
 by `/api/recheck`.
 
+For full CLI, configuration, reporter, server, MCP, and Rust API examples, see
+[docs/user-guide.md](docs/user-guide.md).
+
 ## GitHub Actions
 
 Install from crates.io after publication:
