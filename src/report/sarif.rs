@@ -1,22 +1,17 @@
 use std::collections::HashMap;
-use std::fs;
 
-use anyhow::{Context, Result};
+use anyhow::Result;
 use serde::Serialize;
 
+use super::file_output::write_file_report;
 use super::source::source_location;
 use crate::cli::Options;
 use crate::detector::DetectionResult;
 
 pub(super) fn write(result: &DetectionResult, options: &Options) -> Result<()> {
-    fs::create_dir_all(&options.output)
-        .with_context(|| format!("failed to create output dir `{}`", options.output.display()))?;
-    let path = options.output.join("jscpd-sarif.json");
     let sarif = SarifReport::from_detection(result, options);
     let json = serde_json::to_string(&sarif)?;
-    fs::write(&path, json).with_context(|| format!("failed to write `{}`", path.display()))?;
-    println!("SARIF report saved to {}", path.display());
-    Ok(())
+    write_file_report(options, "jscpd-sarif.json", "SARIF report", json)
 }
 
 #[derive(Serialize)]

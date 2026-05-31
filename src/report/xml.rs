@@ -1,19 +1,13 @@
-use std::fs;
+use anyhow::Result;
 
-use anyhow::{Context, Result};
-
+use super::file_output::write_file_report;
 use super::source::clone_fragment;
 use crate::cli::Options;
 use crate::detector::{CloneMatch, DetectionResult};
 
 pub(super) fn write(result: &DetectionResult, options: &Options) -> Result<()> {
-    fs::create_dir_all(&options.output)
-        .with_context(|| format!("failed to create output dir `{}`", options.output.display()))?;
-    let path = options.output.join("jscpd-report.xml");
     let xml = XmlReport::from_detection(result).to_string();
-    fs::write(&path, xml).with_context(|| format!("failed to write `{}`", path.display()))?;
-    println!("XML report saved to {}", path.display());
-    Ok(())
+    write_file_report(options, "jscpd-report.xml", "XML report", xml)
 }
 
 struct XmlReport {

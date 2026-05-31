@@ -1,19 +1,13 @@
-use std::fs;
+use anyhow::Result;
 
-use anyhow::{Context, Result};
-
+use super::file_output::write_file_report;
 use super::summary::statistic_to_summary_row;
 use crate::cli::Options;
 use crate::detector::Statistics;
 
 pub(super) fn write(result: &crate::detector::DetectionResult, options: &Options) -> Result<()> {
-    fs::create_dir_all(&options.output)
-        .with_context(|| format!("failed to create output dir `{}`", options.output.display()))?;
-    let path = options.output.join("jscpd-report.csv");
     let csv = CsvReport::from_statistics(&result.statistics).to_string();
-    fs::write(&path, csv).with_context(|| format!("failed to write `{}`", path.display()))?;
-    println!("CSV report saved to {}", path.display());
-    Ok(())
+    write_file_report(options, "jscpd-report.csv", "CSV report", csv)
 }
 
 struct CsvReport {

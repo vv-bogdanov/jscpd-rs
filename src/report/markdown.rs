@@ -1,19 +1,13 @@
-use std::fs;
+use anyhow::Result;
 
-use anyhow::{Context, Result};
-
+use super::file_output::write_file_report;
 use super::summary::statistic_to_summary_row;
 use crate::cli::Options;
 use crate::detector::DetectionResult;
 
 pub(super) fn write(result: &DetectionResult, options: &Options) -> Result<()> {
-    fs::create_dir_all(&options.output)
-        .with_context(|| format!("failed to create output dir `{}`", options.output.display()))?;
-    let path = options.output.join("jscpd-report.md");
     let md = MarkdownReport::from_detection(result).to_string();
-    fs::write(&path, md).with_context(|| format!("failed to write `{}`", path.display()))?;
-    println!("Markdown report saved to {}", path.display());
-    Ok(())
+    write_file_report(options, "jscpd-report.md", "Markdown report", md)
 }
 
 struct MarkdownReport {

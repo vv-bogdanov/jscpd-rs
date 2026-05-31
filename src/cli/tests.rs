@@ -181,12 +181,12 @@ fn bare_optional_string_flags_match_upstream_runtime_errors() {
 }
 
 #[test]
-fn repeated_value_flags_match_upstream_last_value_wins_behavior() {
+fn repeated_ignore_flags_accumulate_while_reporters_keep_upstream_last_value_wins_behavior() {
     let cli = Cli::parse_from([
         "jscpd-rs",
         ".",
         "--ignore",
-        "first/**",
+        "first/**,shared/**",
         "--ignore",
         "second/**",
         "--reporters",
@@ -196,8 +196,9 @@ fn repeated_value_flags_match_upstream_last_value_wins_behavior() {
     ]);
     let options = Options::from_cli(cli).unwrap();
 
+    assert!(options.ignore.contains(&"first/**".to_string()));
+    assert!(options.ignore.contains(&"shared/**".to_string()));
     assert!(options.ignore.contains(&"second/**".to_string()));
-    assert!(!options.ignore.contains(&"first/**".to_string()));
     assert_eq!(options.reporters, vec!["silent"]);
 }
 

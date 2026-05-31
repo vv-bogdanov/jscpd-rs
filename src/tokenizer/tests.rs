@@ -1,6 +1,13 @@
 use super::*;
 use crate::cli::{Mode, Options};
 
+fn token_slices<'a>(content: &'a str, tokens: &[DetectionToken]) -> Vec<&'a str> {
+    tokens
+        .iter()
+        .map(|token| &content[token.range[0]..token.range[1]])
+        .collect()
+}
+
 #[test]
 fn tokenizes_non_whitespace_tokens_with_locations() {
     let tokens =
@@ -105,10 +112,7 @@ fn jsx_embedded_javascript_keeps_nested_object_whitespace() {
 fn jsx_text_is_split_like_javascript_text() {
     let content = r#"const x = <div>Hello, "Go" this.</div>;"#;
     let tokens = tokenize_for_detection(content, "javascript", &Options::default());
-    let values = tokens
-        .iter()
-        .map(|token| &content[token.range[0]..token.range[1]])
-        .collect::<Vec<_>>();
+    let values = token_slices(content, &tokens);
 
     assert!(values.contains(&"Hello"));
     assert!(values.contains(&","));
@@ -120,10 +124,7 @@ fn jsx_text_is_split_like_javascript_text() {
 fn jsx_text_unclosed_quote_stops_at_line_end() {
     let content = "const x = <div>\"Captured an\nerror: null\". Clicking</div>;";
     let tokens = tokenize_for_detection(content, "javascript", &Options::default());
-    let values = tokens
-        .iter()
-        .map(|token| &content[token.range[0]..token.range[1]])
-        .collect::<Vec<_>>();
+    let values = token_slices(content, &tokens);
 
     assert!(values.contains(&"\"Captured"));
     assert!(values.contains(&"error"));
@@ -136,10 +137,7 @@ fn jsx_text_unclosed_quote_stops_at_line_end() {
 fn jsx_dashed_identifiers_are_split_like_prism() {
     let content = r#"expect(root).toMatchRenderedOutput(<suspensey-thing src="A" />);"#;
     let tokens = tokenize_for_detection(content, "javascript", &Options::default());
-    let values = tokens
-        .iter()
-        .map(|token| &content[token.range[0]..token.range[1]])
-        .collect::<Vec<_>>();
+    let values = token_slices(content, &tokens);
 
     assert!(values.contains(&"suspensey"));
     assert!(values.contains(&"-"));
@@ -261,11 +259,7 @@ fn markdown_fenced_code_is_removed_from_markdown_map() {
         .iter()
         .find(|map| map.format == "markdown")
         .expect("markdown map");
-    let markdown_values = markdown
-        .tokens
-        .iter()
-        .map(|token| &content[token.range[0]..token.range[1]])
-        .collect::<Vec<_>>();
+    let markdown_values = token_slices(content, &markdown.tokens);
 
     assert!(markdown_values.contains(&"before"));
     assert!(markdown_values.contains(&"after"));
@@ -377,11 +371,7 @@ fn markup_emits_inline_style_attr_css_map() {
         .iter()
         .find(|map| map.format == "css")
         .expect("inline style css map");
-    let values = css
-        .tokens
-        .iter()
-        .map(|token| &content[token.range[0]..token.range[1]])
-        .collect::<Vec<_>>();
+    let values = token_slices(content, &css.tokens);
 
     assert_eq!(
         values,
@@ -456,11 +446,7 @@ fn vue_sfc_style_blocks_skip_internal_whitespace_tokens() {
         .iter()
         .find(|map| map.format == "scss")
         .expect("scss map");
-    let values = scss
-        .tokens
-        .iter()
-        .map(|token| &content[token.range[0]..token.range[1]])
-        .collect::<Vec<_>>();
+    let values = token_slices(content, &scss.tokens);
 
     assert!(
         !values
@@ -478,11 +464,7 @@ fn vue_template_emits_inline_style_attr_css_map() {
         .iter()
         .find(|map| map.format == "css")
         .expect("inline style css map");
-    let values = css
-        .tokens
-        .iter()
-        .map(|token| &content[token.range[0]..token.range[1]])
-        .collect::<Vec<_>>();
+    let values = token_slices(content, &css.tokens);
 
     assert_eq!(
         values,
@@ -601,10 +583,7 @@ fn weak_mode_skips_generic_comments() {
 fn yaml_quoted_scalars_are_single_string_tokens() {
     let content = "email: \"jane@example.com\"\n";
     let tokens = tokenize_for_detection(content, "yaml", &Options::default());
-    let values = tokens
-        .iter()
-        .map(|token| &content[token.range[0]..token.range[1]])
-        .collect::<Vec<_>>();
+    let values = token_slices(content, &tokens);
 
     assert_eq!(values, vec!["email", ":", "\"jane@example.com\""]);
 }
@@ -619,10 +598,7 @@ fn strict_mode_keeps_generic_whitespace_tokens() {
 
     let mild = tokenize_for_detection(content, "yaml", &Options::default());
     let strict = tokenize_for_detection(content, "yaml", &strict_options);
-    let token_values = strict
-        .iter()
-        .map(|token| &content[token.range[0]..token.range[1]])
-        .collect::<Vec<_>>();
+    let token_values = token_slices(content, &strict);
 
     assert_eq!(mild.len(), 3);
     assert_eq!(token_values, vec!["alpha", " ", "beta", "\n", "gamma"]);
@@ -638,10 +614,7 @@ fn strict_mode_keeps_js_whitespace_tokens() {
 
     let mild = tokenize_for_detection(content, "javascript", &Options::default());
     let strict = tokenize_for_detection(content, "javascript", &strict_options);
-    let token_values = strict
-        .iter()
-        .map(|token| &content[token.range[0]..token.range[1]])
-        .collect::<Vec<_>>();
+    let token_values = token_slices(content, &strict);
 
     assert_eq!(mild.len(), 10);
     assert!(strict.len() > mild.len());
@@ -659,10 +632,7 @@ fn weak_mode_skips_generic_double_dash_comments() {
 
     let strong = tokenize_for_detection(content, "sql", &Options::default());
     let weak = tokenize_for_detection(content, "sql", &weak_options);
-    let token_values = weak
-        .iter()
-        .map(|token| &content[token.range[0]..token.range[1]])
-        .collect::<Vec<_>>();
+    let token_values = token_slices(content, &weak);
 
     assert_eq!(strong.len(), 6);
     assert_eq!(token_values, vec!["select", "one", "from", "table"]);
@@ -678,10 +648,7 @@ fn weak_mode_skips_generic_semicolon_comments() {
 
     let strong = tokenize_for_detection(content, "ini", &Options::default());
     let weak = tokenize_for_detection(content, "ini", &weak_options);
-    let token_values = weak
-        .iter()
-        .map(|token| &content[token.range[0]..token.range[1]])
-        .collect::<Vec<_>>();
+    let token_values = token_slices(content, &weak);
 
     assert_eq!(strong.len(), 11);
     assert_eq!(
@@ -705,10 +672,7 @@ fn generic_css_ids_are_not_treated_as_hash_comments() {
 fn css_like_tokenizer_splits_punctuation() {
     let content = "#app .title { color: saturate(@base, 5%); }";
     let tokens = tokenize_for_detection(content, "css", &Options::default());
-    let token_values = tokens
-        .iter()
-        .map(|token| &content[token.range[0]..token.range[1]])
-        .collect::<Vec<_>>();
+    let token_values = token_slices(content, &tokens);
 
     assert_eq!(
         token_values,
@@ -722,10 +686,7 @@ fn css_like_tokenizer_splits_punctuation() {
 fn code_like_tokenizer_splits_punctuation_and_operators() {
     let content = "fn call<T>(x: i32) -> bool { x >= 1 }";
     let tokens = tokenize_for_detection(content, "rust", &Options::default());
-    let token_values = tokens
-        .iter()
-        .map(|token| &content[token.range[0]..token.range[1]])
-        .collect::<Vec<_>>();
+    let token_values = token_slices(content, &tokens);
 
     assert_eq!(
         token_values,
@@ -764,10 +725,7 @@ fn long_tail_code_like_formats_split_punctuation_and_operators() {
         "yaml",
     ] {
         let tokens = tokenize_for_detection(content, format, &Options::default());
-        let token_values = tokens
-            .iter()
-            .map(|token| &content[token.range[0]..token.range[1]])
-            .collect::<Vec<_>>();
+        let token_values = token_slices(content, &tokens);
 
         assert_eq!(
             token_values,
@@ -781,10 +739,7 @@ fn long_tail_code_like_formats_split_punctuation_and_operators() {
 fn twig_mild_mode_keeps_prism_default_whitespace() {
     let content = "<p>a</p>\n <p>b</p>\n{% include \"helper.html\" %}\n";
     let tokens = tokenize_for_detection(content, "twig", &Options::default());
-    let values = tokens
-        .iter()
-        .map(|token| &content[token.range[0]..token.range[1]])
-        .collect::<Vec<_>>();
+    let values = token_slices(content, &tokens);
 
     assert!(values.contains(&"\n "));
     assert!(values.contains(&" "));
@@ -830,10 +785,9 @@ fn js_line_comments_split_into_comment_tokens() {
 fn js_hashbang_splits_like_prism() {
     let content = "#!/usr/bin/env node\n'use strict';\n";
     let tokens = tokenize_for_detection(content, "javascript", &Options::default());
-    let values = tokens
-        .iter()
+    let values = token_slices(content, &tokens)
+        .into_iter()
         .take(9)
-        .map(|token| &content[token.range[0]..token.range[1]])
         .collect::<Vec<_>>();
 
     assert_eq!(
@@ -864,10 +818,7 @@ fn splits_template_interpolation_like_prism() {
 fn keeps_template_interpolation_space_tokens_like_prism() {
     let content = "const x = `${store ? '[Store]' : '[No Store]'}`;";
     let tokens = tokenize_for_detection(content, "typescript", &Options::default());
-    let values = tokens
-        .iter()
-        .map(|token| &content[token.range[0]..token.range[1]])
-        .collect::<Vec<_>>();
+    let values = token_slices(content, &tokens);
 
     assert!(
         values
@@ -916,10 +867,7 @@ export function normalize(str) {\n\
   return str.replace(/Check your code at .+?:\\d+/g, 'Check your code at **');\n\
 }\n";
     let tokens = tokenize_for_detection(content, "javascript", &Options::default());
-    let values = tokens
-        .iter()
-        .map(|token| &content[token.range[0]..token.range[1]])
-        .collect::<Vec<_>>();
+    let values = token_slices(content, &tokens);
 
     assert!(values.contains(&"/Check your code at .+?:\\d+/g"));
     assert!(!values.windows(2).any(|window| window == ["/", "Check"]));
@@ -929,10 +877,7 @@ export function normalize(str) {\n\
 fn typescript_array_regex_splits_like_prism() {
     let content = r#"const restrictions = [/\.css$/i];"#;
     let tokens = tokenize_for_detection(content, "typescript", &Options::default());
-    let values = tokens
-        .iter()
-        .map(|token| &content[token.range[0]..token.range[1]])
-        .collect::<Vec<_>>();
+    let values = token_slices(content, &tokens);
 
     assert!(
         values
@@ -946,10 +891,7 @@ fn typescript_array_regex_splits_like_prism() {
 fn js_division_after_identifier_is_not_recovered_as_regex() {
     let content = "const ratio = total / count / scale;\n";
     let tokens = tokenize_for_detection(content, "javascript", &Options::default());
-    let values = tokens
-        .iter()
-        .map(|token| &content[token.range[0]..token.range[1]])
-        .collect::<Vec<_>>();
+    let values = token_slices(content, &tokens);
 
     assert!(values.contains(&"/"));
     assert!(!values.contains(&"/ count /"));
@@ -968,9 +910,6 @@ fn weak_mode_skips_generic_markup_comments() {
 
     assert_eq!(strong.len(), 5);
     assert_eq!(weak.len(), 3);
-    let token_values: Vec<&str> = weak
-        .iter()
-        .map(|t| &content[t.range[0]..t.range[1]])
-        .collect();
+    let token_values = token_slices(content, &weak);
     assert_eq!(token_values, vec!["alpha", "beta", "gamma"]);
 }

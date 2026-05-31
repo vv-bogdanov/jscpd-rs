@@ -1,20 +1,14 @@
-use std::fs;
-
-use anyhow::{Context, Result};
+use anyhow::Result;
 use serde::Serialize;
 
+use super::file_output::write_file_report;
 use super::source::slice_range;
 use crate::cli::Options;
 use crate::detector::{BlamedLines, CloneMatch, DetectionResult, Statistics, clone_lines};
 
 pub(super) fn write(result: &DetectionResult, options: &Options) -> Result<()> {
-    fs::create_dir_all(&options.output)
-        .with_context(|| format!("failed to create output dir `{}`", options.output.display()))?;
-    let path = options.output.join("jscpd-report.json");
     let json = to_pretty_json(result)?;
-    fs::write(&path, json).with_context(|| format!("failed to write `{}`", path.display()))?;
-    println!("JSON report saved to {}", path.display());
-    Ok(())
+    write_file_report(options, "jscpd-report.json", "JSON report", json)
 }
 
 pub(super) fn to_pretty_json(result: &DetectionResult) -> Result<String> {

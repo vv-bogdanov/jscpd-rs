@@ -1,20 +1,17 @@
-use std::fs;
 use std::path::PathBuf;
 
-use anyhow::{Context, Result};
+use anyhow::Result;
 use serde_json::{Map, Value};
 
+use super::file_output::{ensure_output_dir, write_path};
 use crate::cli::Options;
 use crate::detector::DetectionResult;
 
 pub(super) fn write(result: &DetectionResult, options: &Options) -> Result<()> {
-    fs::create_dir_all(&options.output)
-        .with_context(|| format!("failed to create output dir `{}`", options.output.display()))?;
+    ensure_output_dir(options)?;
     let path = badge_output_path(options);
     let badge = BadgeReport::from_detection(result, options).to_string();
-    fs::write(&path, badge).with_context(|| format!("failed to write `{}`", path.display()))?;
-    println!("Badge saved to {}", path.display());
-    Ok(())
+    write_path(&path, "Badge", badge)
 }
 
 struct BadgeReport {
