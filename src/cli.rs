@@ -3,7 +3,7 @@ use std::ffi::OsString;
 use std::path::PathBuf;
 
 use anyhow::{Context, Result, bail};
-use clap::{ArgAction, Parser};
+use clap::Parser;
 use regex::Regex;
 use time::OffsetDateTime;
 use time::format_description::well_known::Rfc3339;
@@ -115,10 +115,9 @@ pub struct Cli {
         value_name = "string",
         num_args = 0..=1,
         default_missing_value = BARE_STRING_VALUE,
-        action = ArgAction::Append,
         help = "glob pattern for files what should be excluded from duplication detection"
     )]
-    pub ignore: Vec<String>,
+    pub ignore: Option<String>,
 
     #[arg(
         short = 'r',
@@ -487,15 +486,11 @@ impl Options {
         if let Some(pattern) = cli.pattern {
             options.pattern = pattern;
         }
-        if !cli.ignore.is_empty() {
-            let mut ignore_patterns = Vec::new();
-            for ignore in cli.ignore {
-                if is_bare_string(&ignore) {
-                    bail!("TypeError: cli.ignore.split is not a function");
-                }
-                ignore_patterns.extend(split_csv(&ignore));
+        if let Some(ignore) = cli.ignore {
+            if is_bare_string(&ignore) {
+                bail!("TypeError: cli.ignore.split is not a function");
             }
-            options.ignore = ignore_patterns;
+            options.ignore = split_csv(&ignore);
         }
         if let Some(reporters) = cli.reporters {
             if is_bare_string(&reporters) {

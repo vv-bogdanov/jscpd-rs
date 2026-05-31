@@ -62,10 +62,6 @@ choice insufficient.
 ## CLI And Upstream Quirks
 
 - Mirror upstream behavior when it is visible, common, and covered by tests.
-- Repeated `--ignore` flags are a deliberate ergonomic extension: the Rust CLI
-  accumulates all values, including comma-separated values inside each flag.
-  Upstream Commander currently keeps only the last repeated value, but real
-  CI/self-scan workflows commonly pass several ignore flags and should work.
 - Crash-only Commander edge cases are documented first and mirrored only if a
   release gate or user workflow makes exact behavior necessary.
 - Keep upstream bug candidates in `docs/upstream-bugs.md` so we can file them
