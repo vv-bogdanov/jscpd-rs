@@ -69,9 +69,9 @@ Latest recorded public benchmark baseline:
 
 | Repo | Format | Rust avg | Upstream avg | Speedup |
 | --- | --- | ---: | ---: | ---: |
-| React | JavaScript | 0.192475s | 10.179825s | 52.89x |
-| Next.js | TypeScript | 0.250453s | 14.849955s | 59.29x |
-| Prometheus | Go | 0.084240s | 4.643329s | 55.12x |
+| React | JavaScript | 0.199097s | 10.079214s | 50.62x |
+| Next.js | TypeScript | 0.262433s | 14.715736s | 56.07x |
+| Prometheus | Go | 0.085239s | 4.642435s | 54.46x |
 
 Reproduce the public benchmark and coverage suite:
 

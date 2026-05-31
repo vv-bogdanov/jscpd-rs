@@ -12,16 +12,14 @@ Latest full local prepublish gate:
 scripts/prepublish-check.sh
 ```
 
-Passed on 2026-05-31 at code commit `41339ec`. This includes
+Passed on 2026-05-31 at code commit `8c3da0e`. This includes
 `scripts/release-candidate.sh`, package/install verification, crate/tag
 availability checks, npm package/name/npx verification, and
 `cargo publish --dry-run --locked`. Later documentation-only commits may reuse
-this evidence if they do not change code, scripts, package metadata, or
-benchmark configuration.
-
-This evidence is historical after the CI/package/README release-prep changes
-made after `41339ec`. Before publication, rerun `scripts/prepublish-check.sh`
-and replace this section with evidence from the exact commit being tagged.
+the release-candidate evidence if they do not change code, scripts, package
+metadata, or benchmark configuration; rerun
+`RUN_RELEASE_CANDIDATE=0 scripts/prepublish-check.sh` after documentation edits
+so package/dry-run evidence matches the exact package contents being tagged.
 
 GitHub Actions default `release-gate` must pass on the exact pushed commit
 being published. Check the current run in GitHub Actions after the final push;
@@ -33,8 +31,8 @@ Latest GitHub Actions default release-gate:
 push
 ```
 
-Passed on 2026-05-31 at code commit `71088f1`:
-https://github.com/vv-bogdanov/jscpd-rs/actions/runs/26710686373
+Passed on 2026-05-31 at code commit `8c3da0e`:
+https://github.com/vv-bogdanov/jscpd-rs/actions/runs/26710762680
 
 CI timing snapshot after the first cache/timing pass, from cold GitHub Actions
 run `26710415211` on commit `7bdf12f`:
@@ -69,9 +67,9 @@ Recorded public benchmark baseline for this release candidate:
 
 | Case | Commit | Format | Rust avg | Upstream avg | Speedup | Compat |
 | --- | --- | --- | ---: | ---: | ---: | --- |
-| `react` | `f0dfee3` | `javascript` | 0.192475s | 10.179825s | 52.89x | pass |
-| `next` | `2bbb67b9` | `typescript` | 0.250453s | 14.849955s | 59.29x | pass |
-| `prometheus` | `a0524ee` | `go` | 0.084240s | 4.643329s | 55.12x | pass |
+| `react` | `f0dfee3` | `javascript` | 0.199097s | 10.079214s | 50.62x | pass |
+| `next` | `2bbb67b9` | `typescript` | 0.262433s | 14.715736s | 56.07x | pass |
+| `prometheus` | `a0524ee` | `go` | 0.085239s | 4.642435s | 54.46x | pass |
 
 ## Publish Blockers
 
