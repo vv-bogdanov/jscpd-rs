@@ -23,7 +23,7 @@ current implementation status.
 | Native Rust API | ready | `jscpd`, `jscpd_with_exit_callback`, `Tokenizer`, `Detector`, `Statistic`, `MemoryStore`, `detect_clones`, `detect_clones_and_statistic`, `detect_clones_and_statistics`, `detect_source_files`, default options, argv option parsing, supported formats, and format lookup helpers expose the app, tokenizer, detector, statistics, and store core for path-based and in-memory integrations. See `docs/api-parity.md`. |
 | Native server | partial | `jscpd-server` exposes `/`, `/api/health`, `/api/stats`, `/api/check`, `/api/recheck`, and `/mcp`; exact help text, stable CLI, HTTP success/error, and MCP contracts are gated; `/api/check` reuses prepared project token maps; exact upstream Streamable HTTP SDK behavior remains follow-up. |
 | Performance harness | ready | Local benchmark script and public benchmark suite with pinned output recording and speedup gates. |
-| Release gates | ready | Default CI gate, full compatibility matrix, Cargo/npm package checks, reporter/config/CLI/blame gates. The default gate now prints per-step timings and the workflow caches Cargo, pnpm, and upstream build artifacts. |
+| Release gates | ready | Default CI gate, full compatibility matrix, Cargo/npm package checks, reporter/config/CLI/blame gates. The default gate now prints per-step timings, caches Cargo/pnpm/upstream build artifacts, and uses target-reuse npm package smoke in push/PR CI while keeping cold npm source-build in release-candidate/prepublish gates. |
 
 ## Partial Or Follow-Up
 

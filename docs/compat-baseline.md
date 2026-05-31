@@ -185,9 +185,11 @@ CI gate:
 The GitHub Actions workflow checks out the upstream submodule, installs Rust
 and Node, restores Cargo/pnpm/upstream-build caches, and runs the default
 release gate on pushes and pull requests. The gate prints per-step timings so
-CI regressions are visible in logs. Manual workflow dispatch exposes `full`,
-`public`, `release_candidate`, and `public_runs` inputs for the pre-release
-full matrix, public benchmark, and release-candidate gates.
+CI regressions are visible in logs. Default push/PR CI uses the already-built
+Cargo target for the npm package smoke; release-candidate and prepublish gates
+still run the cold npm source-build path. Manual workflow dispatch exposes
+`full`, `public`, `release_candidate`, and `public_runs` inputs for the
+pre-release full matrix, public benchmark, and release-candidate gates.
 
 Latest local prepublish check: `scripts/prepublish-check.sh` passed on
 2026-05-31 at code commit `41339ec`, covering

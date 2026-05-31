@@ -105,6 +105,10 @@ if (publish.name !== 'jscpd-rs' || publish.version !== expectedVersion) {
 console.log(`npm publish dry-run: ${publish.name}@${publish.version}`);
 NODE
 
+if [[ "${NPM_PACKAGE_CHECK_REUSE_TARGET:-0}" == "1" ]]; then
+  export CARGO_TARGET_DIR="$ROOT/target"
+fi
+
 (
   cd "$INSTALL_DIR"
   npm init -y >/dev/null

@@ -36,6 +36,23 @@ push
 Passed on 2026-05-31 at code commit `41339ec`:
 https://github.com/vv-bogdanov/jscpd-rs/actions/runs/26705128270
 
+CI timing snapshot after the first cache/timing pass, from cold GitHub Actions
+run `26710415211` on commit `7bdf12f`:
+
+| Step | Time |
+| --- | ---: |
+| `package/install check` | 192s |
+| `CLI compatibility` | 56s |
+| `cargo test` | 35s |
+| `server compatibility` | 28s |
+| `config compatibility` | 4s |
+
+The next pushed run should be faster for the default gate because the workflow
+now restores Cargo, pnpm, and upstream build caches, resolves the pnpm store
+with upstream's `pnpm@10.28.0`, skips `clippy` installation outside release
+candidate runs, and uses a target-reuse npm package smoke. Keep the full cold
+npm source-build in `scripts/prepublish-check.sh` and release-candidate runs.
+
 Recorded public benchmark baseline for this release candidate:
 
 | Case | Commit | Format | Rust avg | Upstream avg | Speedup | Compat |
@@ -156,3 +173,18 @@ Track these after the first release candidate:
 - Tighten MCP Streamable HTTP SDK edge cases if real MCP clients require them.
 - Promote long-tail tokenizers only from concrete missed-coverage evidence.
 - File upstream bug reports from `docs/upstream-issue-drafts.md`.
+
+## CI Speed Plan
+
+Keep this as part of the release plan:
+
+- Treat `package/install check`, `CLI compatibility`, `cargo test`, and
+  `server compatibility` as the CI bottleneck watchlist.
+- Record the next cached GitHub Actions run after the target-reuse npm smoke
+  change and compare it with cold run `26710415211`.
+- Keep default push/PR CI as a fast confidence gate; keep cold npm source
+  install, `clippy`, full matrix, and public benchmark coverage in
+  `scripts/prepublish-check.sh` and manual release-candidate workflow runs.
+- If default CI remains above roughly three minutes after warm caches, split the
+  package surface smoke from the compatibility gates into separate jobs or make
+  package source-build a release-candidate-only job.

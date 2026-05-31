@@ -10,7 +10,9 @@ function packageRoot() {
 
 function binaryPath(name) {
   const exe = process.platform === "win32" ? `${name}.exe` : name;
-  return path.join(packageRoot(), "target", "release", exe);
+  const targetDir =
+    process.env.CARGO_TARGET_DIR || path.join(packageRoot(), "target");
+  return path.join(targetDir, "release", exe);
 }
 
 function buildIfMissing(name) {

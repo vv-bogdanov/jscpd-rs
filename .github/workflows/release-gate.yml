@@ -53,7 +53,9 @@ jobs:
         run: |
           rustup toolchain install 1.93.0 --profile minimal
           rustup component add rustfmt --toolchain 1.93.0
-          rustup component add clippy --toolchain 1.93.0
+          if [[ "$RELEASE_CANDIDATE" == "1" ]]; then
+            rustup component add clippy --toolchain 1.93.0
+          fi
           rustup default 1.93.0
 
       - name: Cache Cargo registry and target
@@ -73,10 +75,12 @@ jobs:
           node-version: "22"
 
       - name: Enable pnpm through corepack
-        run: corepack enable
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.28.0 --activate
 
       - name: Resolve pnpm store path
-        run: echo "PNPM_STORE_PATH=$(pnpm store path --silent)" >> "$GITHUB_ENV"
+        run: echo "PNPM_STORE_PATH=$(pnpm --dir jscpd store path --silent)" >> "$GITHUB_ENV"
 
       - name: Cache pnpm store
         uses: actions/cache@v4
@@ -102,5 +106,5 @@ jobs:
           if [[ "$RELEASE_CANDIDATE" == "1" ]]; then
             FULL=1 PUBLIC=1 PUBLIC_RUNS="$PUBLIC_RUNS" scripts/release-candidate.sh
           else
-            scripts/release-gate.sh
+            NPM_PACKAGE_CHECK_REUSE_TARGET=1 scripts/release-gate.sh
           fi

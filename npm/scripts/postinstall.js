@@ -6,7 +6,8 @@ const { spawnSync } = require("node:child_process");
 
 const root = path.resolve(__dirname, "..", "..");
 const cargo = process.env.CARGO || "cargo";
-const releaseDir = path.join(root, "target", "release");
+const targetDir = process.env.CARGO_TARGET_DIR || path.join(root, "target");
+const releaseDir = path.join(targetDir, "release");
 const exeSuffix = process.platform === "win32" ? ".exe" : "";
 const binaries = ["jscpd", "jscpd-server"].map((name) =>
   path.join(releaseDir, `${name}${exeSuffix}`),
