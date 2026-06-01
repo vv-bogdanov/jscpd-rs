@@ -1,6 +1,6 @@
 {
   "name": "jscpd-rs",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "50x+ faster duplicate-code detector for CI/CD; jscpd-compatible CLI, SARIF, JSON, HTML reports",
   "license": "MIT",
   "repository": {
@@ -28,11 +28,11 @@
     "cli"
   ],
   "optionalDependencies": {
-    "jscpd-rs-darwin-arm64": "0.1.2",
-    "jscpd-rs-darwin-x64": "0.1.2",
-    "jscpd-rs-linux-arm64-gnu": "0.1.2",
-    "jscpd-rs-linux-x64-gnu": "0.1.2",
-    "jscpd-rs-win": "0.1.2"
+    "jscpd-rs-darwin-arm64": "0.1.3",
+    "jscpd-rs-darwin-x64": "0.1.3",
+    "jscpd-rs-linux-arm64-gnu": "0.1.3",
+    "jscpd-rs-linux-x64-gnu": "0.1.3",
+    "jscpd-rs-win": "0.1.3"
   },
   "bin": {
     "jscpd-rs": "npm/bin/jscpd-rs.js",

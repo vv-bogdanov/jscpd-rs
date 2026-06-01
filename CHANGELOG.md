@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.1.3 - 2026-06-01
+
+### Changed
+
+- Tighten GitHub Release publication gates: npm and crates.io publication now
+  run the release-candidate gate before publishing.
+- Block the main npm package publication if any configured prebuilt platform
+  package is missing or failed to publish.
+- Add a core coverage gate to the release-candidate flow.
+- Add an advisory server benchmark for comparing native and upstream
+  `/api/check` latency.
+- Refresh npm, prebuilt-binary, release-readiness, and README documentation for
+  the prebuilt-first install path.
+
 ## 0.1.2 - 2026-06-01
 
 ### Changed

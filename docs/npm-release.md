@@ -3,16 +3,15 @@
 Current npm readiness snapshot:
 
 - Date: 2026-06-01.
-- Current published version: `jscpd-rs@0.1.2`.
-- Latest npm publish workflow: run `26752424193`, commit `74380d6`,
-  conclusion `success`.
+- Current published version: `jscpd-rs@0.1.3`.
+- Latest npm publish workflow: `v0.1.3` GitHub Release workflow.
 - Published platform packages: `jscpd-rs-linux-x64-gnu`,
   `jscpd-rs-linux-arm64-gnu`, `jscpd-rs-darwin-x64`,
   `jscpd-rs-darwin-arm64`, and `jscpd-rs-win`.
 - Post-publication smoke passed from clean temporary directories:
-  `npm install jscpd-rs@0.1.2`, `jscpd-rs --version`, `jscpd --version`,
+  `npm install jscpd-rs@0.1.3`, `jscpd-rs --version`, `jscpd --version`,
   `jscpd-server --version`, and
-  `npx --package jscpd-rs@0.1.2 jscpd-rs --version`.
+  `npx --package jscpd-rs@0.1.3 jscpd-rs --version`.
 - Rerun `scripts/npm-package-check.sh` on the exact checkout before publishing
   any new npm version.
 
