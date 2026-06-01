@@ -1,9 +1,20 @@
 #![doc(html_root_url = "https://docs.rs/jscpd-rs/0.1.0")]
 
-//! Native Rust API for `jscpd-rs`, a high-performance Rust clone of
+//! Native Rust API for `jscpd-rs`, a 50x+ faster Rust clone of
 //! [`jscpd`](https://github.com/kucherenko/jscpd).
 //!
-//! The crate exposes the same detector core used by the `jscpd` and
+//! `jscpd` is a copy-paste detector for source code. It scans a codebase,
+//! finds duplicated fragments across files, writes reports for humans and CI
+//! systems, and can fail a build when duplication crosses a configured
+//! threshold.
+//!
+//! `jscpd-rs` keeps the common upstream CLI, configuration, reporter, server,
+//! and threshold workflows while moving the detector hot path to native Rust.
+//! The current public benchmark suite records 50x+ speedups on pinned React,
+//! Next.js, and Prometheus cases while using a coverage-first compatibility
+//! gate against upstream `jscpd`.
+//!
+//! This crate exposes the same detector core used by the `jscpd` and
 //! `jscpd-server` binaries: option parsing, file discovery, tokenization,
 //! duplicate detection, statistics, and in-memory source checks.
 //!

@@ -184,6 +184,43 @@ Track these after the first release candidate:
 - Promote long-tail tokenizers only from concrete missed-coverage evidence.
 - File upstream bug reports from `docs/upstream-issue-drafts.md`.
 
+## Automated GitHub Release Publishing
+
+After the first manual Cargo/npm bootstrap, future releases should use GitHub
+Release publication as the single publish trigger.
+
+Configured workflows:
+
+- `.github/workflows/crates-publish.yml`
+- `.github/workflows/npm-publish.yml`
+
+Both workflows run on `release.published` for non-draft, non-prerelease GitHub
+Releases. Both check out the release tag and verify that `vX.Y.Z` matches the
+package version before publishing. `crates-publish` publishes the Rust crate to
+crates.io; docs.rs builds documentation automatically after crates.io accepts
+the crate. `npm-publish` publishes the npm package.
+
+Release flow for future versions:
+
+1. Update `Cargo.toml` and `package.json` to the same version.
+2. Update `CHANGELOG.md`, README benchmark numbers, and release docs.
+3. Run the release gates, including `scripts/package-check.sh`.
+4. Commit and push `main`.
+5. Create and publish a GitHub Release with tag `vX.Y.Z`.
+6. Confirm both `crates-publish` and `npm-publish` completed successfully.
+7. Check crates.io, docs.rs, and npm package pages.
+
+Trusted Publishing setup:
+
+- crates.io: configure a trusted publisher for repository
+  `vv-bogdanov/jscpd-rs` and workflow `crates-publish.yml`.
+- npm: configure a trusted publisher for repository `vv-bogdanov/jscpd-rs` and
+  workflow `npm-publish.yml`.
+
+Use no GitHub environment name unless the workflow is updated to declare one.
+After Trusted Publishing works, revoke temporary npm/crates tokens and keep
+token-based publishing as an emergency fallback only.
+
 ## CI Speed Plan
 
 Keep this as part of the release plan:

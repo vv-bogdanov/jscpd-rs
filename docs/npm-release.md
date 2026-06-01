@@ -134,4 +134,6 @@ short-lived granular token with bypass 2FA enabled, then immediately configure
 Trusted Publishing for future releases.
 
 After Trusted Publishing is verified, revoke temporary npm tokens and consider
-setting the npm package publishing access to disallow traditional tokens.
+setting the npm package publishing access to disallow traditional tokens. The
+full GitHub Release publishing flow, including crates.io publishing, is tracked
+in `docs/release-checklist.md`.

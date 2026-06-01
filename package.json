@@ -1,7 +1,7 @@
 {
   "name": "jscpd-rs",
   "version": "0.1.0",
-  "description": "Fast native Rust clone of jscpd for duplicate-code detection",
+  "description": "50x+ faster jscpd-compatible duplicate-code detection for CI/CD",
   "license": "MIT",
   "repository": {
     "type": "git",

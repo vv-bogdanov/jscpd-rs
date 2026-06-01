@@ -7,8 +7,9 @@
 [![license](https://img.shields.io/github/license/vv-bogdanov/jscpd-rs.svg?style=flat-square)](LICENSE)
 [![rust](https://img.shields.io/badge/rust-1.93%2B-dea584?style=flat-square)](https://www.rust-lang.org/)
 
-Fast native Rust clone of [`jscpd`](https://github.com/kucherenko/jscpd)
-for copy-paste and duplicate-code detection in local development and CI/CD.
+50x+ faster native Rust clone of
+[`jscpd`](https://github.com/kucherenko/jscpd) for copy-paste and
+duplicate-code detection in local development and CI/CD.
 It scans a codebase, finds duplicated source fragments across files, writes
 reports for humans and automation, and can fail a build when duplication
 crosses a configured threshold.
