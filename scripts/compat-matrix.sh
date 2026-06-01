@@ -192,6 +192,9 @@ run_case "fixtures velocity" "jscpd/fixtures/velocity" "velocity" 20 3
 run_case "fixtures wolfram" "jscpd/fixtures/mathematica" "wolfram" 20 3
 run_case "jscpd packages js" "jscpd/packages" "javascript" 50 5
 run_case "jscpd packages ts" "jscpd/packages" "typescript" 50 5
-run_case "dream javascript" "/home/dev/dream" "javascript" 50 5
-run_case "dream typescript" "/home/dev/dream" "typescript" 50 5
-run_case "dream tsx" "/home/dev/dream" "tsx" 50 5
+
+if [[ -n "${PRIVATE_COMPAT_ROOT:-}" ]]; then
+  run_case "private javascript" "$PRIVATE_COMPAT_ROOT" "javascript" 50 5
+  run_case "private typescript" "$PRIVATE_COMPAT_ROOT" "typescript" 50 5
+  run_case "private tsx" "$PRIVATE_COMPAT_ROOT" "tsx" 50 5
+fi

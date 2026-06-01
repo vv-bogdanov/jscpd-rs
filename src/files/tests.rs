@@ -61,8 +61,8 @@ fn fast_glob_like_order_places_parent_files_before_child_files() {
     );
     assert_eq!(
         fast_glob_like_path_cmp(
-            Path::new("../dream/landing/.next/types/validator.ts"),
-            Path::new("../dream/landing/.next/dev/types/validator.ts"),
+            Path::new("../example-app/landing/.next/types/validator.ts"),
+            Path::new("../example-app/landing/.next/dev/types/validator.ts"),
         ),
         Ordering::Less
     );
@@ -125,11 +125,11 @@ fn directory_discovery_preserves_glob_like_order_with_parallel_walk() {
 fn relative_path_formats_sibling_paths_like_upstream() {
     assert_eq!(
         relative_path(
-            Path::new("/home/dev/dream/file.ts"),
-            Path::new("/home/dev/jscpd-rs")
+            Path::new("/workspace/example-app/file.ts"),
+            Path::new("/workspace/jscpd-rs")
         )
         .unwrap(),
-        Path::new("../dream/file.ts")
+        Path::new("../example-app/file.ts")
     );
 }
 

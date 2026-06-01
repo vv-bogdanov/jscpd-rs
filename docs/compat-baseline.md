@@ -367,9 +367,9 @@ Recorded public benchmark baseline:
 | `jscpd/fixtures/mathematica` | `wolfram` | pass | exact clone and line summary parity |
 | `jscpd/packages` | `javascript` | pass | no clones in either implementation |
 | `jscpd/packages` | `typescript` | pass | 66/66 upstream fragments line-covered |
-| `/home/dev/dream` | `javascript` | pass | 154/154 upstream fragments line-covered; one exact pair differs in generated `.next` chunks |
-| `/home/dev/dream` | `typescript` | pass | 408/408 upstream fragments line-covered |
-| `/home/dev/dream` | `tsx` | pass | 14/14 upstream fragments line-covered; Rust currently reports extra findings |
+| Private app fixture | `javascript` | pass | 154/154 upstream fragments line-covered; one exact pair differs in generated `.next` chunks |
+| Private app fixture | `typescript` | pass | 408/408 upstream fragments line-covered |
+| Private app fixture | `tsx` | pass | 14/14 upstream fragments line-covered; Rust currently reports extra findings |
 
 ## Known Deltas
 
@@ -509,7 +509,7 @@ Recent local sanity checks:
 
 | Target | Format | Rust avg | Upstream avg | Approx speedup |
 | --- | --- | ---: | ---: | ---: |
-| `/home/dev/dream` | `tsx` | `0.0358s` | `0.568s` | `16x` |
+| Private app fixture | `tsx` | `0.0358s` | `0.568s` | `16x` |
 | `jscpd/packages` | `typescript` | `0.0143s` | `0.831s` | `58x` |
 
 Latest public benchmark suite checks, using repositories cloned outside the

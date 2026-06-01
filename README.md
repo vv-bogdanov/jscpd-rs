@@ -109,6 +109,8 @@ by `/api/recheck`.
 
 For full CLI, configuration, reporter, server, MCP, and Rust API examples, see
 [docs/user-guide.md](docs/user-guide.md).
+If you already use upstream `jscpd`, see
+[docs/migrating-from-jscpd.md](docs/migrating-from-jscpd.md).
 
 ## GitHub Actions
 

@@ -11,7 +11,8 @@ commits, and pushes.
 - Give small implementation tasks with an example, exact files, and exact tests.
 - Do not delegate architecture, compatibility policy, broad reviews, or release
   decisions.
-- Do not let a junior touch external repositories such as `/home/dev/dream`.
+- Do not let a junior touch external repositories outside the dedicated
+  worktree.
 - Treat junior output as a patch proposal. Review every diff before merging.
 - Prefer `pi` for one-shot tasks because `--no-session` and `--tools` make the
   allowed surface explicit. Use `opencode` only as fallback.

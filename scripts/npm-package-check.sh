@@ -34,7 +34,8 @@ fi
 
 PACK_DIR="$TMP_ROOT/pack"
 INSTALL_DIR="$TMP_ROOT/install"
-mkdir -p "$PACK_DIR" "$INSTALL_DIR"
+FAIL_DIR="$TMP_ROOT/install-no-cargo"
+mkdir -p "$PACK_DIR" "$INSTALL_DIR" "$FAIL_DIR"
 
 npm pack --pack-destination "$PACK_DIR" --json >"$TMP_ROOT/npm-pack.json"
 tarball="$(node --input-type=module - "$TMP_ROOT/npm-pack.json" <<'NODE'
@@ -54,6 +55,7 @@ const files = pack.files.map((file) => file.path).sort();
 const required = [
   'Cargo.toml',
   'Cargo.lock',
+  'docs/migrating-from-jscpd.md',
   'docs/user-guide.md',
   'examples/library_api.rs',
   'LICENSE',
@@ -106,6 +108,23 @@ if (publish.name !== 'jscpd-rs' || publish.version !== expectedVersion) {
 }
 console.log(`npm publish dry-run: ${publish.name}@${publish.version}`);
 NODE
+
+(
+  cd "$FAIL_DIR"
+  npm init -y >/dev/null
+  set +e
+  CARGO="$TMP_ROOT/missing-cargo" npm install --no-audit --no-fund "$tarball" \
+    >"$TMP_ROOT/npm-install-no-cargo.log" 2>&1
+  status=$?
+  set -e
+  if [[ "$status" -eq 0 ]]; then
+    fail "npm install unexpectedly succeeded without Cargo"
+  fi
+  grep -Fq \
+    "jscpd-rs: Cargo was not found. Install Rust from https://rustup.rs/ and retry." \
+    "$TMP_ROOT/npm-install-no-cargo.log" \
+    || fail "npm install without Cargo did not print the expected Rust toolchain hint"
+)
 
 if [[ "${NPM_PACKAGE_CHECK_REUSE_TARGET:-0}" == "1" ]]; then
   export CARGO_TARGET_DIR="$ROOT/target"

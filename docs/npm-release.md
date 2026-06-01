@@ -27,6 +27,8 @@ That script verifies:
 - forbidden paths such as `jscpd/`, `target/`, `report/`, `scripts/`, and
   `node_modules/` are not packed;
 - `npm publish --dry-run --json` succeeds without publishing;
+- installing the packed tarball without Cargo fails with the expected Rust
+  toolchain hint;
 - a local npm install exposes working `jscpd-rs`, `jscpd`, and `jscpd-server`
   bin commands;
 - `npx --package <local-tarball> jscpd-rs --version` works.

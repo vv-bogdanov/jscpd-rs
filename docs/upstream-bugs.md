@@ -16,16 +16,17 @@ Status: observed on `jscpd` submodule during compatibility work.
 Repro target:
 
 ```sh
-FORMAT=javascript MIN_TOKENS=50 MIN_LINES=5 MAX_SIZE=1mb KEEP=1 scripts/compat.sh /home/dev/dream
+FORMAT=javascript MIN_TOKENS=50 MIN_LINES=5 MAX_SIZE=1mb KEEP=1 \
+  scripts/compat.sh /path/to/generated-next-app
 ```
 
 Observed mismatch:
 
 - Upstream reports a clone between:
-  - `../dream/landing/.next/dev/server/chunks/ssr/[root-of-the-server]__04xj076._.js:166`
-  - `../dream/landing/.next/standalone/.next/server/chunks/[root-of-the-server]__0b-rble._.js:18`
+  - generated SSR chunk A
+  - generated standalone server chunk B
 - The Rust/Oxc tokenizer also sees the equivalent clone in:
-  - `../dream/landing/.next/standalone/.next/server/chunks/ssr/_0vnreey._.js:3`
+  - generated standalone SSR chunk C
 - Upstream does not see that second candidate because Prism tokenizes a large
   minified JS range as one `string` token.
 
@@ -55,7 +56,8 @@ Status: observed on `jscpd` submodule during compatibility work.
 Related repro target:
 
 ```sh
-FORMAT=javascript MIN_TOKENS=50 MIN_LINES=5 MAX_SIZE=1mb KEEP=1 scripts/compat.sh /home/dev/dream
+FORMAT=javascript MIN_TOKENS=50 MIN_LINES=5 MAX_SIZE=1mb KEEP=1 \
+  scripts/compat.sh /path/to/generated-next-app
 ```
 
 In another generated SSR chunk, upstream tokenizes a `//` sequence inside a
@@ -230,7 +232,7 @@ Repro target:
 
 ```sh
 FORMAT=javascript MIN_TOKENS=50 MIN_LINES=5 MAX_SIZE=1mb KEEP=1 \
-  scripts/compat.sh /home/dev/.cache/jscpd-rs/public-bench/repos/react/.
+  scripts/compat.sh "${BENCH_ROOT:-$HOME/.cache/jscpd-rs/public-bench}/repos/react/."
 ```
 
 After the Rust clone covers the real duplicated subranges, three upstream
@@ -264,7 +266,7 @@ Repro target:
 
 ```sh
 FORMAT=typescript MIN_TOKENS=50 MIN_LINES=5 MAX_SIZE=1mb STRICT=coverage KEEP=1 \
-  scripts/compat.sh /home/dev/.cache/jscpd-rs/public-bench/repos/next/.
+  scripts/compat.sh "${BENCH_ROOT:-$HOME/.cache/jscpd-rs/public-bench}/repos/next/."
 ```
 
 After matching the upstream `console-exit` template interpolation behavior and
@@ -302,7 +304,7 @@ Repro target:
 
 ```sh
 FORMAT=go MIN_TOKENS=50 MIN_LINES=5 MAX_SIZE=1mb STRICT=coverage KEEP=1 \
-  scripts/compat.sh /home/dev/.cache/jscpd-rs/public-bench/repos/prometheus/.
+  scripts/compat.sh "${BENCH_ROOT:-$HOME/.cache/jscpd-rs/public-bench}/repos/prometheus/."
 ```
 
 The Rust clone reports more Go clones overall on this benchmark, but upstream

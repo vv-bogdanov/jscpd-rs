@@ -19,6 +19,7 @@ required_files=(
   "CHANGELOG.md"
   "Cargo.lock"
   "Cargo.toml"
+  "docs/migrating-from-jscpd.md"
   "docs/user-guide.md"
   "examples/library_api.rs"
   "LICENSE"

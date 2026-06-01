@@ -209,13 +209,17 @@ All commands below used TypeScript-only scanning to keep the comparison focused:
 FORMAT=typescript RUNS=3 scripts/bench.sh <repo>
 ```
 
+These early exploratory timings used private local repositories. The repository
+names and paths are intentionally omitted; repeatable public benchmarks are
+tracked separately in `docs/public-benchmark-suite.md`.
+
 | Repo | Rust MVP | Upstream `jscpd` | Files | Rust clones | Upstream clones |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| `/home/dev/.hermes/hermes-agent` | `0.447s` | `1.930s` | 316 | 93 | 475 |
-| `/home/dev/dream` | `0.350s` | `1.877s` | 566 Rust / 572 upstream | 371 | 1371 |
-| `/home/dev/infer` | `0.010s` | `0.290s` | 28 | 12 | 41 |
+| Private repo A | `0.447s` | `1.930s` | 316 | 93 | 475 |
+| Private repo B | `0.350s` | `1.877s` | 566 Rust / 572 upstream | 371 | 1371 |
+| Private repo C | `0.010s` | `0.290s` | 28 | 12 | 41 |
 
-Broader all-format stress on `/home/dev/dream`:
+Broader all-format stress on private repo B:
 
 - Rust MVP, `RUNS=2`: `0.600s` average.
 - Upstream `jscpd`: first run took `70.32s`, then the benchmark was stopped.
@@ -244,9 +248,9 @@ Updated TypeScript-only benchmark:
 | Repo | Rust MVP before | Rust MVP now | Upstream `jscpd` | Approx speedup vs upstream |
 | --- | ---: | ---: | ---: | ---: |
 | `jscpd/packages` | `0.108s` | `0.019s` | `0.856s` | ~45x |
-| `/home/dev/.hermes/hermes-agent` | `0.447s` | `0.085s` | `2.028s` | ~24x |
-| `/home/dev/dream` | `0.350s` | `0.074s` | `1.955s` | ~26x |
-| `/home/dev/infer` | `0.010s` | `0.009s` | `0.305s` | ~33x |
+| Private repo A | `0.447s` | `0.085s` | `2.028s` | ~24x |
+| Private repo B | `0.350s` | `0.074s` | `1.955s` | ~26x |
+| Private repo C | `0.010s` | `0.009s` | `0.305s` | ~33x |
 
 This is the first speed signal that is strong enough to justify continuing,
 provided compatibility can be raised without destroying the margin.
@@ -269,8 +273,8 @@ Updated TypeScript-only benchmark after this pass:
 | Repo | Rust after hash pass | Rust after core pass | Upstream `jscpd` | Approx speedup vs upstream |
 | --- | ---: | ---: | ---: | ---: |
 | `jscpd/packages` | `0.019s` | `0.011s` | `0.821s` | ~75x |
-| `/home/dev/.hermes/hermes-agent` | `0.085s` | `0.038s` | `2.041s` | ~54x |
-| `/home/dev/dream` | `0.074s` | `0.034s` | `1.939s` | ~57x |
+| Private repo A | `0.085s` | `0.038s` | `2.041s` | ~54x |
+| Private repo B | `0.074s` | `0.034s` | `1.939s` | ~57x |
 
 Do not treat these as fixed release gates yet. Before publication, choose a
 small set of popular public repositories and use them as the repeatable
