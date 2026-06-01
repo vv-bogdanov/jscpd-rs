@@ -1,6 +1,10 @@
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::sync::{Arc, Mutex};
+use std::sync::{
+    Arc,
+    atomic::{AtomicBool, Ordering},
+    mpsc,
+};
 
 use anyhow::{Context, Result, anyhow};
 use globset::{Glob, GlobSet, GlobSetBuilder};
@@ -59,14 +63,11 @@ pub fn discover(options: &Options) -> Result<Vec<SourceFile>> {
         let metadata = fs::metadata(root)
             .with_context(|| format!("failed to inspect path `{}`", root.display()))?;
         if metadata.is_file() {
-            collect_candidate(
-                root,
-                root_index,
-                options,
-                &ignore_set,
-                &cwd,
-                &mut candidates,
-            )?;
+            if let Some(candidate) =
+                candidate_for_path(root, root_index, options, &ignore_set, &cwd)?
+            {
+                candidates.push(candidate);
+            }
             continue;
         }
 
@@ -158,14 +159,15 @@ fn collect_candidates_sequential(
         if !context.pattern_set.is_match(relative) {
             continue;
         }
-        collect_candidate(
+        if let Some(candidate) = candidate_for_path(
             path,
             context.root_index,
             context.options,
             context.ignore_set,
             context.cwd,
-            candidates,
-        )?;
+        )? {
+            candidates.push(candidate);
+        }
     }
 
     Ok(())
@@ -176,24 +178,25 @@ fn collect_candidates_parallel(
     context: &CandidateCollectionContext<'_>,
     candidates: &mut Vec<CandidateFile>,
 ) -> Result<()> {
-    let collected = Arc::new(Mutex::new(Vec::new()));
-    let error = Arc::new(Mutex::new(None));
+    let (sender, receiver) = mpsc::channel::<Result<CandidateFile>>();
+    let failed = Arc::new(AtomicBool::new(false));
 
     builder.build_parallel().run(|| {
-        let collected = Arc::clone(&collected);
-        let error = Arc::clone(&error);
+        let sender = sender.clone();
+        let failed = Arc::clone(&failed);
         Box::new(move |entry| {
-            if error.lock().unwrap().is_some() {
+            if failed.load(Ordering::Relaxed) {
                 return WalkState::Quit;
             }
 
             let entry = match entry {
                 Ok(entry) => entry,
                 Err(err) => {
-                    *error.lock().unwrap() = Some(anyhow!(
+                    failed.store(true, Ordering::Relaxed);
+                    let _ = sender.send(Err(anyhow!(
                         "failed to walk path `{}`: {err}",
                         context.root.display()
-                    ));
+                    )));
                     return WalkState::Quit;
                 }
             };
@@ -210,47 +213,50 @@ fn collect_candidates_parallel(
                 return WalkState::Continue;
             }
 
-            let mut local = Vec::with_capacity(1);
-            if let Err(err) = collect_candidate(
+            match candidate_for_path(
                 path,
                 context.root_index,
                 context.options,
                 context.ignore_set,
                 context.cwd,
-                &mut local,
             ) {
-                *error.lock().unwrap() = Some(err);
-                return WalkState::Quit;
-            }
-            if !local.is_empty() {
-                collected.lock().unwrap().extend(local);
+                Ok(Some(candidate)) => {
+                    if sender.send(Ok(candidate)).is_err() {
+                        failed.store(true, Ordering::Relaxed);
+                        return WalkState::Quit;
+                    }
+                }
+                Ok(None) => {}
+                Err(err) => {
+                    failed.store(true, Ordering::Relaxed);
+                    let _ = sender.send(Err(err));
+                    return WalkState::Quit;
+                }
             }
             WalkState::Continue
         })
     });
+    drop(sender);
 
-    if let Some(error) = Arc::try_unwrap(error).unwrap().into_inner().unwrap() {
-        return Err(error);
+    for item in receiver {
+        candidates.push(item?);
     }
-
-    candidates.extend(Arc::try_unwrap(collected).unwrap().into_inner().unwrap());
 
     Ok(())
 }
 
-fn collect_candidate(
+fn candidate_for_path(
     path: &Path,
     root_index: usize,
     options: &Options,
     ignore_set: &IgnoreMatcher,
     cwd: &Path,
-    candidates: &mut Vec<CandidateFile>,
-) -> Result<()> {
+) -> Result<Option<CandidateFile>> {
     if options.no_symlinks && is_symlink(path) {
-        return Ok(());
+        return Ok(None);
     }
     if is_ignored(path, ignore_set, cwd) {
-        return Ok(());
+        return Ok(None);
     }
 
     let format = if let Some(format) =
@@ -269,7 +275,7 @@ fn collect_candidate(
                     options.max_size_bytes
                 );
             }
-            return Ok(());
+            return Ok(None);
         }
         shebang_format_for_path(path, &metadata)?.map(str::to_string)
     };
@@ -277,7 +283,7 @@ fn collect_candidate(
         if options.verbose {
             eprintln!("skipped unsupported format: {}", path.display());
         }
-        return Ok(());
+        return Ok(None);
     };
     if let Some(formats) = &options.formats
         && !formats.contains(format.as_str())
@@ -285,15 +291,13 @@ fn collect_candidate(
         if options.verbose || options.debug {
             println!("{}", format_filter_skip_message(path, &format, cwd));
         }
-        return Ok(());
+        return Ok(None);
     }
-    candidates.push(CandidateFile {
+    Ok(Some(CandidateFile {
         path: path.to_path_buf(),
         format,
         root_index,
-    });
-
-    Ok(())
+    }))
 }
 
 fn read_candidate(
@@ -415,7 +419,7 @@ fn push_pattern_once(
     }
 }
 
-fn normalize_glob_path(path: PathBuf) -> String {
+pub(super) fn normalize_glob_path(path: PathBuf) -> String {
     let mut normalized = PathBuf::new();
     for component in path.components() {
         match component {
@@ -496,7 +500,7 @@ pub(super) fn build_ignore_matcher(patterns: &[String]) -> Result<IgnoreMatcher>
     })
 }
 
-fn build_glob_set(patterns: &[String]) -> Result<GlobSet> {
+pub(super) fn build_glob_set(patterns: &[String]) -> Result<GlobSet> {
     let mut builder = GlobSetBuilder::new();
     if patterns.is_empty() {
         return Ok(builder.build()?);

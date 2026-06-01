@@ -52,7 +52,7 @@ public_benchmark_suite() {
     CASES="${PUBLIC_CASES:-react,next,prometheus}" \
       RUNS="${PUBLIC_RUNS:-1}" \
       CHECK_COMPAT="${PUBLIC_CHECK_COMPAT:-1}" \
-      MIN_SPEEDUP="${PUBLIC_MIN_SPEEDUP:-10}" \
+      MIN_SPEEDUP="${PUBLIC_MIN_SPEEDUP:-45}" \
       scripts/public-bench-suite.sh
   else
     printf 'Skipping public benchmark suite. Run PUBLIC=1 scripts/release-gate.sh before publication.\n'
@@ -64,6 +64,8 @@ run_step "cargo fmt --check" cargo fmt --check
 run_step "cargo test" cargo test
 
 run_step "bash -n scripts/*.sh" bash -n scripts/*.sh
+
+run_step "shellcheck scripts/*.sh" shellcheck scripts/*.sh
 
 run_step "package/install check" scripts/package-check.sh
 

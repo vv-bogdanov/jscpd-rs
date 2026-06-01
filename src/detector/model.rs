@@ -1,4 +1,5 @@
 use std::collections::{BTreeMap, HashMap};
+use std::sync::Arc;
 
 use serde::Serialize;
 
@@ -157,7 +158,6 @@ pub(super) struct TokenSpan {
 pub(super) struct SourceMeta {
     pub(super) source_id: String,
     pub(super) format: String,
-    pub(super) content: String,
     pub(super) lines: usize,
     pub(super) tokens: usize,
 }
@@ -185,6 +185,7 @@ pub(super) struct PreparedSource {
 #[derive(Clone, Debug)]
 pub(crate) struct PreparedSourceDraft {
     pub(super) meta: SourceMeta,
-    pub(super) hashes: Vec<u64>,
-    pub(super) spans: Vec<TokenSpan>,
+    pub(super) content: Arc<str>,
+    pub(super) hashes: Arc<Vec<u64>>,
+    pub(super) spans: Arc<Vec<TokenSpan>>,
 }

@@ -239,7 +239,9 @@ PUBLIC=1 PUBLIC_RUNS=3 scripts/release-gate.sh
 ```
 
 Release-candidate workflows rerun the public suite before each new publication
-so README numbers stay tied to a concrete commit and gate output.
+so README numbers stay tied to a concrete commit and gate output. The public
+release gate fails below a 45x speedup on the default benchmark cases to prevent
+silent performance regressions while preserving room for normal runner noise.
 
 ## Library API
 
@@ -319,6 +321,19 @@ scripts/compat-reporters.sh
 STRICT=coverage scripts/compat-matrix.sh
 ```
 
+Rust code coverage is optional and intentionally kept out of the default fast
+gate:
+
+```bash
+cargo install cargo-llvm-cov --locked
+SUMMARY=1 scripts/coverage.sh
+SCOPE=core SUMMARY=1 scripts/coverage.sh
+SCOPE=core FAIL_UNDER_LINES=93 scripts/coverage.sh
+```
+
+Black-box behavior tests that exercise the public API live in `tests/`. Small
+private-helper tests stay next to the module they protect.
+
 Known upstream bug candidates and intentional compatibility exceptions are
 tracked in [docs/upstream-bugs.md](docs/upstream-bugs.md). GitHub-ready issue
 drafts are prepared in
@@ -331,6 +346,9 @@ Fast local gate:
 ```bash
 scripts/release-gate.sh
 ```
+
+The fast gate includes `cargo fmt`, `cargo test`, shell syntax checks,
+`shellcheck`, package/install checks, and the focused compatibility gates.
 
 Package/install gate:
 

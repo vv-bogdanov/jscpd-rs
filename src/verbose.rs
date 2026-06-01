@@ -175,6 +175,66 @@ mod tests {
         assert!(!output.contains(r#""tokens""#));
     }
 
+    #[test]
+    fn verbose_events_emit_unmatched_clones_after_source_ordered_events() {
+        let result = DetectionResult {
+            clones: vec![
+                CloneMatch {
+                    format: "javascript".to_string(),
+                    duplication_a: fragment("src/a.js", 2),
+                    duplication_b: fragment("src/b.js", 8),
+                    tokens: 6,
+                },
+                CloneMatch {
+                    format: "javascript".to_string(),
+                    duplication_a: fragment("external.js", 10),
+                    duplication_b: fragment("src/b.js", 18),
+                    tokens: 6,
+                },
+            ],
+            skipped_clones: Vec::new(),
+            statistics: Statistics::default(),
+            sources: vec![SourceSummary {
+                path: "src/a.js".to_string(),
+                format: "javascript".to_string(),
+                lines: 10,
+                tokens: 20,
+            }],
+            source_contents: HashMap::new(),
+        };
+
+        let output = detection_events_output(&result, 500);
+
+        assert_eq!(output.matches("CLONE_FOUND").count(), 2);
+        assert!(output.contains(r#""foundDate": 500"#));
+        assert!(output.contains(r#""foundDate": 501"#));
+        assert!(output.contains(r#""sourceId": "external.js""#));
+    }
+
+    #[test]
+    fn verbose_events_emit_unmatched_skipped_clones() {
+        let result = DetectionResult {
+            clones: Vec::new(),
+            skipped_clones: vec![SkippedClone {
+                clone: CloneMatch {
+                    format: "javascript".to_string(),
+                    duplication_a: fragment("external.js", 20),
+                    duplication_b: fragment("src/b.js", 30),
+                    tokens: 3,
+                },
+                message: vec!["Skipped outside source list".to_string()],
+            }],
+            statistics: Statistics::default(),
+            sources: Vec::new(),
+            source_contents: HashMap::new(),
+        };
+
+        let output = detection_events_output(&result, 700);
+
+        assert!(output.contains("CLONE_SKIPPED"));
+        assert!(output.contains("Clone skipped: Skipped outside source list"));
+    }
+
     fn fragment(source_id: &str, line: usize) -> Fragment {
         Fragment {
             source_id: source_id.to_string(),

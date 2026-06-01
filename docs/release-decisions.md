@@ -77,8 +77,14 @@ choice insufficient.
 
 - Performance remains a product requirement. Public benchmark runs should be
   repeated before publication with pinned commits and recorded speedups.
+- Refactors, simplifications, compatibility fixes, and dependency swaps must not
+  introduce sustained speed regressions. If a change touches discovery,
+  tokenization, matching, source loading, reporter hot paths, or server snippet
+  checks, rerun the affected benchmark case before treating the core as stable.
 - The aspirational target is 50x on representative cases, but release gating
-  should use measured thresholds from the selected public benchmark suite.
+  should use measured thresholds from the selected public benchmark suite. The
+  default public release gate currently fails below 45x to preserve the 50x+
+  baseline while leaving room for runner noise.
 
 ## Approved Complex Feature Choices
 

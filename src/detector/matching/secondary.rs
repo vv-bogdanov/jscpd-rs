@@ -329,7 +329,6 @@ mod tests {
             meta: SourceMeta {
                 source_id: source_id.to_string(),
                 format: "javascript".to_string(),
-                content: String::new(),
                 lines: hashes.len(),
                 tokens: hashes.len(),
             },

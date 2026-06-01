@@ -7,7 +7,8 @@ use crate::cli::Options;
 use super::SourceFile;
 use super::discover;
 use super::discovery::{
-    build_ignore_matcher, count_lines, decode_source, format_filter_skip_message, is_ignored,
+    build_glob_set, build_ignore_matcher, count_lines, decode_source, format_filter_skip_message,
+    is_ignored, normalize_glob_path,
 };
 use super::gitignore::{
     collect_cwd_gitignore_patterns, collect_gitignore_patterns_with_global, gitignore_line_to_globs,
@@ -226,6 +227,17 @@ fn collect_cwd_gitignore_patterns_uses_upstream_unscoped_conversion() {
 }
 
 #[test]
+fn collect_cwd_gitignore_patterns_returns_empty_without_gitignore() {
+    let dir = unique_temp_path("missing-cwd-gitignore");
+    std::fs::create_dir_all(&dir).unwrap();
+
+    let patterns = collect_cwd_gitignore_patterns(&dir);
+    let _ = std::fs::remove_dir_all(&dir);
+
+    assert!(patterns.is_empty());
+}
+
+#[test]
 fn format_filter_skip_message_matches_upstream_shape() {
     let cwd = Path::new("/repo");
     let path = Path::new("/repo/src/file.ts");
@@ -237,12 +249,108 @@ fn format_filter_skip_message_matches_upstream_shape() {
 }
 
 #[test]
+fn empty_glob_set_matches_nothing() {
+    let glob_set = build_glob_set(&[]).unwrap();
+
+    assert!(!glob_set.is_match("src/main.js"));
+}
+
+#[test]
+fn normalize_glob_path_removes_dot_and_parent_components() {
+    assert_eq!(
+        normalize_glob_path(PathBuf::from("./src/../dist/file.js")),
+        "dist/file.js"
+    );
+}
+
+#[test]
 fn decode_source_reuses_valid_utf8_and_falls_back_to_lossy() {
     assert_eq!(
         decode_source(b"const answer = 42;\n".to_vec()),
         "const answer = 42;\n"
     );
     assert_eq!(decode_source(vec![b'a', 0xff, b'b']), "a\u{fffd}b");
+}
+
+#[test]
+fn debug_discovery_uses_sequential_walk_and_pattern_filter() {
+    let dir = unique_temp_path("debug-sequential");
+    std::fs::create_dir_all(&dir).unwrap();
+    std::fs::write(dir.join("main.js"), "const main = 1;\n").unwrap();
+    std::fs::write(dir.join("style.css"), "body { color: red; }\n").unwrap();
+
+    let mut options = discovery_options(vec![dir.clone()]);
+    options.debug = true;
+    options.pattern = "**/*.js".to_string();
+
+    let files = discover(&options).unwrap();
+    let _ = std::fs::remove_dir_all(&dir);
+
+    assert_eq!(files.len(), 1);
+    assert!(files[0].source_id.ends_with("main.js"));
+}
+
+#[test]
+fn absolute_discovery_uses_canonical_source_id() {
+    let dir = unique_temp_path("absolute-source-id");
+    let path = dir.join("main.js");
+    std::fs::create_dir_all(&dir).unwrap();
+    std::fs::write(&path, "const main = 1;\n").unwrap();
+
+    let mut options = discovery_options(vec![path.clone()]);
+    options.absolute = true;
+    options.reporters = Vec::new();
+
+    let files = discover(&options).unwrap();
+    let expected = path.canonicalize().unwrap().display().to_string();
+    let _ = std::fs::remove_dir_all(&dir);
+
+    assert_eq!(files.len(), 1);
+    assert_eq!(files[0].source_id, expected);
+}
+
+#[test]
+fn discovery_filters_line_count_bounds() {
+    let dir = unique_temp_path("line-filter");
+    let path = dir.join("short.js");
+    std::fs::create_dir_all(&dir).unwrap();
+    std::fs::write(&path, "const short = 1;\n").unwrap();
+
+    let mut options = discovery_options(vec![path]);
+    options.min_lines = 3;
+    options.reporters = Vec::new();
+
+    let files = discover(&options).unwrap();
+    let _ = std::fs::remove_dir_all(&dir);
+
+    assert!(files.is_empty());
+}
+
+#[test]
+fn discovery_skips_formats_outside_filter() {
+    let dir = unique_temp_path("format-filter");
+    std::fs::create_dir_all(&dir).unwrap();
+    std::fs::write(dir.join("main.ts"), "const value: number = 1;\n").unwrap();
+
+    let mut options = javascript_discovery_options(vec![dir.clone()]);
+    options.debug = true;
+
+    let files = discover(&options).unwrap();
+    let _ = std::fs::remove_dir_all(&dir);
+
+    assert!(files.is_empty());
+}
+
+#[test]
+fn ignore_matcher_checks_paths_relative_to_cwd() {
+    let cwd = Path::new("/repo");
+    let matcher = build_ignore_matcher(&["src/generated/**".to_string()]).unwrap();
+
+    assert!(is_ignored(
+        Path::new("/repo/src/generated/file.js"),
+        &matcher,
+        cwd
+    ));
 }
 
 #[test]

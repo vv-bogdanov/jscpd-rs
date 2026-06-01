@@ -34,7 +34,7 @@ pub struct ServerService {
 struct ServiceState {
     working_directory: PathBuf,
     options: Options,
-    project_drafts: Vec<PreparedSourceDraft>,
+    project_drafts: Arc<[PreparedSourceDraft]>,
     statistics: Option<Statistics>,
     last_scan_time: Option<String>,
     is_scanning: bool,
@@ -48,7 +48,7 @@ impl ServerService {
             state: Arc::new(RwLock::new(ServiceState {
                 working_directory,
                 options,
-                project_drafts: Vec::new(),
+                project_drafts: Arc::from(Vec::<PreparedSourceDraft>::new()),
                 statistics: None,
                 last_scan_time: None,
                 is_scanning: false,
@@ -100,22 +100,24 @@ impl ServerService {
             state.snippet_counter += 1;
             (
                 service_detection_options(&state),
-                state.project_drafts.clone(),
+                Arc::clone(&state.project_drafts),
                 snippet_id,
                 state.working_directory.clone(),
             )
         };
 
         let total_lines = request.code.split('\n').count();
-        let mut prepared_drafts = project_drafts;
-        prepared_drafts.extend(prepare_source_drafts(
+        let snippet_drafts = prepare_source_drafts(
             vec![SourceFile {
                 source_id: snippet_id.clone(),
                 format: request.format,
                 content: request.code,
             }],
             &options,
-        ));
+        );
+        let mut prepared_drafts = Vec::with_capacity(project_drafts.len() + snippet_drafts.len());
+        prepared_drafts.extend(project_drafts.iter().cloned());
+        prepared_drafts.extend(snippet_drafts);
         let result = detect_prepared_drafts(prepared_drafts, &options);
         let duplications = result
             .clones
@@ -198,11 +200,11 @@ fn service_detection_options(state: &ServiceState) -> Options {
     options
 }
 
-fn scan_project(options: &Options) -> Result<(Vec<PreparedSourceDraft>, DetectionResult)> {
+fn scan_project(options: &Options) -> Result<(Arc<[PreparedSourceDraft]>, DetectionResult)> {
     let files = files::discover(options)?;
     let project_drafts = prepare_source_drafts(files, options);
     let result = detect_prepared_drafts(project_drafts.clone(), options);
-    Ok((project_drafts, result))
+    Ok((Arc::from(project_drafts), result))
 }
 
 pub fn create_router(service: ServerService) -> Router {

@@ -94,6 +94,10 @@ fn blame_line_regex() -> &'static Regex {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::tokenizer::Location;
+    use std::fs;
+    use std::path::{Path, PathBuf};
+    use std::time::{SystemTime, UNIX_EPOCH};
 
     #[test]
     fn parses_git_blame_lines() {
@@ -126,5 +130,117 @@ cccccccc (Carol 2024-01-03 00:00:00 +0000 3) third
         assert_eq!(sliced.keys().cloned().collect::<Vec<_>>(), vec!["2", "3"]);
         assert_eq!(sliced["2"].author, "Bob");
         assert_eq!(sliced["3"].author, "Carol");
+    }
+
+    #[test]
+    fn ignores_malformed_git_blame_lines() {
+        let blame = parse_git_blame(
+            "\
+not blame output
+aaaaaaaa (Alice 2024-01-01 00:00:00 +0000 1) first
+bbbbbbbb (Bob 2024-01-02 00:00 +0000 2) bad date
+",
+        );
+
+        assert_eq!(blame.len(), 1);
+        assert_eq!(blame["1"].author, "Alice");
+    }
+
+    #[test]
+    fn applies_cached_blame_to_fragment_range() {
+        let mut cache = HashMap::from([(
+            "src/a.js".to_string(),
+            Some(parse_git_blame(
+                "\
+aaaaaaaa (Alice 2024-01-01 00:00:00 +0000 1) first
+bbbbbbbb (Bob 2024-01-02 00:00:00 +0000 2) second
+cccccccc (Carol 2024-01-03 00:00:00 +0000 3) third
+",
+            )),
+        )]);
+        let mut fragment = fragment("src/a.js", 2, 3);
+
+        apply_fragment_blame(&mut fragment, &mut cache);
+
+        let blame = fragment.blame.expect("fragment blame");
+        assert_eq!(blame.keys().cloned().collect::<Vec<_>>(), vec!["2", "3"]);
+        assert_eq!(blame["2"].author, "Bob");
+        assert_eq!(blame["3"].author, "Carol");
+    }
+
+    #[test]
+    fn omits_cached_blame_when_file_or_range_has_no_blame() {
+        let mut cache = HashMap::from([
+            ("missing.js".to_string(), None),
+            (
+                "src/a.js".to_string(),
+                Some(parse_git_blame(
+                    "aaaaaaaa (Alice 2024-01-01 00:00:00 +0000 10) tenth\n",
+                )),
+            ),
+        ]);
+        let mut missing = fragment("missing.js", 1, 1);
+        let mut outside_range = fragment("src/a.js", 1, 2);
+
+        apply_fragment_blame(&mut missing, &mut cache);
+        apply_fragment_blame(&mut outside_range, &mut cache);
+
+        assert!(missing.blame.is_none());
+        assert!(outside_range.blame.is_none());
+    }
+
+    #[test]
+    fn reads_git_blame_for_tracked_file() {
+        let repo = unique_temp_dir("blame-repo");
+        fs::create_dir_all(&repo).unwrap();
+        git(&repo, &["init", "-q"]);
+        git(&repo, &["config", "user.email", "jscpd-rs@example.test"]);
+        git(&repo, &["config", "user.name", "Jscpd Rs"]);
+        let path = repo.join("tracked.js");
+        fs::write(&path, "const first = 1;\nconst second = 2;\n").unwrap();
+        git(&repo, &["add", "tracked.js"]);
+        git(&repo, &["commit", "--no-gpg-sign", "-q", "-m", "initial"]);
+
+        let blame = blame_file(path.to_str().unwrap()).expect("git blame output");
+        let _ = fs::remove_dir_all(&repo);
+
+        assert_eq!(blame.len(), 2);
+        assert_eq!(blame["1"].author, "Jscpd Rs");
+        assert_eq!(blame["2"].line, "2");
+    }
+
+    fn fragment(source_id: &str, start_line: usize, end_line: usize) -> Fragment {
+        Fragment {
+            source_id: source_id.to_string(),
+            start: location(start_line),
+            end: location(end_line),
+            range: [0, 0],
+            blame: None,
+        }
+    }
+
+    fn location(line: usize) -> Location {
+        Location {
+            line,
+            column: 1,
+            position: 0,
+        }
+    }
+
+    fn git(repo: &Path, args: &[&str]) {
+        let status = Command::new("git")
+            .args(args)
+            .current_dir(repo)
+            .status()
+            .expect("run git");
+        assert!(status.success(), "git {args:?} failed");
+    }
+
+    fn unique_temp_dir(label: &str) -> PathBuf {
+        let suffix = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        std::env::temp_dir().join(format!("jscpd-rs-{label}-{}-{suffix}", std::process::id()))
     }
 }

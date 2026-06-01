@@ -3,7 +3,7 @@ use std::path::PathBuf;
 
 use anyhow::{Result, bail};
 use clap::Parser;
-use jscpd_rs::cli::{Cli, Options};
+use jscpd_rs::{Cli, Options};
 
 #[tokio::main]
 async fn main() {

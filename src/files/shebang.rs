@@ -104,3 +104,82 @@ fn is_executable(metadata: &fs::Metadata) -> bool {
 fn is_executable(_metadata: &fs::Metadata) -> bool {
     false
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::path::PathBuf;
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    #[test]
+    fn normalizes_versioned_interpreter_names() {
+        assert_eq!(normalize_shebang_name("python3.11"), "python");
+        assert_eq!(normalize_shebang_name("NODEJS"), "nodejs");
+        assert_eq!(normalize_shebang_name("perl5"), "perl");
+        assert_eq!(normalize_shebang_name("rscript"), "rscript");
+    }
+
+    #[test]
+    fn maps_common_interpreter_names_to_formats() {
+        assert_eq!(shebang_name_to_format("bash"), Some("bash"));
+        assert_eq!(shebang_name_to_format("nodejs"), Some("javascript"));
+        assert_eq!(shebang_name_to_format("gawk"), Some("awk"));
+        assert_eq!(shebang_name_to_format("rscript"), Some("r"));
+        assert_eq!(shebang_name_to_format("unknown"), None);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn detects_executable_env_shebangs() {
+        let path = unique_temp_path("shebang-env");
+        std::fs::write(&path, "#!/usr/bin/env python3.11\nprint('ok')\n").unwrap();
+        make_executable(&path);
+        let metadata = std::fs::metadata(&path).unwrap();
+
+        let format = shebang_format_for_path(&path, &metadata).unwrap();
+        let _ = std::fs::remove_file(&path);
+
+        assert_eq!(format, Some("python"));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn ignores_non_executable_or_env_option_shebangs() {
+        let non_executable = unique_temp_path("shebang-non-executable");
+        std::fs::write(&non_executable, "#!/usr/bin/env node\nconsole.log(1)\n").unwrap();
+        let metadata = std::fs::metadata(&non_executable).unwrap();
+        assert_eq!(
+            shebang_format_for_path(&non_executable, &metadata).unwrap(),
+            None
+        );
+
+        let env_option = unique_temp_path("shebang-env-option");
+        std::fs::write(&env_option, "#!/usr/bin/env -S node\nconsole.log(1)\n").unwrap();
+        make_executable(&env_option);
+        let metadata = std::fs::metadata(&env_option).unwrap();
+        assert_eq!(
+            shebang_format_for_path(&env_option, &metadata).unwrap(),
+            None
+        );
+
+        let _ = std::fs::remove_file(non_executable);
+        let _ = std::fs::remove_file(env_option);
+    }
+
+    #[cfg(unix)]
+    fn make_executable(path: &Path) {
+        use std::os::unix::fs::PermissionsExt;
+
+        let mut permissions = std::fs::metadata(path).unwrap().permissions();
+        permissions.set_mode(0o755);
+        std::fs::set_permissions(path, permissions).unwrap();
+    }
+
+    fn unique_temp_path(label: &str) -> PathBuf {
+        let suffix = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        std::env::temp_dir().join(format!("jscpd-rs-{label}-{}-{suffix}", std::process::id()))
+    }
+}

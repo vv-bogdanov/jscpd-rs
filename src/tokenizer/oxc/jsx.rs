@@ -166,3 +166,80 @@ fn count_embedded_gap_positions(
             .filter(|token| token.kind != Kind::Skip)
             .count()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn finds_jsx_attribute_expression_groups() {
+        let tokens = vec![
+            token(Kind::LAngle, 0, 1),
+            token(Kind::Ident, 1, 2),
+            token(Kind::Ident, 3, 7),
+            token(Kind::Eq, 7, 8),
+            token(Kind::LCurly, 8, 9),
+            token(Kind::Ident, 9, 14),
+            token(Kind::RCurly, 14, 15),
+            token(Kind::RAngle, 16, 17),
+        ];
+
+        assert_eq!(jsx_attribute_script_groups(&tokens), vec![(3, 6)]);
+    }
+
+    #[test]
+    fn recognizes_opening_and_closing_jsx_tag_starts() {
+        assert!(looks_like_jsx_tag_start(
+            &[token(Kind::LAngle, 0, 1), token(Kind::Ident, 1, 4)],
+            0
+        ));
+        assert!(looks_like_jsx_tag_start(
+            &[
+                token(Kind::LAngle, 0, 1),
+                token(Kind::Slash, 1, 2),
+                token(Kind::Ident, 2, 5),
+            ],
+            0
+        ));
+        assert!(!looks_like_jsx_tag_start(
+            &[token(Kind::LAngle, 0, 1), token(Kind::Str, 1, 4)],
+            0
+        ));
+    }
+
+    #[test]
+    fn jsx_attribute_expression_end_handles_nested_and_unclosed_braces() {
+        let nested = vec![
+            token(Kind::LCurly, 0, 1),
+            token(Kind::LCurly, 1, 2),
+            token(Kind::RCurly, 2, 3),
+            token(Kind::RCurly, 3, 4),
+        ];
+        let unclosed = &nested[..3];
+
+        assert_eq!(jsx_attribute_expression_end(&nested, 0), Some(3));
+        assert_eq!(jsx_attribute_expression_end(unclosed, 0), None);
+    }
+
+    #[test]
+    fn embedded_gap_positions_count_prism_whitespace_and_non_skip_tokens() {
+        let content = "a \n b + c";
+        let parser_tokens = vec![
+            token(Kind::Ident, 4, 5),
+            token(Kind::Skip, 5, 6),
+            token(Kind::Ident, 7, 8),
+        ];
+
+        assert_eq!(
+            count_embedded_gap_positions(content, &parser_tokens, 1, 6),
+            5
+        );
+    }
+
+    fn token(kind: Kind, start: usize, end: usize) -> RawOxcToken {
+        RawOxcToken {
+            kind,
+            span: ByteSpan { start, end },
+        }
+    }
+}

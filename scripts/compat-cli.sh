@@ -159,7 +159,7 @@ require_count() {
   local expected="$3"
   local label="$4"
   local actual
-  actual="$(grep -F -- "$needle" "$file" | wc -l | tr -d ' ')"
+  actual="$(grep -F -c -- "$needle" "$file" || true)"
 
   if [[ "$actual" != "$expected" ]]; then
     printf '%s had %s occurrences of %s, expected %s\n' "$label" "$actual" "$needle" "$expected" >&2

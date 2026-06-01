@@ -24,6 +24,7 @@ current implementation status.
 | Native server | partial | `jscpd-server` exposes `/`, `/api/health`, `/api/stats`, `/api/check`, `/api/recheck`, and `/mcp`; exact help text, stable CLI, HTTP success/error, and MCP contracts are gated; `/api/check` reuses prepared project token maps; exact upstream Streamable HTTP SDK behavior remains follow-up. |
 | Performance harness | ready | Local benchmark script and public benchmark suite with pinned output recording and speedup gates. |
 | Release gates | ready | Default CI gate, full compatibility matrix, Cargo/npm package checks, reporter/config/CLI/blame gates. The default gate now prints per-step timings, caches Cargo/pnpm/upstream build artifacts, and uses target-reuse npm package smoke in push/PR CI while keeping cold npm source-build in release-candidate/prepublish gates. |
+| Code coverage tooling | ready | One script: `scripts/coverage.sh`. Use `SCOPE=full` for the full advisory report and `SCOPE=core` for core coverage that runs all test targets while excluding CLI/server glue from the report. Local baseline on 2026-06-01: full 91.54% line / 90.13% region coverage; core 93.18% line / 91.39% region coverage. Local core gate: `SCOPE=core FAIL_UNDER_LINES=93 scripts/coverage.sh`. |
 
 ## Partial Or Follow-Up
 
@@ -49,3 +50,4 @@ current implementation status.
 | MCP endpoint polish | Core native endpoint exists; tighten exact SDK edge cases only when MCP client compatibility demands it. |
 | Persistent cache/store backends | Add only if public benchmark data proves the in-memory path is insufficient. |
 | Full Prism grammar port | Do not rewrite all grammars eagerly; use native crates or small scanners only for proven gaps. |
+| CI coverage enforcement | Keep coverage out of the default fast gate until CI runtime is measured; add the existing core gate to scheduled or release-candidate CI first. |

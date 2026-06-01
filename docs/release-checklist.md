@@ -89,9 +89,9 @@ Before publishing, all of these must be true:
 - `README.md`, `docs/compat-baseline.md`, and
   `docs/public-benchmark-suite.md` contain the same recorded public benchmark
   numbers.
-- For the first publication, the `jscpd-rs` crate and npm package names are
-  still available or already owned by this project, and `v0.1.0` does not
-  already exist locally or on the remote.
+- For a new publication, the target crate version, npm package versions, and
+  `vX.Y.Z` Git tag are not already published, unless an explicitly documented
+  target-only npm rerun is being used for a prebuilt package.
 - `docs/upstream-bugs.md` contains concrete repro commands for upstream issues
   we plan to file.
 - `docs/upstream-issue-drafts.md` contains reviewed issue drafts ready to
@@ -140,18 +140,20 @@ scripts/prepublish-check.sh
 ```
 
 The script checks clean git state, the reviewed `jscpd` submodule reference,
-local and remote tag availability, exact crate-name availability through
-`cargo search`, exact npm package-name availability through `npm view`,
+local and remote tag availability, exact crate version availability through
+`cargo info`, exact npm package version availability through `npm view`,
 benchmark-number consistency across release docs, the full release-candidate
 gate, package/install validation, npm pack/npx validation, and
-`cargo publish --dry-run --locked`. Set `RUN_RELEASE_CANDIDATE=0` only when the
-same code commit already has fresh local and CI release-candidate evidence.
+`cargo publish --dry-run --locked`. The npm availability check covers the main
+package and every prebuilt optional package. Set
+`RUN_RELEASE_CANDIDATE=0` only when the same code commit already has fresh
+local and CI release-candidate evidence.
 
 Then push the exact release commit and verify the GitHub Actions
 `release-gate` result. Use the workflow dispatch `release_candidate` input for a
 full CI-side release-candidate run when needed.
 
-For the first publication candidate checked on 2026-05-31, local and remote
+Historical first publication candidate checked on 2026-05-31: local and remote
 `v0.1.0` tag lookups returned no entries. `cargo search jscpd-rs --limit 5`
 returned no exact crate, `npm view jscpd-rs version` returned `E404`, and the
 sparse crates.io index path
@@ -178,8 +180,8 @@ two explicit commands above are a manual smoke equivalent for post-tag checks.
 Track these after the first release candidate:
 
 - Reduce noisy extra Rust findings where they are user-visible false positives.
-- Verify the first npm prebuilt platform-package publication before broad npm
-  promotion so Node users can install without Cargo; see the
+- Monitor npm prebuilt install behavior and add Linux musl or Windows arm64
+  packages only when install data or user reports show demand; see the
   [prebuilt binary distribution plan](prebuilt-binaries.md).
 - Add native persistent store/cache only if release-scale benchmark data needs
   it.

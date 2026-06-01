@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use rustc_hash::FxHashMap;
 
 use crate::cli::Options;
@@ -26,19 +28,23 @@ pub(super) fn assign_formats(files: &[PreparedSourceDraft]) -> (Vec<FormatId>, V
 }
 
 pub(super) fn prepare_file_maps(file: SourceFile, options: &Options) -> Vec<PreparedSourceDraft> {
-    tokenize_maps_for_detection(&file.content, &file.format, options)
-        .into_iter()
+    let source_id = file.source_id;
+    let content = file.content;
+    let maps = tokenize_maps_for_detection(&content, &file.format, options);
+    let content = Arc::<str>::from(content);
+
+    maps.into_iter()
         .map(|map| {
             let (hashes, spans) = split_tokens(map.tokens);
             let (stat_lines, stat_tokens) = token_stream_statistics(&spans);
             PreparedSourceDraft {
                 meta: SourceMeta {
-                    source_id: file.source_id.clone(),
+                    source_id: source_id.clone(),
                     format: map.format,
-                    content: file.content.clone(),
                     lines: stat_lines,
                     tokens: stat_tokens,
                 },
+                content: Arc::clone(&content),
                 hashes,
                 spans,
             }
@@ -46,7 +52,7 @@ pub(super) fn prepare_file_maps(file: SourceFile, options: &Options) -> Vec<Prep
         .collect()
 }
 
-fn split_tokens(tokens: Vec<DetectionToken>) -> (Vec<u64>, Vec<TokenSpan>) {
+fn split_tokens(tokens: Vec<DetectionToken>) -> (Arc<Vec<u64>>, Arc<Vec<TokenSpan>>) {
     let mut hashes = Vec::with_capacity(tokens.len());
     let mut spans = Vec::with_capacity(tokens.len());
     for token in tokens {
@@ -57,7 +63,7 @@ fn split_tokens(tokens: Vec<DetectionToken>) -> (Vec<u64>, Vec<TokenSpan>) {
             range: token.range,
         });
     }
-    (hashes, spans)
+    (Arc::new(hashes), Arc::new(spans))
 }
 
 fn token_stream_statistics(spans: &[TokenSpan]) -> (usize, usize) {

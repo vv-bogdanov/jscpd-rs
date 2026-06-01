@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::sync::Arc;
 
 use rayon::prelude::*;
 use rustc_hash::FxHashSet;
@@ -131,29 +132,36 @@ pub(crate) fn detect_prepared_drafts(
     prepared_drafts: Vec<PreparedSourceDraft>,
     options: &Options,
 ) -> DetectionResult {
+    let include_source_contents = options
+        .reporters
+        .iter()
+        .any(|reporter| matches!(reporter.as_str(), "json" | "xml" | "html" | "consoleFull"));
+    let mut source_contents = HashMap::new();
     let (format_ids, format_names) = assign_formats(&prepared_drafts);
     let prepared_files = prepared_drafts
         .into_iter()
         .enumerate()
-        .map(|(idx, draft)| PreparedSource {
-            meta: draft.meta,
-            stream: TokenStream {
-                source_id: SourceId(idx),
-                format_id: format_ids[idx],
-                hashes: draft.hashes,
-                spans: draft.spans,
-            },
+        .map(|(idx, draft)| {
+            if include_source_contents && !draft.spans.is_empty() {
+                source_contents
+                    .entry(draft.meta.source_id.clone())
+                    .or_insert_with(|| draft.content.to_string());
+            }
+            PreparedSource {
+                meta: draft.meta,
+                stream: TokenStream {
+                    source_id: SourceId(idx),
+                    format_id: format_ids[idx],
+                    hashes: unwrap_or_clone_arc_vec(draft.hashes),
+                    spans: unwrap_or_clone_arc_vec(draft.spans),
+                },
+            }
         })
         .collect::<Vec<_>>();
 
     let mut statistics = Statistics::default();
     let mut sources = Vec::new();
-    let mut source_contents = HashMap::new();
     let mut source_indices_by_format = vec![Vec::new(); format_names.len()];
-    let include_source_contents = options
-        .reporters
-        .iter()
-        .any(|reporter| matches!(reporter.as_str(), "json" | "xml" | "html" | "consoleFull"));
 
     for (idx, prepared) in prepared_files.iter().enumerate() {
         if prepared.stream.spans.is_empty() {
@@ -172,12 +180,6 @@ pub(crate) fn detect_prepared_drafts(
             lines: prepared.meta.lines,
             tokens: prepared.meta.tokens,
         });
-        if include_source_contents {
-            source_contents.insert(
-                prepared.meta.source_id.clone(),
-                prepared.meta.content.clone(),
-            );
-        }
         source_indices_by_format[prepared.stream.format_id.0].push(idx);
     }
 
@@ -220,6 +222,10 @@ pub(crate) fn detect_prepared_drafts(
 fn dedup_exact_clones(clones: &mut Vec<CloneMatch>) {
     let mut seen = FxHashSet::default();
     clones.retain(|clone| seen.insert(CloneDedupKey::from(clone)));
+}
+
+fn unwrap_or_clone_arc_vec<T: Clone>(value: Arc<Vec<T>>) -> Vec<T> {
+    Arc::try_unwrap(value).unwrap_or_else(|value| (*value).clone())
 }
 
 #[derive(Hash, Eq, PartialEq)]

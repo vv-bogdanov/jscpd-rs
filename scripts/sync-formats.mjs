@@ -30,9 +30,8 @@ pub const SUPPORTED_FORMATS: &[&str] = &[
 ${stringArray(supportedFormats)}
 ];
 
-const EXTENSION_FORMATS: &[(&str, &str)] = &[
-${tupleArray(extensionFormats)}
-];
+#[cfg(test)]
+const EXTENSION_FORMATS_COUNT: usize = ${extensionFormats.length};
 
 pub fn format_for_path<'a>(
     path: &Path,
@@ -51,9 +50,14 @@ pub fn format_for_path<'a>(
         return formats_exts.find_format_for_value(&ext);
     }
 
-    EXTENSION_FORMATS
-        .iter()
-        .find_map(|(candidate, format)| (*candidate == ext).then_some(*format))
+    builtin_format_for_extension(&ext)
+}
+
+fn builtin_format_for_extension(extension: &str) -> Option<&'static str> {
+    match extension {
+${matchArms(extensionFormats)}
+        _ => None,
+    }
 }
 
 pub fn supported_formats() -> Vec<&'static str> {
@@ -99,7 +103,7 @@ mod tests {
     #[test]
     fn syncs_supported_format_surface_from_upstream() {
         assert_eq!(super::SUPPORTED_FORMATS.len(), ${supportedFormats.length});
-        assert_eq!(super::EXTENSION_FORMATS.len(), ${extensionFormats.length});
+        assert_eq!(super::EXTENSION_FORMATS_COUNT, ${extensionFormats.length});
         assert_eq!(super::supported_formats().first(), Some(&"abap"));
         assert!(super::supported_formats().contains(&"typescript"));
         assert!(super::supported_formats().contains(&"excel-formula"));
@@ -170,8 +174,8 @@ function stringArray(values) {
   return values.map((value) => `    ${quote(value)},`).join('\n');
 }
 
-function tupleArray(values) {
-  return values.map(([left, right]) => `    (${quote(left)}, ${quote(right)}),`).join('\n');
+function matchArms(values) {
+  return values.map(([left, right]) => `        ${quote(left)} => Some(${quote(right)}),`).join('\n');
 }
 
 function quote(value) {

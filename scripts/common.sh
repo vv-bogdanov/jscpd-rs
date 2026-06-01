@@ -20,7 +20,7 @@ jscpd_rs_prepare_release_tools() {
     corepack prepare pnpm@10.28.0 --activate >/dev/null
   fi
 
-  cd "$ROOT"
+  cd "$ROOT" || exit
   cargo build --release >/dev/null
 
   if [[ ! -e "$ROOT/jscpd/node_modules/@jscpd/core" ]]; then

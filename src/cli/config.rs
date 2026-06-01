@@ -501,6 +501,206 @@ mod tests {
         );
     }
 
+    #[test]
+    fn config_number_strings_follow_node_number_rules() {
+        assert_eq!(parse_config_usize_string("0x10").unwrap(), 16);
+        assert_eq!(parse_config_usize_string(" 42 ").unwrap(), 42);
+        assert!(parse_config_usize_string("1.5").is_err());
+        assert!(parse_config_usize_string("-1").is_err());
+        assert!(parse_config_usize_string("Infinity").is_err());
+
+        let config: FileConfig =
+            serde_json::from_str(r#"{"minLines":"0b101","threshold":"1e2"}"#).unwrap();
+        assert_eq!(config.min_lines, Some(5));
+        assert_eq!(config.threshold, Some(100.0));
+
+        let error = serde_json::from_str::<FileConfig>(r#"{"minLines":[]}"#).unwrap_err();
+        assert!(error.to_string().contains("invalid type: array"));
+    }
+
+    #[test]
+    fn config_number_deserializers_accept_numbers_nulls_and_reject_wrong_types() {
+        let config: FileConfig =
+            serde_json::from_str(r#"{"minLines":7,"maxLines":null,"threshold":2.5}"#).unwrap();
+        assert_eq!(config.min_lines, Some(7));
+        assert_eq!(config.max_lines, None);
+        assert_eq!(config.threshold, Some(2.5));
+
+        let config: FileConfig =
+            serde_json::from_str(r#"{"minLines":null,"threshold":null}"#).unwrap();
+        assert_eq!(config.min_lines, None);
+        assert_eq!(config.threshold, None);
+
+        let error = serde_json::from_str::<FileConfig>(r#"{"threshold":{}}"#).unwrap_err();
+        assert!(error.to_string().contains("invalid type: object"));
+    }
+
+    #[test]
+    fn clean_lexical_path_collapses_dot_and_parent_components() {
+        assert_eq!(
+            clean_lexical_path(Path::new("repo/app/./src/../tests/file.js")),
+            PathBuf::from("repo/app/tests/file.js")
+        );
+        assert_eq!(
+            clean_lexical_path(Path::new("../repo/./src")),
+            PathBuf::from("../repo/src")
+        );
+        assert!(
+            absolute_config_path(Path::new("Cargo.toml"))
+                .unwrap()
+                .is_absolute()
+        );
+    }
+
+    #[test]
+    fn resolves_config_paths_and_ignores_like_upstream() {
+        let cwd = std::env::current_dir().unwrap();
+        let config_dir = cwd.join("fixtures").join("config");
+        let absolute = cwd.join("src");
+
+        assert_eq!(
+            resolve_config_path(&config_dir, "src"),
+            config_dir.join("src")
+        );
+        assert_eq!(resolve_config_path(&config_dir, absolute.clone()), absolute);
+        assert_eq!(
+            resolve_config_ignore(&config_dir, "**/vendor/**".to_string()).unwrap(),
+            "**/vendor/**"
+        );
+        assert_eq!(
+            resolve_config_ignore(&cwd, "target/**".to_string()).unwrap(),
+            "target/**"
+        );
+
+        let absolute = cwd.join("dist/**").display().to_string();
+        assert_eq!(
+            resolve_config_ignore(&config_dir, absolute.clone()).unwrap(),
+            absolute
+        );
+    }
+
+    #[test]
+    fn applies_config_mappings_and_exit_code_variants() {
+        let config: FileConfig = serde_json::from_str(
+            r#"{
+                "format": "javascript,typescript",
+                "formatsExts": {"javascript": ["mjs", "cjs"]},
+                "formatsNames": "makefile:Makefile,GNUmakefile",
+                "exitCode": false,
+                "tokensToSkip": "import,require"
+            }"#,
+        )
+        .unwrap();
+        let mut options = Options::default();
+
+        apply_config(&mut options, config, Path::new(".")).unwrap();
+
+        assert_eq!(
+            options.format_order,
+            Some(vec!["javascript".to_string(), "typescript".to_string()])
+        );
+        assert_eq!(
+            options.formats_exts.find_format_for_value("mjs"),
+            Some("javascript")
+        );
+        assert_eq!(
+            options.formats_names.find_format_for_value("GNUmakefile"),
+            Some("makefile")
+        );
+        assert_eq!(options.exit_code, ExitCode::Boolean(false));
+        assert_eq!(options.tokens_to_skip, vec!["import", "require"]);
+    }
+
+    #[test]
+    fn node_like_json_syntax_message_handles_eof() {
+        let data = "{\"minLines\":";
+        let error = serde_json::from_str::<FileConfig>(data).unwrap_err();
+
+        assert_eq!(
+            node_like_json_syntax_message(data, &error),
+            "Unexpected end of JSON input"
+        );
+        assert_eq!(json_error_position("a\nbc", 2, 2), 3);
+
+        let trailing = "[1,]";
+        let error = serde_json::from_str::<serde_json::Value>(trailing).unwrap_err();
+        assert!(node_like_json_syntax_message(trailing, &error).contains("at position"));
+    }
+
+    #[test]
+    fn read_config_reports_syntax_errors_with_upstream_shape() {
+        let root = unique_temp_dir("jscpd-rs-config-syntax");
+        std::fs::create_dir_all(&root).unwrap();
+        let path = root.join(".jscpd.json");
+        std::fs::write(&path, "{ invalid json\n").unwrap();
+
+        let error = read_config(Some(&path)).unwrap_err();
+        let _ = std::fs::remove_dir_all(root);
+
+        assert!(error.to_string().starts_with("SyntaxError: "));
+        assert!(error.to_string().contains("Expected property name or '}'"));
+    }
+
+    #[test]
+    fn apply_config_updates_main_runtime_flags() {
+        let config: FileConfig = serde_json::from_str(
+            r#"{
+                "executionId": "run-1",
+                "path": "src,tests",
+                "pattern": "**/*.rs",
+                "ignore": "target/**,dist/**",
+                "reporters": "json,console",
+                "ignorePattern": ["import .*"],
+                "minLines": 3,
+                "minTokens": 7,
+                "maxLines": 99,
+                "maxSize": "2kb",
+                "threshold": 10,
+                "mode": "weak",
+                "silent": true,
+                "absolute": true,
+                "noSymlinks": true,
+                "ignoreCase": true,
+                "gitignore": false,
+                "debug": true,
+                "verbose": true,
+                "skipLocal": true,
+                "exitCode": 2,
+                "noTips": true
+            }"#,
+        )
+        .unwrap();
+        let mut options = Options::default();
+
+        apply_config(&mut options, config, Path::new(".")).unwrap();
+
+        assert_eq!(options.execution_id.as_deref(), Some("run-1"));
+        assert_eq!(
+            options.paths,
+            vec![PathBuf::from("./src"), PathBuf::from("./tests")]
+        );
+        assert_eq!(options.pattern, "**/*.rs");
+        assert_eq!(options.ignore, vec!["./target/**", "./dist/**"]);
+        assert_eq!(options.reporters, vec!["json", "console"]);
+        assert_eq!(options.ignore_pattern.len(), 1);
+        assert_eq!(options.min_lines, 3);
+        assert_eq!(options.min_tokens, 7);
+        assert_eq!(options.max_lines, 99);
+        assert_eq!(options.max_size_bytes, 2 * 1024);
+        assert_eq!(options.threshold, Some(10.0));
+        assert_eq!(options.mode, super::super::Mode::Weak);
+        assert!(options.silent);
+        assert!(options.absolute);
+        assert!(options.no_symlinks);
+        assert!(options.ignore_case);
+        assert!(!options.gitignore);
+        assert!(options.debug);
+        assert!(options.verbose);
+        assert!(options.skip_local);
+        assert_eq!(options.exit_code, ExitCode::Number(2.0));
+        assert!(options.no_tips);
+    }
+
     #[cfg(unix)]
     #[test]
     fn read_config_preserves_symlink_path_like_upstream() {

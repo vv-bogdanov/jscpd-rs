@@ -24,6 +24,27 @@ section() {
   printf '\n== %s ==\n' "$*"
 }
 
+check_npm_version_available() {
+  local package_name="$1"
+  local package_version="$2"
+  local npm_view_output
+  local npm_view_code
+
+  set +e
+  npm_view_output="$(npm view "${package_name}@${package_version}" version 2>&1)"
+  npm_view_code=$?
+  set -e
+  if [[ "$npm_view_code" == "0" ]]; then
+    printf '%s\n' "$npm_view_output" >&2
+    fail "npm package ${package_name}@${package_version} is already published"
+  fi
+  if ! grep -Fq "E404" <<<"$npm_view_output"; then
+    printf '%s\n' "$npm_view_output" >&2
+    fail "could not confirm npm package ${package_name}@${package_version} availability"
+  fi
+  printf 'npm package %s@%s is not published yet\n' "$package_name" "$package_version"
+}
+
 section "clean git state"
 status="$(git status --short)"
 if [[ -n "$status" ]]; then
@@ -62,19 +83,21 @@ fi
 printf 'crate %s@%s is not published yet\n' "$CRATE_NAME" "$PACKAGE_VERSION"
 
 section "npm package version availability"
-set +e
-npm_view_output="$(npm view "${NPM_PACKAGE_NAME}@${PACKAGE_VERSION}" version 2>&1)"
-npm_view_code=$?
-set -e
-if [[ "$npm_view_code" == "0" ]]; then
-  printf '%s\n' "$npm_view_output" >&2
-  fail "npm package ${NPM_PACKAGE_NAME}@${PACKAGE_VERSION} is already published"
-fi
-if ! grep -Fq "E404" <<<"$npm_view_output"; then
-  printf '%s\n' "$npm_view_output" >&2
-  fail "could not confirm npm package ${NPM_PACKAGE_NAME}@${PACKAGE_VERSION} availability"
-fi
-printf 'npm package %s@%s is not published yet\n' "$NPM_PACKAGE_NAME" "$PACKAGE_VERSION"
+mapfile -t npm_package_names < <(
+  printf '%s\n' "$NPM_PACKAGE_NAME"
+  node --input-type=module <<'NODE'
+import fs from 'node:fs';
+
+const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+const optional = Object.keys(pkg.optionalDependencies ?? {}).sort();
+for (const name of optional) {
+  console.log(name);
+}
+NODE
+)
+for package_name in "${npm_package_names[@]}"; do
+  check_npm_version_available "$package_name" "$PACKAGE_VERSION"
+done
 
 section "benchmark docs consistency"
 benchmark_source="docs/compat-baseline.md"

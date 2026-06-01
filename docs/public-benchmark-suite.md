@@ -31,7 +31,7 @@ Usage:
 LIST=1 scripts/public-bench-suite.sh
 CASES=react,next RUNS=3 scripts/public-bench-suite.sh
 CHECK_COMPAT=1 CASES=react scripts/public-bench-suite.sh
-MIN_SPEEDUP=10 CASES=react,next RUNS=3 scripts/public-bench-suite.sh
+MIN_SPEEDUP=45 CASES=react,next RUNS=3 scripts/public-bench-suite.sh
 UPSTREAM_TIMEOUT=600s CASES=vscode RUNS=1 scripts/public-bench-suite.sh
 PUBLIC=1 PUBLIC_CASES=react,next PUBLIC_RUNS=3 scripts/release-gate.sh
 ```
@@ -46,6 +46,10 @@ case falls below the required upstream/Rust speedup. Each upstream timing run is
 bounded by `UPSTREAM_TIMEOUT` (`600s` by default) so optional stress cases cannot
 hang a release gate indefinitely; set `RUST_TIMEOUT` or `UPSTREAM_TIMEOUT` to an
 empty value to disable that side's timeout.
+
+The release gate uses `PUBLIC_MIN_SPEEDUP=45` by default. This intentionally
+locks the 50x+ product baseline with enough headroom for normal runner noise;
+lowering that threshold requires an explicit release decision.
 
 When `CHECK_COMPAT=1` is enabled, the suite runs the same coverage-first report
 comparison used by the fixture gates. `react`, `next`, and `prometheus` include

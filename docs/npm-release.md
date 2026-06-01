@@ -3,15 +3,18 @@
 Current npm readiness snapshot:
 
 - Date: 2026-06-01.
-- Baseline commit: `e343350`; rerun `scripts/npm-package-check.sh` on the
-  exact checkout before npm publish.
-- GitHub Actions `release-gate`: passed on run `26743839098`.
-- Local checks passed: `cargo test`, `scripts/package-check.sh`,
-  `scripts/npm-package-check.sh`, local `npx --no-install` smoke for
-  `jscpd-rs`, `jscpd`, and `jscpd-server`.
-- Package name status: `npm view jscpd-rs version` returned `E404`.
-- Packed artifact audit: `jscpd-rs-0.1.0.tgz`, 96 files, about 169 KiB packed,
-  about 708 KiB unpacked.
+- Current published version: `jscpd-rs@0.1.2`.
+- Latest npm publish workflow: run `26752424193`, commit `74380d6`,
+  conclusion `success`.
+- Published platform packages: `jscpd-rs-linux-x64-gnu`,
+  `jscpd-rs-linux-arm64-gnu`, `jscpd-rs-darwin-x64`,
+  `jscpd-rs-darwin-arm64`, and `jscpd-rs-win`.
+- Post-publication smoke passed from clean temporary directories:
+  `npm install jscpd-rs@0.1.2`, `jscpd-rs --version`, `jscpd --version`,
+  `jscpd-server --version`, and
+  `npx --package jscpd-rs@0.1.2 jscpd-rs --version`.
+- Rerun `scripts/npm-package-check.sh` on the exact checkout before publishing
+  any new npm version.
 
 The npm package is `jscpd-rs`. It exposes these bin commands:
 
@@ -57,7 +60,7 @@ Before actual publication, run:
 git status --short
 npm whoami
 scripts/npm-package-check.sh
-npm view jscpd-rs version
+npm view jscpd-rs@X.Y.Z version
 ```
 
 For a new version, `npm view jscpd-rs@X.Y.Z version` should fail before the
@@ -70,14 +73,8 @@ crate and GitHub tag have already been published: that script is the full
 Cargo/GitHub first-publication gate and intentionally checks that the crate name
 and release tag are still available.
 
-If the package name is still free and the npm account is logged in:
-
-```bash
-scripts/npm-package-check.sh
-npm publish --access public
-```
-
-If the account requires a one-time password for publish:
+If an emergency manual fallback is approved and the npm account requires a
+one-time password for publish:
 
 ```bash
 npm publish --access public --otp 123456
@@ -127,13 +124,15 @@ Then publish automatically from GitHub:
 4. Create and publish a GitHub Release with tag `vX.Y.Z`.
 5. GitHub Actions will run `npm-publish` from that release tag.
 
-Manual fallback:
+Manual workflow fallback:
 
 1. Open GitHub Actions.
 2. Select the `npm-publish` workflow.
 3. Click **Run workflow** on `main`.
 4. Enter `jscpd-rs` for `package_name`.
-5. Run the workflow.
+5. Optionally enter a single target key such as `linux-arm64-gnu` and set
+   `publish_main=false` when only one prebuilt package needs a rerun.
+6. Run the workflow.
 
 If npm does not allow Trusted Publishing configuration before a platform package
 version exists, add a short-lived `NPM_TOKEN` GitHub secret for the first

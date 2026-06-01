@@ -201,3 +201,91 @@ fn push_gitignore_glob_variants(globs: &mut Vec<String>, path: &Path) {
         globs.push(format!("{relative}/**"));
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    #[test]
+    fn scoped_gitignore_globs_cover_rooted_nested_and_filename_patterns() {
+        let base = std::env::current_dir().unwrap();
+
+        let rooted = scoped_gitignore_globs(&base, "dist", true);
+        assert!(rooted.iter().any(|glob| glob == "dist"));
+        assert!(rooted.iter().any(|glob| glob == "dist/**"));
+
+        let nested = scoped_gitignore_globs(&base, "src/generated", false);
+        assert!(nested.iter().any(|glob| glob == "src/generated"));
+        assert!(nested.iter().any(|glob| glob == "**/src/generated"));
+
+        let filename = scoped_gitignore_globs(&base, "*.snap", false);
+        assert!(filename.iter().any(|glob| glob == "**/*.snap"));
+        assert!(filename.iter().any(|glob| glob == "**/*.snap/**"));
+    }
+
+    #[test]
+    fn gitignore_lines_trim_slashes_backslashes_and_negations() {
+        assert_eq!(
+            gitignore_line_to_globs(r"build\generated", None),
+            vec![
+                "build/generated",
+                "build/generated/**",
+                "**/build/generated",
+                "**/build/generated/**",
+            ]
+        );
+        assert_eq!(
+            gitignore_line_to_globs("!/dist/", None),
+            vec!["!dist", "!dist/**"]
+        );
+    }
+
+    #[test]
+    fn collect_gitignore_patterns_walks_parents_and_repo_exclude_once() {
+        let repo = unique_temp_path("gitignore-repo");
+        let nested = repo.join("packages").join("app");
+        std::fs::create_dir_all(repo.join(".git").join("info")).unwrap();
+        std::fs::create_dir_all(&nested).unwrap();
+        std::fs::write(repo.join(".gitignore"), "/target\n").unwrap();
+        std::fs::write(nested.join(".gitignore"), "local-cache\n").unwrap();
+        std::fs::write(
+            repo.join(".git").join("info").join("exclude"),
+            "repo-only\n",
+        )
+        .unwrap();
+
+        let patterns =
+            collect_gitignore_patterns_with_global(&[nested.clone(), nested.join("src")], None);
+        let _ = std::fs::remove_dir_all(&repo);
+
+        assert!(patterns.iter().any(|pattern| pattern.ends_with("/target")));
+        assert!(
+            patterns
+                .iter()
+                .any(|pattern| pattern.ends_with("/**/local-cache"))
+        );
+        assert!(
+            patterns
+                .iter()
+                .any(|pattern| pattern.ends_with("/**/repo-only"))
+        );
+        let repo_only = patterns
+            .iter()
+            .filter(|pattern| pattern.contains("repo-only"))
+            .collect::<Vec<_>>();
+        let unique_repo_only = repo_only
+            .iter()
+            .copied()
+            .collect::<std::collections::HashSet<_>>();
+        assert_eq!(repo_only.len(), unique_repo_only.len());
+    }
+
+    fn unique_temp_path(label: &str) -> PathBuf {
+        let suffix = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        std::env::temp_dir().join(format!("jscpd-rs-{label}-{}-{suffix}", std::process::id()))
+    }
+}
