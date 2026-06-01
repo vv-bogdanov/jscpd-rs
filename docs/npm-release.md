@@ -76,3 +76,41 @@ If the account requires a one-time password for publish:
 ```bash
 npm publish --access public --otp 123456
 ```
+
+## Trusted Publishing
+
+Trusted Publishing is the preferred npm path for CI/CD publishing. npm trusts a
+specific GitHub Actions workflow through OIDC, so the workflow can publish
+without a long-lived npm token. For public packages published from public
+repositories, npm also generates provenance attestations automatically.
+
+This repository provides a manual publish workflow:
+
+```text
+.github/workflows/npm-publish.yml
+```
+
+Configure npm:
+
+1. Open the `jscpd-rs` package settings on npmjs.com.
+2. Go to **Trusted Publisher**.
+3. Select **GitHub Actions**.
+4. Use these values:
+   - Organization or user: `vv-bogdanov`
+   - Repository: `jscpd-rs`
+   - Workflow filename: `npm-publish.yml`
+   - Environment name: leave empty
+   - Allowed actions: `npm publish`
+
+Then publish from GitHub:
+
+1. Open GitHub Actions.
+2. Select the `npm-publish` workflow.
+3. Click **Run workflow** on `main`.
+4. Enter `jscpd-rs` for `package_name`.
+5. Run the workflow.
+
+If npm does not allow Trusted Publishing configuration before the first package
+version exists, publish the first version with either interactive 2FA or a
+short-lived granular token with bypass 2FA enabled, then immediately configure
+Trusted Publishing for future releases.

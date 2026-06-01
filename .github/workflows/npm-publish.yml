@@ -1,0 +1,55 @@
+name: npm-publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      package_name:
+        description: "Type jscpd-rs to confirm npm publication"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    name: publish npm package
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Confirm package
+        run: |
+          if [[ "${{ inputs.package_name }}" != "jscpd-rs" ]]; then
+            echo "package_name must be exactly jscpd-rs" >&2
+            exit 1
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install Rust
+        run: |
+          rustup toolchain install 1.93.0 --profile minimal
+          rustup default 1.93.0
+
+      - name: Install Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
+          package-manager-cache: false
+
+      - name: Check package version is not published
+        run: |
+          version="$(node -p 'require("./package.json").version')"
+          if npm view "jscpd-rs@${version}" version >/dev/null 2>&1; then
+            echo "jscpd-rs@${version} is already published" >&2
+            exit 1
+          fi
+
+      - name: Verify npm package
+        run: scripts/npm-package-check.sh
+
+      - name: Publish
+        run: npm publish --access public
