@@ -15,16 +15,22 @@ permissions:
   contents: read
   id-token: write
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
-  publish:
-    name: publish npm package
+  prepare:
+    name: prepare npm release
     if: >-
       ${{
         github.event_name == 'workflow_dispatch' ||
         (github.event_name == 'release' && !github.event.release.draft && !github.event.release.prerelease)
       }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
+    runs-on: ubuntu-24.04
+    outputs:
+      targets: ${{ steps.metadata.outputs.targets }}
+      version: ${{ steps.metadata.outputs.version }}
     steps:
       - name: Confirm package
         if: github.event_name == 'workflow_dispatch'
@@ -34,6 +40,131 @@ jobs:
             exit 1
           fi
 
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event_name == 'release' && github.event.release.tag_name || github.ref }}
+
+      - name: Install Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
+          package-manager-cache: false
+
+      - name: Read npm metadata
+        id: metadata
+        run: |
+          version="$(node -p 'require("./package.json").version')"
+          targets="$(
+            node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+
+          const targets = JSON.parse(fs.readFileSync('npm/prebuilt-targets.json', 'utf8'));
+          console.log(
+            JSON.stringify(
+              Object.entries(targets).map(([key, target]) => ({ key, ...target })),
+            ),
+          );
+          NODE
+          )"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "targets=${targets}" >> "$GITHUB_OUTPUT"
+
+      - name: Check release tag matches package version
+        if: github.event_name == 'release'
+        run: |
+          version="${{ steps.metadata.outputs.version }}"
+          tag="${{ github.event.release.tag_name }}"
+          if [[ "$tag" != "v${version}" ]]; then
+            echo "release tag ${tag} does not match package version ${version}" >&2
+            exit 1
+          fi
+
+      - name: Check main package version is not published
+        run: |
+          version="${{ steps.metadata.outputs.version }}"
+          if npm view "jscpd-rs@${version}" version >/dev/null 2>&1; then
+            echo "jscpd-rs@${version} is already published" >&2
+            exit 1
+          fi
+
+  build-platform-packages:
+    name: build ${{ matrix.target.key }}
+    needs: prepare
+    runs-on: ${{ matrix.target.runner }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        target: ${{ fromJson(needs.prepare.outputs.targets) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event_name == 'release' && github.event.release.tag_name || github.ref }}
+
+      - name: Install Rust
+        run: |
+          rustup toolchain install 1.93.0 --profile minimal
+          rustup default 1.93.0
+          rustup target add "${{ matrix.target.rustTarget }}"
+
+      - name: Install Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
+          package-manager-cache: false
+
+      - name: Build native binaries
+        run: |
+          cargo build \
+            --release \
+            --locked \
+            --target "${{ matrix.target.rustTarget }}" \
+            --bin jscpd \
+            --bin jscpd-server
+
+      - name: Create platform package
+        id: package
+        run: |
+          package_dir="$(
+            node scripts/npm-prebuilt-package.mjs \
+              --target "${{ matrix.target.key }}" \
+              --bin-dir "target/${{ matrix.target.rustTarget }}/release" \
+              --out-dir "target/npm-prebuilt"
+          )"
+          echo "package_dir=${package_dir}" >> "$GITHUB_OUTPUT"
+
+      - name: Smoke platform package
+        run: |
+          package_dir="${{ steps.package.outputs.package_dir }}"
+          test "$("$package_dir/bin/${{ matrix.target.os == 'win32' && 'jscpd.exe' || 'jscpd' }}" --version)" = "${{ needs.prepare.outputs.version }}"
+          test "$("$package_dir/bin/${{ matrix.target.os == 'win32' && 'jscpd-server.exe' || 'jscpd-server' }}" --version)" = "${{ needs.prepare.outputs.version }}"
+          npm pack "$package_dir" --pack-destination "$RUNNER_TEMP" --json >/dev/null
+
+      - name: Publish platform package
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          version="${{ needs.prepare.outputs.version }}"
+          package_name="${{ matrix.target.packageName }}"
+          package_dir="${{ steps.package.outputs.package_dir }}"
+          if npm view "${package_name}@${version}" version >/dev/null 2>&1; then
+            echo "${package_name}@${version} is already published; skipping"
+            exit 0
+          fi
+          npm publish "$package_dir" --access public --provenance
+
+  publish-main:
+    name: publish main npm package
+    needs:
+      - prepare
+      - build-platform-packages
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
       - name: Checkout
         uses: actions/checkout@v5
         with:
@@ -51,26 +182,10 @@ jobs:
           registry-url: "https://registry.npmjs.org"
           package-manager-cache: false
 
-      - name: Check release tag matches package version
-        if: github.event_name == 'release'
-        run: |
-          version="$(node -p 'require("./package.json").version')"
-          tag="${{ github.event.release.tag_name }}"
-          if [[ "$tag" != "v${version}" ]]; then
-            echo "release tag ${tag} does not match package version ${version}" >&2
-            exit 1
-          fi
-
-      - name: Check package version is not published
-        run: |
-          version="$(node -p 'require("./package.json").version')"
-          if npm view "jscpd-rs@${version}" version >/dev/null 2>&1; then
-            echo "jscpd-rs@${version} is already published" >&2
-            exit 1
-          fi
-
       - name: Verify npm package
         run: scripts/npm-package-check.sh
 
-      - name: Publish
-        run: npm publish --access public
+      - name: Publish main package
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access public --provenance

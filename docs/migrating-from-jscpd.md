@@ -127,8 +127,9 @@ These are intentional first-release limits:
   tokenizer is needed;
 - the Rust crate exposes a native Rust API, not the upstream JavaScript package
   API;
-- current npm packaging is source-build: a Rust/Cargo toolchain is required
-  during install until prebuilt platform packages are added.
+- published `jscpd-rs@0.1.0` npm packaging is source-build: a Rust/Cargo
+  toolchain is required during install until the next npm release publishes
+  prebuilt platform packages.
 
 ## Compare On Your Repository
 
@@ -190,6 +191,7 @@ npm/npx-based `jscpd-rs` CI:
 - run: npx jscpd-rs src --reporters console,json --threshold 5 --exitCode 1
 ```
 
-The npm source-build package still needs Rust available during installation.
-Prebuilt npm platform packages are the next packaging milestone; see the
+The published `jscpd-rs@0.1.0` source-build npm package still needs Rust
+available during installation. The repository is configured to publish
+prebuilt npm platform packages from the next npm release; see the
 [prebuilt binary distribution plan](prebuilt-binaries.md).

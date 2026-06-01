@@ -1,24 +1,29 @@
 "use strict";
 
 const fs = require("node:fs");
-const path = require("node:path");
 const { spawnSync } = require("node:child_process");
+const {
+  packageRoot,
+  resolvePrebuiltBinary,
+  sourceBinaryPath,
+} = require("../lib/platform");
 
-const root = path.resolve(__dirname, "..", "..");
+const root = packageRoot();
 const cargo = process.env.CARGO || "cargo";
-const targetDir = process.env.CARGO_TARGET_DIR || path.join(root, "target");
-const releaseDir = path.join(targetDir, "release");
-const exeSuffix = process.platform === "win32" ? ".exe" : "";
-const binaries = ["jscpd", "jscpd-server"].map((name) =>
-  path.join(releaseDir, `${name}${exeSuffix}`),
-);
+const binaryNames = ["jscpd", "jscpd-server"];
+const prebuiltBinaries = binaryNames.map(resolvePrebuiltBinary);
+const sourceBinaries = binaryNames.map(sourceBinaryPath);
 
 if (process.env.JSCPD_RS_SKIP_POSTINSTALL === "1") {
   console.log("jscpd-rs: skipping native build because JSCPD_RS_SKIP_POSTINSTALL=1");
   process.exit(0);
 }
 
-if (binaries.every((binary) => fs.existsSync(binary))) {
+if (prebuiltBinaries.every(Boolean)) {
+  process.exit(0);
+}
+
+if (sourceBinaries.every((binary) => fs.existsSync(binary))) {
   process.exit(0);
 }
 

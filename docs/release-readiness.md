@@ -1,6 +1,6 @@
 # Release Readiness
 
-Last updated: 2026-05-31.
+Last updated: 2026-06-01.
 
 This is the working component checklist for the first release. The authoritative
 policy decisions are still in `docs/release-decisions.md`; this file tracks the
@@ -36,7 +36,7 @@ current implementation status.
 | Terminal cosmetics | practical parity | Important messages are gated; exact wrapping/order remains lower priority. |
 | Upstream JavaScript API parity | follow-up | Native Rust helpers cover the practical app/tokenizer/detector/statistics/store concepts, including an embeddable argv runner and tokenizer map generation; exact JS package export shape is not implemented in the Rust crate. See `docs/api-parity.md`. |
 | Server snippet matching | optimized baseline | Native `/api/check` and MCP `check_duplication` are functional and reuse project token maps from the last scan; add a dedicated window index only if real server benchmarks require it. |
-| Npm prebuilt binaries | follow-up | The current npm package is source-build: install/postinstall compiles with Cargo. Add platform-specific optional packages before broad npm promotion so npm users do not need a Rust toolchain. See the [prebuilt binary distribution plan](prebuilt-binaries.md). |
+| Npm prebuilt binaries | configured | The published `jscpd-rs@0.1.0` package is source-build, but the repository now has platform-specific optional package metadata, runtime prebuilt resolution, prebuilt/fallback package checks, and GitHub Release publishing automation for the next npm release. See the [prebuilt binary distribution plan](prebuilt-binaries.md). |
 | Latest full publication gate | ready | `scripts/prepublish-check.sh` passed locally on code commit `8c3da0e`, including `scripts/release-candidate.sh`, package/install verification, crate/tag availability checks, npm package/name/npx verification, and `cargo publish --dry-run --locked`. GitHub Actions default `release-gate` passed on code commit `8c3da0e` in run `26710762680`. After benchmark documentation updates, `RUN_RELEASE_CANDIDATE=0 scripts/prepublish-check.sh` is the package/dry-run refresh gate for the exact package contents being tagged. |
 
 ## Post-MVP

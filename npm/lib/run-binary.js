@@ -3,20 +3,19 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
-
-function packageRoot() {
-  return path.resolve(__dirname, "..", "..");
-}
-
-function binaryPath(name) {
-  const exe = process.platform === "win32" ? `${name}.exe` : name;
-  const targetDir =
-    process.env.CARGO_TARGET_DIR || path.join(packageRoot(), "target");
-  return path.join(targetDir, "release", exe);
-}
+const {
+  packageRoot,
+  resolvePrebuiltBinary,
+  sourceBinaryPath,
+} = require("./platform");
 
 function buildIfMissing(name) {
-  const binary = binaryPath(name);
+  const prebuilt = resolvePrebuiltBinary(name);
+  if (prebuilt) {
+    return prebuilt;
+  }
+
+  const binary = sourceBinaryPath(name);
   if (fs.existsSync(binary)) {
     return binary;
   }

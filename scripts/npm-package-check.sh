@@ -56,13 +56,16 @@ const required = [
   'Cargo.toml',
   'Cargo.lock',
   'docs/migrating-from-jscpd.md',
+  'docs/prebuilt-binaries.md',
   'docs/user-guide.md',
   'examples/library_api.rs',
   'LICENSE',
   'README.md',
   'npm/bin/jscpd-rs.js',
   'npm/bin/jscpd-server.js',
+  'npm/lib/platform.js',
   'npm/lib/run-binary.js',
+  'npm/prebuilt-targets.json',
   'npm/scripts/postinstall.js',
   'package.json',
   'skills/dry-refactoring/SKILL.md',
@@ -92,6 +95,35 @@ for (const path of files) {
   }
 }
 console.log(`npm package file count: ${files.length}`);
+NODE
+
+node --input-type=module - "$npm_version" <<'NODE'
+import fs from 'node:fs';
+
+const [expectedVersion] = process.argv.slice(2);
+const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+const targets = JSON.parse(fs.readFileSync('npm/prebuilt-targets.json', 'utf8'));
+const expectedPackages = Object.values(targets)
+  .map((target) => target.packageName)
+  .sort();
+const optionalDependencies = pkg.optionalDependencies ?? {};
+const actualPackages = Object.keys(optionalDependencies).sort();
+
+if (JSON.stringify(actualPackages) !== JSON.stringify(expectedPackages)) {
+  console.error(
+    `optionalDependencies do not match prebuilt targets: ${actualPackages.join(', ')}`,
+  );
+  process.exit(1);
+}
+
+for (const name of expectedPackages) {
+  if (optionalDependencies[name] !== expectedVersion) {
+    console.error(
+      `optional dependency ${name} uses ${optionalDependencies[name]}, expected ${expectedVersion}`,
+    );
+    process.exit(1);
+  }
+}
 NODE
 
 set +e
@@ -126,7 +158,7 @@ fi
   cd "$FAIL_DIR"
   npm init -y >/dev/null
   set +e
-  CARGO="$TMP_ROOT/missing-cargo" npm install --no-audit --no-fund "$tarball" \
+  CARGO="$TMP_ROOT/missing-cargo" npm install --omit=optional --no-audit --no-fund "$tarball" \
     >"$TMP_ROOT/npm-install-no-cargo.log" 2>&1
   status=$?
   set -e
@@ -146,12 +178,53 @@ fi
 (
   cd "$INSTALL_DIR"
   npm init -y >/dev/null
-  npm install --no-audit --no-fund "$tarball"
+  JSCPD_RS_FORCE_BUILD=1 npm install --omit=optional --no-audit --no-fund "$tarball"
   test "$("./node_modules/.bin/jscpd-rs" --version)" = "$cargo_version"
   test "$("./node_modules/.bin/jscpd" --version)" = "$cargo_version"
   test "$("./node_modules/.bin/jscpd-server" --version)" = "$cargo_version"
   "./node_modules/.bin/jscpd" --help | grep -Fq 'Usage: jscpd [options] <path ...>'
 )
+
+current_target="$(node -e 'process.stdout.write(require("./npm/lib/platform").currentTargetKey() || "")')"
+if [[ -n "$current_target" ]]; then
+  cargo build --release --locked --bin jscpd --bin jscpd-server >/dev/null
+
+  PREBUILT_ROOT="$TMP_ROOT/prebuilt"
+  PREBUILT_PACK_DIR="$TMP_ROOT/prebuilt-pack"
+  PREBUILT_INSTALL_DIR="$TMP_ROOT/install-prebuilt"
+  mkdir -p "$PREBUILT_ROOT" "$PREBUILT_PACK_DIR" "$PREBUILT_INSTALL_DIR"
+
+  prebuilt_package_dir="$(
+    node scripts/npm-prebuilt-package.mjs \
+      --target "$current_target" \
+      --bin-dir "$ROOT/target/release" \
+      --out-dir "$PREBUILT_ROOT"
+  )"
+  npm pack "$prebuilt_package_dir" --pack-destination "$PREBUILT_PACK_DIR" --json \
+    >"$TMP_ROOT/npm-prebuilt-pack.json"
+  prebuilt_tarball="$(node --input-type=module - "$TMP_ROOT/npm-prebuilt-pack.json" <<'NODE'
+import fs from 'node:fs';
+
+const pack = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+console.log(pack[0].filename);
+NODE
+)"
+  prebuilt_tarball="$PREBUILT_PACK_DIR/$prebuilt_tarball"
+
+  (
+    cd "$PREBUILT_INSTALL_DIR"
+    npm init -y >/dev/null
+    npm install --ignore-scripts --no-audit --no-fund "$prebuilt_tarball"
+    JSCPD_RS_SKIP_POSTINSTALL=1 CARGO="$TMP_ROOT/missing-cargo" \
+      npm install --no-audit --no-fund "$tarball"
+    export CARGO="$TMP_ROOT/missing-cargo"
+    test "$("./node_modules/.bin/jscpd-rs" --version)" = "$cargo_version"
+    test "$("./node_modules/.bin/jscpd" --version)" = "$cargo_version"
+    test "$("./node_modules/.bin/jscpd-server" --version)" = "$cargo_version"
+  )
+else
+  printf 'npm prebuilt smoke skipped: no prebuilt target for this platform\n'
+fi
 
 npx --yes --package "$tarball" jscpd-rs --version | grep -Fxq "$cargo_version"
 

@@ -1,70 +1,92 @@
-# Prebuilt Binary Distribution Plan
+# Prebuilt Binary Distribution
 
-`jscpd-rs` is already a native Rust CLI, but the current npm package builds the
-native binaries from source during `postinstall`. That is acceptable for the
-bootstrap release and awkward for broad npm adoption: users need Cargo, native
-build tools, and extra install time before they can run a duplicate-code scan.
+`jscpd-rs` is a native Rust CLI. The published `jscpd-rs@0.1.0` npm package
+builds the native binaries from source during `postinstall`; that bootstrap
+path works, but it is too much friction for broad npm adoption because users
+need Cargo, native build tools, and extra install time before they can run a
+duplicate-code scan.
 
-The recommended npm distribution model is a small main package plus
-platform-specific optional packages, similar to other native Node CLIs.
+The repository is now wired for the next npm release to use a small main
+package plus platform-specific optional packages. The main `jscpd-rs` package
+keeps the public bin names: `jscpd-rs`, `jscpd`, and `jscpd-server`.
 
-## Recommended Shape
+## Runtime Behavior
 
-- Keep `jscpd-rs` as the main package with the public bin names:
-  `jscpd-rs`, `jscpd`, and `jscpd-server`.
-- Publish platform packages with exactly one prebuilt binary pair each.
-- Add the platform packages as `optionalDependencies` of `jscpd-rs`.
-- Use `os`, `cpu`, and where supported `libc` metadata in platform packages so
-  npm installs only the matching package.
-- Resolve the platform package at runtime from the existing JS shims.
-- Keep source-build fallback for unsupported platforms and local development.
-- Fail with a direct install hint when neither a prebuilt package nor Cargo is
-  available.
+- The JS shim first looks for a matching prebuilt optional package.
+- If a prebuilt package is installed, the shim runs its native binary directly.
+- If no prebuilt package exists for the platform, the existing source-build
+  path remains the fallback.
+- `JSCPD_RS_FORCE_BUILD=1` forces the fallback build path.
+- `JSCPD_RS_SKIP_POSTINSTALL=1` skips install-time builds for package tests and
+  advanced users who provide binaries another way.
 
 Avoid default postinstall downloads from GitHub Releases. Optional platform
 packages are more reproducible, work better with npm mirrors and lockfiles, and
 avoid surprising network access during install.
 
-## Initial Target Matrix
+## Platform Packages
 
-Start with the platforms most likely to cover CI and developer machines:
+The target matrix is defined in `npm/prebuilt-targets.json`.
 
-| Package target | Notes |
-| --- | --- |
-| Linux x64 GNU | Highest-priority GitHub Actions and server target. |
-| Linux arm64 GNU | Common in ARM CI runners and cloud instances. |
-| macOS arm64 | Apple Silicon default. |
-| macOS x64 | Intel macOS fallback. |
-| Windows x64 MSVC | Main Windows developer target. |
+| Package | Rust target | Runner |
+| --- | --- | --- |
+| `jscpd-rs-linux-x64-gnu` | `x86_64-unknown-linux-gnu` | `ubuntu-24.04` |
+| `jscpd-rs-linux-arm64-gnu` | `aarch64-unknown-linux-gnu` | `ubuntu-24.04-arm` |
+| `jscpd-rs-darwin-x64` | `x86_64-apple-darwin` | `macos-15-intel` |
+| `jscpd-rs-darwin-arm64` | `aarch64-apple-darwin` | `macos-15` |
+| `jscpd-rs-win32-x64-msvc` | `x86_64-pc-windows-msvc` | `windows-2025` |
 
 Consider Linux musl and Windows arm64 only after install data or user reports
 show demand.
 
-## Current Install Friction
+## Package Checks
 
-- npm installs require Cargo and Rust `1.93+`.
-- Source builds are slow compared with unpacking a binary package.
-- Windows users may need the MSVC build tools before install succeeds.
-- macOS users may need Xcode command-line tools.
-- Ephemeral CI jobs pay the compile cost unless they cache Cargo artifacts.
-- `npx jscpd-rs` is convenient but still triggers npm install/build on a cold
-  cache.
-- The `jscpd` bin alias intentionally shadows upstream `jscpd`; users should
-  check `jscpd --version` during migration.
+`scripts/npm-package-check.sh` verifies:
+
+- the root npm version matches `Cargo.toml`;
+- `optionalDependencies` exactly match `npm/prebuilt-targets.json`;
+- every optional platform dependency uses the same version as the main package;
+- the main npm package contains the runtime shim and target metadata;
+- no Cargo/no prebuilt install fails with the expected Rust toolchain hint;
+- source-build fallback works with optional dependencies omitted;
+- a locally generated platform package works without Cargo;
+- `npx --package <local-tarball> jscpd-rs --version` works.
 
 ## Release Workflow
 
-The future release workflow should remain GitHub Release driven:
+The GitHub Release workflow in `.github/workflows/npm-publish.yml` publishes in
+this order:
 
-1. Build release binaries in a matrix for the target platforms.
-2. Smoke-test `jscpd --version`, `jscpd --help`, and `jscpd-server --version`
-   on each native runner where possible.
-3. Publish platform npm packages with the same version as the main package.
-4. Publish the main `jscpd-rs` npm package with optional dependencies pointing
-   at those exact versions.
-5. Keep `scripts/npm-package-check.sh` testing both prebuilt resolution and
-   source-build fallback.
+1. Verify that the GitHub Release tag matches `package.json`.
+2. Build platform packages in a native runner matrix.
+3. Smoke-test `jscpd --version` and `jscpd-server --version` for each package.
+4. Publish the platform packages.
+5. Run `scripts/npm-package-check.sh`.
+6. Publish the main `jscpd-rs` package.
 
-This should happen before broad npm promotion. Cargo users can keep using
-`cargo install jscpd-rs --locked`; Rust source builds are normal in that
-ecosystem.
+The workflow publishes with npm provenance enabled. It is designed for Trusted
+Publishing, but `NPM_TOKEN` can be kept as a temporary bootstrap fallback for
+new platform packages if npm does not allow Trusted Publisher setup before the
+first version exists.
+
+## npm Setup
+
+Configure Trusted Publishing for each npm package with:
+
+- Organization or user: `vv-bogdanov`
+- Repository: `jscpd-rs`
+- Workflow filename: `npm-publish.yml`
+- Environment name: leave empty
+- Allowed actions: `npm publish`
+
+Packages:
+
+- `jscpd-rs`
+- `jscpd-rs-linux-x64-gnu`
+- `jscpd-rs-linux-arm64-gnu`
+- `jscpd-rs-darwin-x64`
+- `jscpd-rs-darwin-arm64`
+- `jscpd-rs-win32-x64-msvc`
+
+If a temporary npm token is used for the first platform-package bootstrap,
+revoke it after Trusted Publishing succeeds.

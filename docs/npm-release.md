@@ -19,12 +19,15 @@ The npm package is `jscpd-rs`. It exposes these bin commands:
 - `jscpd`: installed alias for the native `jscpd` CLI.
 - `jscpd-server`: installed alias for the native server binary.
 
-The current package is source-build: `postinstall` runs `cargo build --release
---locked --bin jscpd --bin jscpd-server` inside the installed npm package.
-Users installing from npm need Node, npm, and a Rust/Cargo toolchain. Prebuilt
-platform packages are the next packaging milestone and can be added without
-changing the CLI behavior; see the
-[prebuilt binary distribution plan](prebuilt-binaries.md).
+The published `jscpd-rs@0.1.0` package is source-build: `postinstall` runs
+`cargo build --release --locked --bin jscpd --bin jscpd-server` inside the
+installed npm package. Users installing that version from npm need Node, npm,
+and a Rust/Cargo toolchain.
+
+The repository is now configured for the next npm release to publish prebuilt
+platform packages before the main `jscpd-rs` package. The CLI behavior stays
+the same, and the source-build path remains the fallback for unsupported
+platforms; see the [prebuilt binary distribution plan](prebuilt-binaries.md).
 
 Local verification:
 
@@ -36,16 +39,20 @@ That script verifies:
 
 - `package.json` version matches `Cargo.toml`;
 - `npm pack` includes the expected Rust source and npm shim files;
+- `optionalDependencies` match `npm/prebuilt-targets.json` and the current
+  package version;
 - `npm pack` includes the advertised `skills/` files used by the terminal tip;
 - forbidden paths such as `jscpd/`, `target/`, `report/`, `scripts/`, and
   `node_modules/` are not packed;
 - `npm publish --dry-run --json` succeeds without publishing;
   if the current version is already published, this dry-run is skipped with an
   explicit message;
-- installing the packed tarball without Cargo fails with the expected Rust
-  toolchain hint;
-- a local npm install exposes working `jscpd-rs`, `jscpd`, and `jscpd-server`
-  bin commands;
+- installing the packed tarball without Cargo and without optional prebuilt
+  packages fails with the expected Rust toolchain hint;
+- source-build fallback exposes working `jscpd-rs`, `jscpd`, and
+  `jscpd-server` bin commands;
+- a locally generated platform package exposes the same bin commands without
+  Cargo;
 - `npx --package <local-tarball> jscpd-rs --version` works.
 
 Before actual publication, run:
@@ -94,16 +101,17 @@ This repository provides a publish workflow:
 
 The workflow runs automatically when a non-draft, non-prerelease GitHub Release
 is published. It checks out the release tag, verifies that the tag matches the
-`package.json` version, verifies that the exact npm version is not already
-published, runs `scripts/npm-package-check.sh`, and then runs
-`npm publish --access public`.
+`package.json` version, verifies that the main npm version is not already
+published, builds platform packages in a native runner matrix, publishes those
+platform packages first, runs `scripts/npm-package-check.sh`, and then
+publishes the main `jscpd-rs` package.
 
 It can also be run manually from GitHub Actions as a fallback by entering
 `jscpd-rs` in the confirmation input.
 
-Configure npm:
+Configure npm for every package listed in `docs/prebuilt-binaries.md`:
 
-1. Open the `jscpd-rs` package settings on npmjs.com.
+1. Open the package settings on npmjs.com.
 2. Go to **Trusted Publisher**.
 3. Select **GitHub Actions**.
 4. Use these values:
@@ -116,9 +124,11 @@ Configure npm:
 Then publish automatically from GitHub:
 
 1. Update `Cargo.toml` and `package.json` to the same version.
-2. Run the release gates.
-3. Create and publish a GitHub Release with tag `vX.Y.Z`.
-4. GitHub Actions will run `npm-publish` from that release tag.
+2. Update `package.json#optionalDependencies` to the same version for every
+   platform package.
+3. Run the release gates.
+4. Create and publish a GitHub Release with tag `vX.Y.Z`.
+5. GitHub Actions will run `npm-publish` from that release tag.
 
 Manual fallback:
 
@@ -128,10 +138,10 @@ Manual fallback:
 4. Enter `jscpd-rs` for `package_name`.
 5. Run the workflow.
 
-If npm does not allow Trusted Publishing configuration before the first package
-version exists, publish the first version with either interactive 2FA or a
-short-lived granular token with bypass 2FA enabled, then immediately configure
-Trusted Publishing for future releases.
+If npm does not allow Trusted Publishing configuration before a platform package
+version exists, add a short-lived `NPM_TOKEN` GitHub secret for the first
+platform-package bootstrap, then immediately configure Trusted Publishing and
+revoke the token.
 
 After Trusted Publishing is verified, revoke temporary npm tokens and consider
 setting the npm package publishing access to disallow traditional tokens. The

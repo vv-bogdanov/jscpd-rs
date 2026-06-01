@@ -178,8 +178,8 @@ two explicit commands above are a manual smoke equivalent for post-tag checks.
 Track these after the first release candidate:
 
 - Reduce noisy extra Rust findings where they are user-visible false positives.
-- Add npm prebuilt platform packages before broad npm promotion so Node users
-  can install without Cargo; see the
+- Verify the first npm prebuilt platform-package publication before broad npm
+  promotion so Node users can install without Cargo; see the
   [prebuilt binary distribution plan](prebuilt-binaries.md).
 - Add native persistent store/cache only if release-scale benchmark data needs
   it.
@@ -201,24 +201,30 @@ Both workflows run on `release.published` for non-draft, non-prerelease GitHub
 Releases. Both check out the release tag and verify that `vX.Y.Z` matches the
 package version before publishing. `crates-publish` publishes the Rust crate to
 crates.io; docs.rs builds documentation automatically after crates.io accepts
-the crate. `npm-publish` publishes the npm package.
+the crate. `npm-publish` builds and publishes prebuilt npm platform packages
+before publishing the main npm package.
 
 Release flow for future versions:
 
 1. Update `Cargo.toml` and `package.json` to the same version.
-2. Update `CHANGELOG.md`, README benchmark numbers, and release docs.
-3. Run the release gates, including `scripts/package-check.sh`.
-4. Commit and push `main`.
-5. Create and publish a GitHub Release with tag `vX.Y.Z`.
-6. Confirm both `crates-publish` and `npm-publish` completed successfully.
-7. Check crates.io, docs.rs, and npm package pages.
+2. Update `package.json#optionalDependencies` to the same version for every
+   platform package.
+3. Update `CHANGELOG.md`, README benchmark numbers, and release docs.
+4. Run the release gates, including `scripts/package-check.sh`.
+5. Commit and push `main`.
+6. Create and publish a GitHub Release with tag `vX.Y.Z`.
+7. Confirm `crates-publish` completed successfully.
+8. Confirm `npm-publish` built and published all platform packages before the
+   main `jscpd-rs` package.
+9. Check crates.io, docs.rs, and npm package pages.
 
 Trusted Publishing setup:
 
 - crates.io: configure a trusted publisher for repository
   `vv-bogdanov/jscpd-rs` and workflow `crates-publish.yml`.
 - npm: configure a trusted publisher for repository `vv-bogdanov/jscpd-rs` and
-  workflow `npm-publish.yml`.
+  workflow `npm-publish.yml` on `jscpd-rs` and every platform package listed in
+  `docs/prebuilt-binaries.md`.
 
 Use no GitHub environment name unless the workflow is updated to declare one.
 After Trusted Publishing works, revoke temporary npm/crates tokens and keep

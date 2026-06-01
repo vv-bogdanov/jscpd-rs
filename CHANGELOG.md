@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- npm prebuilt binary distribution wiring for Linux x64 GNU, Linux arm64 GNU,
+  macOS x64, macOS arm64, and Windows x64 MSVC platform packages.
+- Runtime npm shim resolution that prefers installed prebuilt optional
+  packages and falls back to the existing Cargo source-build path.
+- npm package checks for platform package metadata, source-build fallback, and
+  local prebuilt-package smoke tests.
+- GitHub Release npm publishing workflow that builds platform packages before
+  publishing the main `jscpd-rs` package.
+
 ## 0.1.0 - 2026-05-31
 
 First release candidate for `jscpd-rs`, a native Rust clone of upstream
@@ -62,8 +75,8 @@ Recorded release-candidate public benchmark measurements from
 - HTML output is self-contained and practically compatible, not pixel-perfect.
 - The Rust crate exposes a native Rust API, not the upstream JavaScript package
   API.
-- The npm package currently builds native binaries from source during install;
-  prebuilt platform packages are planned as a later publication improvement.
+- The `jscpd-rs@0.1.0` npm package builds native binaries from source during
+  install.
 - Full Prism grammar parity for every long-tail format is not attempted in this
   release. Formats should be promoted from generic tokenization when concrete
   coverage gates show missed upstream lines.
