@@ -1,4 +1,4 @@
-#![doc(html_root_url = "https://docs.rs/jscpd-rs/0.1.1")]
+#![doc(html_root_url = "https://docs.rs/jscpd-rs/0.1.2")]
 
 //! Native Rust API for `jscpd-rs`, a 50x+ faster duplicate-code detector for
 //! local development and CI/CD.

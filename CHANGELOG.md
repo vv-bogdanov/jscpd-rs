@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.2 - 2026-06-01
+
+### Changed
+
+- Rename the Windows prebuilt npm package to `jscpd-rs-win` to avoid npm
+  registry spam-policy false positives on the previous machine-generated name.
+- Move the Linux arm64 prebuilt build to the Ubuntu 22.04 ARM runner for a more
+  stable native ARM publication path and older glibc baseline.
+- Allow npm release workflow reruns for a single prebuilt target without
+  republishing the already-published main package.
+
 ## 0.1.1 - 2026-06-01
 
 ### Added

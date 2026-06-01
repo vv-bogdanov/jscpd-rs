@@ -1,6 +1,6 @@
 # Prebuilt Binary Distribution
 
-`jscpd-rs` is a native Rust CLI. Starting with `jscpd-rs@0.1.1`, npm
+`jscpd-rs` is a native Rust CLI. Starting with `jscpd-rs@0.1.2`, npm
 distribution uses a small main package plus platform-specific optional
 packages. The original `0.1.0` npm package was source-build only.
 
@@ -28,10 +28,10 @@ The target matrix is defined in `npm/prebuilt-targets.json`.
 | Package | Rust target | Runner |
 | --- | --- | --- |
 | `jscpd-rs-linux-x64-gnu` | `x86_64-unknown-linux-gnu` | `ubuntu-24.04` |
-| `jscpd-rs-linux-arm64-gnu` | `aarch64-unknown-linux-gnu` | `ubuntu-24.04-arm` |
+| `jscpd-rs-linux-arm64-gnu` | `aarch64-unknown-linux-gnu` | `ubuntu-22.04-arm` |
 | `jscpd-rs-darwin-x64` | `x86_64-apple-darwin` | `macos-15-intel` |
 | `jscpd-rs-darwin-arm64` | `aarch64-apple-darwin` | `macos-15` |
-| `jscpd-rs-win32-x64-msvc` | `x86_64-pc-windows-msvc` | `windows-2025` |
+| `jscpd-rs-win` | `x86_64-pc-windows-msvc` | `windows-2025` |
 
 Consider Linux musl and Windows arm64 only after install data or user reports
 show demand.
@@ -83,7 +83,7 @@ Packages:
 - `jscpd-rs-linux-arm64-gnu`
 - `jscpd-rs-darwin-x64`
 - `jscpd-rs-darwin-arm64`
-- `jscpd-rs-win32-x64-msvc`
+- `jscpd-rs-win`
 
 If a temporary npm token is used for the first platform-package bootstrap,
 revoke it after Trusted Publishing succeeds.

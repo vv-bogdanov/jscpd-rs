@@ -19,7 +19,7 @@ The npm package is `jscpd-rs`. It exposes these bin commands:
 - `jscpd`: installed alias for the native `jscpd` CLI.
 - `jscpd-server`: installed alias for the native server binary.
 
-`jscpd-rs@0.1.1+` publishes prebuilt platform packages before the main
+`jscpd-rs@0.1.2+` publishes prebuilt platform packages before the main
 `jscpd-rs` package. The CLI behavior stays the same, and the source-build path
 remains the fallback for unsupported platforms. The original `0.1.0` package
 was source-build only; see the

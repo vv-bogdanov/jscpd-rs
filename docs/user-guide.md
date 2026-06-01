@@ -29,7 +29,7 @@ npm install -g jscpd-rs
 npx jscpd-rs --version
 ```
 
-`jscpd-rs@0.1.1+` installs prebuilt Linux, macOS, and Windows binaries where
+`jscpd-rs@0.1.2+` installs prebuilt Linux, macOS, and Windows binaries where
 available and falls back to building from source with Cargo for unsupported
 platforms. The original `0.1.0` npm package was source-build only. See the
 [prebuilt binary distribution plan](prebuilt-binaries.md).

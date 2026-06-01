@@ -15,7 +15,7 @@
     "cpu": "arm64",
     "libc": "glibc",
     "rustTarget": "aarch64-unknown-linux-gnu",
-    "runner": "ubuntu-24.04-arm"
+    "runner": "ubuntu-22.04-arm"
   },
   "darwin-x64": {
     "packageName": "jscpd-rs-darwin-x64",
@@ -34,8 +34,8 @@
     "runner": "macos-15"
   },
   "win32-x64-msvc": {
-    "packageName": "jscpd-rs-win32-x64-msvc",
-    "description": "Prebuilt Windows x64 MSVC binaries for jscpd-rs",
+    "packageName": "jscpd-rs-win",
+    "description": "Prebuilt Windows x64 binaries for jscpd-rs",
     "os": "win32",
     "cpu": "x64",
     "rustTarget": "x86_64-pc-windows-msvc",

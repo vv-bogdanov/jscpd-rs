@@ -48,7 +48,7 @@ npx jscpd-rs .
 Current npm packaging note: `jscpd-rs` installs prebuilt Linux, macOS, and
 Windows binaries where available, then falls back to building from source with
 Cargo for unsupported platforms. The original `0.1.0` npm package was
-source-build only; use `0.1.1+` for the prebuilt-first path. See
+source-build only; use `0.1.2+` for the full prebuilt-first path. See
 [docs/prebuilt-binaries.md](docs/prebuilt-binaries.md).
 
 From this repository:

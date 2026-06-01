@@ -10,6 +10,16 @@ on:
         description: "Type jscpd-rs to confirm npm publication"
         required: true
         type: string
+      target:
+        description: "Optional prebuilt target key to publish only one platform package"
+        required: false
+        default: ""
+        type: string
+      publish_main:
+        description: "Publish the main jscpd-rs npm package after platform packages"
+        required: false
+        default: true
+        type: boolean
 
 permissions:
   contents: read
@@ -32,6 +42,7 @@ jobs:
       }}
     runs-on: ubuntu-24.04
     outputs:
+      publish_main: ${{ steps.metadata.outputs.publish_main }}
       targets: ${{ steps.metadata.outputs.targets }}
       version: ${{ steps.metadata.outputs.version }}
     steps:
@@ -63,16 +74,30 @@ jobs:
             node --input-type=module <<'NODE'
           import fs from 'node:fs';
 
+          const targetFilter = process.env.TARGET_FILTER;
           const targets = JSON.parse(fs.readFileSync('npm/prebuilt-targets.json', 'utf8'));
+          const entries = Object.entries(targets);
+          const selected = targetFilter
+            ? entries.filter(([key]) => key === targetFilter)
+            : entries;
+          if (targetFilter && selected.length === 0) {
+            console.error(`unknown prebuilt target: ${targetFilter}`);
+            console.error(`available targets: ${entries.map(([key]) => key).join(', ')}`);
+            process.exit(1);
+          }
           console.log(
             JSON.stringify(
-              Object.entries(targets).map(([key, target]) => ({ key, ...target })),
+              selected.map(([key, target]) => ({ key, ...target })),
             ),
           );
           NODE
           )"
           echo "version=${version}" >> "$GITHUB_OUTPUT"
           echo "targets=${targets}" >> "$GITHUB_OUTPUT"
+          echo "publish_main=${PUBLISH_MAIN}" >> "$GITHUB_OUTPUT"
+        env:
+          PUBLISH_MAIN: ${{ github.event_name == 'release' || inputs.publish_main }}
+          TARGET_FILTER: ${{ github.event_name == 'workflow_dispatch' && inputs.target || '' }}
 
       - name: Check release tag matches package version
         if: github.event_name == 'release'
@@ -85,6 +110,7 @@ jobs:
           fi
 
       - name: Check main package version is not published
+        if: steps.metadata.outputs.publish_main == 'true'
         run: |
           version="${{ steps.metadata.outputs.version }}"
           if npm view "jscpd-rs@${version}" version >/dev/null 2>&1; then
@@ -197,7 +223,7 @@ jobs:
     needs:
       - prepare
       - build-platform-packages
-    if: ${{ always() && needs.prepare.result == 'success' }}
+    if: ${{ always() && needs.prepare.result == 'success' && needs.prepare.outputs.publish_main == 'true' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
