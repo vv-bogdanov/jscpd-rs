@@ -87,11 +87,30 @@ jobs:
           cargo test
           cargo publish --dry-run --locked
 
-      - name: Authenticate to crates.io
+      - name: Detect registry token secret
+        id: registry-token
+        run: |
+          if [[ -n "${CARGO_REGISTRY_TOKEN:-}" ]]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
+      - name: Authenticate to crates.io with Trusted Publishing
+        if: steps.registry-token.outputs.available != 'true'
         id: crates-io-auth
         uses: rust-lang/crates-io-auth-action@v1
 
-      - name: Publish
+      - name: Publish with Trusted Publishing
+        if: steps.registry-token.outputs.available != 'true'
         run: cargo publish --locked
         env:
           CARGO_REGISTRY_TOKEN: ${{ steps.crates-io-auth.outputs.token }}
+
+      - name: Publish with registry token
+        if: steps.registry-token.outputs.available == 'true'
+        run: cargo publish --locked
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
