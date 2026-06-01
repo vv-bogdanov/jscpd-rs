@@ -138,7 +138,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - uses: dtolnay/rust-toolchain@stable
       - uses: actions/setup-node@v5
         with:
           node-version: 22
@@ -235,13 +234,20 @@ Latest recorded public benchmark baseline for duplicate-code detection:
 Reproduce the public benchmark and coverage suite:
 
 ```bash
-PUBLIC=1 PUBLIC_RUNS=3 scripts/release-gate.sh
+scripts/release-candidate.sh
+```
+
+Benchmark native server snippet checks against upstream:
+
+```bash
+RUNS=20 scripts/bench-server.sh
 ```
 
 Release-candidate workflows rerun the public suite before each new publication
-so README numbers stay tied to a concrete commit and gate output. The public
-release gate fails below a 45x speedup on the default benchmark cases to prevent
-silent performance regressions while preserving room for normal runner noise.
+and enforce the core coverage gate, so README numbers stay tied to a concrete
+commit and gate output. The public release gate fails below a 45x speedup on
+the default benchmark cases to prevent silent performance regressions while
+preserving room for normal runner noise.
 
 ## Library API
 
@@ -371,7 +377,7 @@ FULL=1 scripts/release-gate.sh
 Public benchmark and coverage gate:
 
 ```bash
-PUBLIC=1 PUBLIC_RUNS=3 scripts/release-gate.sh
+scripts/release-candidate.sh
 ```
 
 Release candidate gate:

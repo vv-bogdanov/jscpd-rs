@@ -33,8 +33,22 @@ defaults:
     shell: bash
 
 jobs:
+  release-candidate:
+    if: >-
+      ${{
+        github.event_name == 'workflow_dispatch' ||
+        (github.event_name == 'release' && !github.event.release.draft && !github.event.release.prerelease)
+      }}
+    uses: ./.github/workflows/release-gate.yml
+    with:
+      release_candidate: true
+      full: true
+      public: true
+      public_runs: "3"
+
   prepare:
     name: prepare npm release
+    needs: release-candidate
     if: >-
       ${{
         github.event_name == 'workflow_dispatch' ||
@@ -69,6 +83,10 @@ jobs:
       - name: Read npm metadata
         id: metadata
         run: |
+          if [[ -n "$TARGET_FILTER" && "$PUBLISH_MAIN" == "true" ]]; then
+            echo "target filter can only be used with publish_main=false" >&2
+            exit 1
+          fi
           version="$(node -p 'require("./package.json").version')"
           targets="$(
             node --input-type=module <<'NODE'
@@ -123,7 +141,6 @@ jobs:
     needs: prepare
     runs-on: ${{ matrix.target.runner }}
     timeout-minutes: 30
-    continue-on-error: true
     strategy:
       fail-fast: false
       max-parallel: 5
@@ -223,7 +240,7 @@ jobs:
     needs:
       - prepare
       - build-platform-packages
-    if: ${{ always() && needs.prepare.result == 'success' && needs.prepare.outputs.publish_main == 'true' }}
+    if: ${{ needs.prepare.result == 'success' && needs.build-platform-packages.result == 'success' && needs.prepare.outputs.publish_main == 'true' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
@@ -265,6 +282,7 @@ jobs:
 
           const version = process.env.VERSION;
           const targets = JSON.parse(fs.readFileSync('npm/prebuilt-targets.json', 'utf8'));
+          let missing = 0;
           for (const [key, target] of Object.entries(targets)) {
             const spec = `${target.packageName}@${version}`;
             const result = spawnSync('npm', ['view', spec, 'version'], {
@@ -274,8 +292,12 @@ jobs:
             if (result.status === 0) {
               console.log(`${key}: ${spec} is published`);
             } else {
-              console.log(`::warning title=Missing prebuilt package::${spec} is not published; npm install will use source-build fallback on this platform`);
+              missing += 1;
+              console.log(`::error title=Missing prebuilt package::${spec} is not published; refusing to publish the main package with a source-build fallback on this platform`);
             }
+          }
+          if (missing > 0) {
+            process.exit(1);
           }
           NODE
         env:

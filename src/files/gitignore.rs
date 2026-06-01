@@ -204,8 +204,8 @@ fn push_gitignore_glob_variants(globs: &mut Vec<String>, path: &Path) {
 
 #[cfg(test)]
 mod tests {
+    use super::super::test_support::unique_temp_path;
     use super::*;
-    use std::time::{SystemTime, UNIX_EPOCH};
 
     #[test]
     fn scoped_gitignore_globs_cover_rooted_nested_and_filename_patterns() {
@@ -279,13 +279,5 @@ mod tests {
             .copied()
             .collect::<std::collections::HashSet<_>>();
         assert_eq!(repo_only.len(), unique_repo_only.len());
-    }
-
-    fn unique_temp_path(label: &str) -> PathBuf {
-        let suffix = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
-        std::env::temp_dir().join(format!("jscpd-rs-{label}-{}-{suffix}", std::process::id()))
     }
 }

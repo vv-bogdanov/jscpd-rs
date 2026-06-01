@@ -94,11 +94,17 @@ This repository provides a publish workflow:
 ```
 
 The workflow runs automatically when a non-draft, non-prerelease GitHub Release
-is published. It checks out the release tag, verifies that the tag matches the
-`package.json` version, verifies that the main npm version is not already
-published, builds platform packages in a native runner matrix, publishes those
-platform packages first, runs `scripts/npm-package-check.sh`, and then
-publishes the main `jscpd-rs` package.
+is published. It checks out the release tag, runs `scripts/release-candidate.sh`
+as a preflight, verifies that the tag matches the `package.json` version,
+verifies that the main npm version is not already published, builds platform
+packages in a native runner matrix, publishes those platform packages first,
+verifies that every optional platform package exists for the release version,
+runs `scripts/npm-package-check.sh`, and then publishes the main `jscpd-rs`
+package.
+
+The main package is blocked when any configured platform package fails or is
+missing. For a target-only rerun, set `publish_main=false`; using `target` with
+`publish_main=true` is rejected by the workflow.
 
 It can also be run manually from GitHub Actions as a fallback by entering
 `jscpd-rs` in the confirmation input.

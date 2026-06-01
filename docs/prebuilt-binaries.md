@@ -54,12 +54,20 @@ show demand.
 The GitHub Release workflow in `.github/workflows/npm-publish.yml` publishes in
 this order:
 
-1. Verify that the GitHub Release tag matches `package.json`.
-2. Build platform packages in a native runner matrix.
-3. Smoke-test `jscpd --version` and `jscpd-server --version` for each package.
-4. Publish the platform packages.
-5. Run `scripts/npm-package-check.sh`.
-6. Publish the main `jscpd-rs` package.
+1. Run `scripts/release-candidate.sh`, including the full compatibility
+   matrix, public speed gate, and core coverage gate.
+2. Verify that the GitHub Release tag matches `package.json`.
+3. Build platform packages in a native runner matrix.
+4. Smoke-test `jscpd --version` and `jscpd-server --version` for each package.
+5. Publish the platform packages.
+6. Verify every optional platform package is published for the release version.
+7. Run `scripts/npm-package-check.sh`.
+8. Publish the main `jscpd-rs` package.
+
+The main npm package is intentionally blocked when any configured platform
+package fails or is missing. Manual target-only reruns must set
+`publish_main=false`; the main package should not be published with an
+accidental source-build fallback on a supported platform.
 
 The workflow publishes with npm provenance enabled. It is designed for Trusted
 Publishing, but `NPM_TOKEN` can be kept as a temporary bootstrap fallback for

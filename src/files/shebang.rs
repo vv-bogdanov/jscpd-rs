@@ -107,9 +107,8 @@ fn is_executable(_metadata: &fs::Metadata) -> bool {
 
 #[cfg(test)]
 mod tests {
+    use super::super::test_support::{make_executable, unique_temp_path};
     use super::*;
-    use std::path::PathBuf;
-    use std::time::{SystemTime, UNIX_EPOCH};
 
     #[test]
     fn normalizes_versioned_interpreter_names() {
@@ -164,22 +163,5 @@ mod tests {
 
         let _ = std::fs::remove_file(non_executable);
         let _ = std::fs::remove_file(env_option);
-    }
-
-    #[cfg(unix)]
-    fn make_executable(path: &Path) {
-        use std::os::unix::fs::PermissionsExt;
-
-        let mut permissions = std::fs::metadata(path).unwrap().permissions();
-        permissions.set_mode(0o755);
-        std::fs::set_permissions(path, permissions).unwrap();
-    }
-
-    fn unique_temp_path(label: &str) -> PathBuf {
-        let suffix = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
-        std::env::temp_dir().join(format!("jscpd-rs-{label}-{}-{suffix}", std::process::id()))
     }
 }

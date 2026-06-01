@@ -307,18 +307,8 @@ fn resolve_vue_block_format(block: &TagBlock) -> String {
                 "markup".to_string()
             }
         }
-        "script" => {
-            if matches!(lang.as_str(), "ts" | "typescript") {
-                "typescript".to_string()
-            } else {
-                "javascript".to_string()
-            }
-        }
-        "style" => match lang.as_str() {
-            "scss" => "scss".to_string(),
-            "less" => "less".to_string(),
-            _ => "css".to_string(),
-        },
+        "script" => js_ts_block_format(&lang),
+        "style" => css_block_format(&lang),
         _ => "markup".to_string(),
     }
 }
@@ -344,19 +334,25 @@ fn resolve_svelte_block_format(block: &TagBlock) -> String {
 fn resolve_astro_block_format(block: &TagBlock) -> String {
     let lang = attr_value(&block.attrs, "lang").unwrap_or_default();
     match block.tag.as_str() {
-        "script" => {
-            if matches!(lang.as_str(), "ts" | "typescript") {
-                "typescript".to_string()
-            } else {
-                "javascript".to_string()
-            }
-        }
-        "style" => match lang.as_str() {
-            "scss" => "scss".to_string(),
-            "less" => "less".to_string(),
-            _ => "css".to_string(),
-        },
+        "script" => js_ts_block_format(&lang),
+        "style" => css_block_format(&lang),
         _ => "markup".to_string(),
+    }
+}
+
+fn js_ts_block_format(lang: &str) -> String {
+    if matches!(lang, "ts" | "typescript") {
+        "typescript".to_string()
+    } else {
+        "javascript".to_string()
+    }
+}
+
+fn css_block_format(lang: &str) -> String {
+    match lang {
+        "scss" => "scss".to_string(),
+        "less" => "less".to_string(),
+        _ => "css".to_string(),
     }
 }
 

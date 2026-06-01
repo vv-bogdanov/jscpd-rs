@@ -19,8 +19,22 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:
+  release-candidate:
+    if: >-
+      ${{
+        github.event_name == 'workflow_dispatch' ||
+        (github.event_name == 'release' && !github.event.release.draft && !github.event.release.prerelease)
+      }}
+    uses: ./.github/workflows/release-gate.yml
+    with:
+      release_candidate: true
+      full: true
+      public: true
+      public_runs: "3"
+
   publish:
     name: publish crates.io package
+    needs: release-candidate
     if: >-
       ${{
         github.event_name == 'workflow_dispatch' ||

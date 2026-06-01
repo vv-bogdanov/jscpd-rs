@@ -79,6 +79,8 @@ Before publishing, all of these must be true:
 - `git submodule status jscpd` points at the reviewed upstream reference.
 - `scripts/release-candidate.sh` passes on the exact code commit being tagged.
 - GitHub Actions `release-gate` passes on the pushed commit.
+- GitHub Actions `crates-publish` and `npm-publish` release jobs are allowed to
+  run their own release-candidate preflight before publishing.
 - `scripts/package-check.sh` passes and the package file list excludes
   `jscpd/`, `target/`, `node_modules/`, and `scripts/`.
 - `scripts/npm-package-check.sh` passes, including `npm pack`,
@@ -92,6 +94,9 @@ Before publishing, all of these must be true:
 - For a new publication, the target crate version, npm package versions, and
   `vX.Y.Z` Git tag are not already published, unless an explicitly documented
   target-only npm rerun is being used for a prebuilt package.
+- For npm publication, every configured prebuilt optional package is published
+  before the main `jscpd-rs` package; target-only reruns use
+  `publish_main=false`.
 - `docs/upstream-bugs.md` contains concrete repro commands for upstream issues
   we plan to file.
 - `docs/upstream-issue-drafts.md` contains reviewed issue drafts ready to

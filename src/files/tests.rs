@@ -14,14 +14,7 @@ use super::gitignore::{
     collect_cwd_gitignore_patterns, collect_gitignore_patterns_with_global, gitignore_line_to_globs,
 };
 use super::paths::{display_relative_to, fast_glob_like_path_cmp, relative_path};
-
-fn unique_temp_path(label: &str) -> PathBuf {
-    let nonce = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap()
-        .as_nanos();
-    std::env::temp_dir().join(format!("jscpd-rs-{label}-{}-{nonce}", std::process::id()))
-}
+use super::test_support::unique_temp_path;
 
 fn discovery_options(paths: Vec<PathBuf>) -> Options {
     Options {
@@ -364,13 +357,11 @@ fn count_lines_matches_upstream_empty_and_newline_rules() {
 #[cfg(unix)]
 #[test]
 fn discovers_executable_node_shebang_without_extension() {
-    use std::os::unix::fs::PermissionsExt;
+    use super::test_support::make_executable;
 
     let path = unique_temp_path("node-shebang");
     std::fs::write(&path, "#!/usr/bin/env node\nconsole.log(1);\n").unwrap();
-    let mut permissions = std::fs::metadata(&path).unwrap().permissions();
-    permissions.set_mode(0o755);
-    std::fs::set_permissions(&path, permissions).unwrap();
+    make_executable(&path);
 
     let options = javascript_discovery_options(vec![path.clone()]);
 
