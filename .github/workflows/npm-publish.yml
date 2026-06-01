@@ -94,8 +94,10 @@ jobs:
     needs: prepare
     runs-on: ${{ matrix.target.runner }}
     timeout-minutes: 30
+    continue-on-error: true
     strategy:
       fail-fast: false
+      max-parallel: 5
       matrix:
         target: ${{ fromJson(needs.prepare.outputs.targets) }}
     steps:
@@ -104,12 +106,6 @@ jobs:
         with:
           ref: ${{ github.event_name == 'release' && github.event.release.tag_name || github.ref }}
 
-      - name: Install Rust
-        run: |
-          rustup toolchain install 1.93.0 --profile minimal
-          rustup default 1.93.0
-          rustup target add "${{ matrix.target.rustTarget }}"
-
       - name: Install Node
         uses: actions/setup-node@v5
         with:
@@ -117,7 +113,40 @@ jobs:
           registry-url: "https://registry.npmjs.org"
           package-manager-cache: false
 
+      - name: Check platform package version
+        id: platform-package
+        run: |
+          version="${{ needs.prepare.outputs.version }}"
+          package_name="${{ matrix.target.packageName }}"
+          if npm view "${package_name}@${version}" version >/dev/null 2>&1; then
+            echo "${package_name}@${version} is already published; skipping build"
+            echo "published=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "published=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install Rust
+        if: steps.platform-package.outputs.published != 'true'
+        run: |
+          rustup toolchain install 1.93.0 --profile minimal
+          rustup default 1.93.0
+          rustup target add "${{ matrix.target.rustTarget }}"
+
+      - name: Cache Cargo registry and target
+        if: steps.platform-package.outputs.published != 'true'
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-${{ matrix.target.key }}-cargo-1.93.0-${{ hashFiles('Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.target.key }}-cargo-1.93.0-
+            ${{ runner.os }}-cargo-1.93.0-
+
       - name: Build native binaries
+        if: steps.platform-package.outputs.published != 'true'
         run: |
           cargo build \
             --release \
@@ -127,6 +156,7 @@ jobs:
             --bin jscpd-server
 
       - name: Create platform package
+        if: steps.platform-package.outputs.published != 'true'
         id: package
         run: |
           package_dir="$(
@@ -138,6 +168,7 @@ jobs:
           echo "package_dir=${package_dir}" >> "$GITHUB_OUTPUT"
 
       - name: Smoke platform package
+        if: steps.platform-package.outputs.published != 'true'
         run: |
           package_dir="${{ steps.package.outputs.package_dir }}"
           test "$("$package_dir/bin/${{ matrix.target.os == 'win32' && 'jscpd.exe' || 'jscpd' }}" --version)" = "${{ needs.prepare.outputs.version }}"
@@ -145,6 +176,7 @@ jobs:
           npm pack "$package_dir" --pack-destination "$RUNNER_TEMP" --json >/dev/null
 
       - name: Publish platform package
+        if: steps.platform-package.outputs.published != 'true'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
@@ -162,6 +194,7 @@ jobs:
     needs:
       - prepare
       - build-platform-packages
+    if: ${{ always() && needs.prepare.result == 'success' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
@@ -175,12 +208,49 @@ jobs:
           rustup toolchain install 1.93.0 --profile minimal
           rustup default 1.93.0
 
+      - name: Cache Cargo registry and target
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-npm-main-cargo-1.93.0-${{ hashFiles('Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-main-cargo-1.93.0-
+            ${{ runner.os }}-cargo-1.93.0-
+
       - name: Install Node
         uses: actions/setup-node@v5
         with:
           node-version: "24"
           registry-url: "https://registry.npmjs.org"
           package-manager-cache: false
+
+      - name: Report platform package availability
+        run: |
+          version="${{ needs.prepare.outputs.version }}"
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import { spawnSync } from 'node:child_process';
+
+          const version = process.env.VERSION;
+          const targets = JSON.parse(fs.readFileSync('npm/prebuilt-targets.json', 'utf8'));
+          for (const [key, target] of Object.entries(targets)) {
+            const spec = `${target.packageName}@${version}`;
+            const result = spawnSync('npm', ['view', spec, 'version'], {
+              encoding: 'utf8',
+              stdio: ['ignore', 'pipe', 'pipe'],
+            });
+            if (result.status === 0) {
+              console.log(`${key}: ${spec} is published`);
+            } else {
+              console.log(`::warning title=Missing prebuilt package::${spec} is not published; npm install will use source-build fallback on this platform`);
+            }
+          }
+          NODE
+        env:
+          VERSION: ${{ needs.prepare.outputs.version }}
 
       - name: Verify npm package
         run: scripts/npm-package-check.sh
