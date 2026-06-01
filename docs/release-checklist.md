@@ -178,6 +178,9 @@ two explicit commands above are a manual smoke equivalent for post-tag checks.
 Track these after the first release candidate:
 
 - Reduce noisy extra Rust findings where they are user-visible false positives.
+- Add npm prebuilt platform packages before broad npm promotion so Node users
+  can install without Cargo; see the
+  [prebuilt binary distribution plan](prebuilt-binaries.md).
 - Add native persistent store/cache only if release-scale benchmark data needs
   it.
 - Tighten MCP Streamable HTTP SDK edge cases if real MCP clients require them.

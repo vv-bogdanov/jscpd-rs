@@ -13,18 +13,18 @@ Current npm readiness snapshot:
 - Packed artifact audit: `jscpd-rs-0.1.0.tgz`, 96 files, about 169 KiB packed,
   about 708 KiB unpacked.
 
-The first npm package is `jscpd-rs`. It exposes these bin commands:
+The npm package is `jscpd-rs`. It exposes these bin commands:
 
 - `jscpd-rs`: primary `npx jscpd-rs` entrypoint, runs the native `jscpd` CLI.
 - `jscpd`: installed alias for the native `jscpd` CLI.
 - `jscpd-server`: installed alias for the native server binary.
 
-The package is intentionally source-build for the first release candidate:
-`postinstall` runs `cargo build --release --locked --bin jscpd --bin
-jscpd-server` inside the installed npm package. This keeps the npm path simple
-and verifiable before publication. Users installing from npm need Node, npm, and
-a Rust/Cargo toolchain. Prebuilt platform packages can be added later without
-changing the CLI behavior.
+The current package is source-build: `postinstall` runs `cargo build --release
+--locked --bin jscpd --bin jscpd-server` inside the installed npm package.
+Users installing from npm need Node, npm, and a Rust/Cargo toolchain. Prebuilt
+platform packages are the next packaging milestone and can be added without
+changing the CLI behavior; see the
+[prebuilt binary distribution plan](prebuilt-binaries.md).
 
 Local verification:
 
