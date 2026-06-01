@@ -1,15 +1,22 @@
 # jscpd-rs User Guide
 
-`jscpd-rs` is a native Rust implementation of the common `jscpd` workflows:
-scan source trees, detect copy-paste fragments, write reports, fail CI on
-thresholds, and serve snippet checks over HTTP/MCP.
+`jscpd-rs` is a 50x+ faster duplicate-code detector for local development,
+CI/CD, and code quality gates. It scans source trees, detects copy-paste
+fragments across files, writes console, JSON, SARIF, HTML, XML, CSV, Markdown,
+badge, and Xcode reports, fails CI on duplication thresholds, and serves
+snippet checks over HTTP/MCP.
+
+It implements the common upstream `jscpd` CLI workflow with native Rust
+performance: upstream-style flags, `.jscpd.json` and `package.json#jscpd`
+configuration, Git blame, report generation, exit-code behavior, and a native
+server.
 
 This guide is intentionally user-facing. Release policy, benchmark evidence,
 and compatibility details live in the release docs linked from the README.
 
 ## Installation
 
-Install the Rust binaries from crates.io after publication:
+Install the Rust binaries from crates.io:
 
 ```bash
 cargo install jscpd-rs --locked
@@ -22,9 +29,9 @@ npm install -g jscpd-rs
 npx jscpd-rs --version
 ```
 
-The first npm package builds the native binaries from source during
+The current npm package builds the native binaries from source during
 `postinstall`, so a Rust toolchain must be available. Prebuilt npm platform
-packages are planned after the first release.
+packages are planned as a follow-up.
 
 Install from a checkout:
 

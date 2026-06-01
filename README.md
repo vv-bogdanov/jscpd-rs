@@ -7,23 +7,24 @@
 [![license](https://img.shields.io/github/license/vv-bogdanov/jscpd-rs.svg?style=flat-square)](LICENSE)
 [![rust](https://img.shields.io/badge/rust-1.93%2B-dea584?style=flat-square)](https://www.rust-lang.org/)
 
-50x+ faster native Rust clone of
-[`jscpd`](https://github.com/kucherenko/jscpd) for copy-paste and
-duplicate-code detection in local development and CI/CD.
-It scans a codebase, finds duplicated source fragments across files, writes
-reports for humans and automation, and can fail a build when duplication
-crosses a configured threshold.
+50x+ faster duplicate-code detector for local development, CI/CD, and code
+quality gates.
+`jscpd-rs` scans a codebase, finds copy-paste fragments across files, writes
+console, JSON, SARIF, HTML, XML, CSV, Markdown, badge, and Xcode reports, and
+can fail a build when duplication crosses a configured threshold.
 
-`jscpd-rs` keeps the upstream command shape, configuration formats, reports,
-exit-code workflows, and server workflow, while moving the hot path to native
-Rust. The practical goal is simple: keep duplication checks always-on without
-spending unnecessary CI minutes, developer waiting time, cloud compute budget,
-or electricity on repeated quality gates.
+It is a native Rust implementation of the common
+[`jscpd`](https://github.com/kucherenko/jscpd) command-line workflow:
+upstream-style CLI flags, `.jscpd.json` and `package.json#jscpd`
+configuration, report formats, exit-code behavior, Git blame, and server
+snippet checks. The practical goal is simple: keep copy-paste detection
+always-on without spending unnecessary CI minutes, developer waiting time,
+cloud compute budget, or electricity on repeated quality gates.
 
-Recorded public release-candidate benchmarks are currently 50x+ faster than
-upstream on the covered repositories. The compatibility gate is coverage-first:
-on the same inputs and options, `jscpd-rs` must not miss duplicated source lines
-reported by upstream `jscpd`.
+Recorded public benchmark baselines show 50x+ speedups over upstream on the
+covered repositories. The compatibility gate is coverage-first: on the same
+inputs and options, `jscpd-rs` must not miss duplicated source lines reported
+by upstream `jscpd`.
 
 ## Install
 
@@ -44,10 +45,9 @@ npx jscpd-rs --version
 npx jscpd-rs .
 ```
 
-The first npm package is a source-build package: install/postinstall compiles
+The current npm package is a source-build package: install/postinstall compiles
 the native Rust binaries with Cargo. A Rust toolchain must be available on the
-installing machine. Prebuilt platform packages are a planned publication
-improvement.
+installing machine. Prebuilt platform packages are a planned follow-up.
 
 From this repository:
 
@@ -115,7 +115,7 @@ If you already use upstream `jscpd`, see
 
 ## GitHub Actions
 
-Install from crates.io after publication:
+Install from crates.io:
 
 ```yaml
 jobs:
@@ -170,6 +170,8 @@ npx skills add vv-bogdanov/jscpd-rs --skill dry-refactoring
 
 - **Fast CI/CD gates:** duplicate detection should be cheap enough to run on
   every pull request.
+- **Actionable reports:** console, JSON, SARIF, HTML, XML, CSV, Markdown,
+  badge, Xcode, threshold, and AI-oriented reports are implemented natively.
 - **Lower operating cost:** shorter scans reduce paid compute minutes and
   repeated developer wait time.
 - **Native detector path:** the detector does not embed or spawn JavaScript for
@@ -182,8 +184,8 @@ npx skills add vv-bogdanov/jscpd-rs --skill dry-refactoring
 
 ## What Works Today
 
-This is pre-release software. The first release target is a coverage-first
-compatible CLI replacement for common `jscpd` workflows:
+The current release is a coverage-first compatible CLI replacement for common
+`jscpd` duplicate-code and copy-paste detection workflows:
 
 - `jscpd` and `jscpd-server` binaries with upstream-compatible command names;
 - CLI and config option surface covered by compatibility scripts;
@@ -218,7 +220,7 @@ compare their reports.
 
 ## Performance
 
-Latest recorded public benchmark baseline:
+Latest recorded public benchmark baseline for duplicate-code detection:
 
 | Repo | Format | Rust avg | Upstream avg | Speedup |
 | --- | --- | ---: | ---: | ---: |
@@ -232,8 +234,8 @@ Reproduce the public benchmark and coverage suite:
 PUBLIC=1 PUBLIC_RUNS=3 scripts/release-gate.sh
 ```
 
-The release-candidate workflow reruns the public suite before publication so
-README numbers stay tied to a concrete commit and gate output.
+Release-candidate workflows rerun the public suite before each new publication
+so README numbers stay tied to a concrete commit and gate output.
 
 ## Library API
 

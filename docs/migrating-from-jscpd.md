@@ -1,8 +1,10 @@
 # Migrating From jscpd
 
-`jscpd-rs` is a native Rust implementation of the common upstream `jscpd`
-workflow. It scans source trees, reports duplicated fragments, and can fail CI
-when duplication crosses a configured threshold.
+`jscpd-rs` is a 50x+ faster duplicate-code detector and native Rust
+implementation of the common upstream `jscpd` workflow. It scans source trees,
+reports copy-paste fragments across files, writes console, JSON, SARIF, HTML,
+XML, CSV, Markdown, badge, and Xcode reports, and can fail CI when duplication
+crosses a configured threshold.
 
 The migration goal for the first release is practical CLI/reporting
 compatibility for CI and local scans, not exact JavaScript package API parity.
@@ -16,7 +18,7 @@ cargo install jscpd-rs --locked
 jscpd --threshold 5 --exitCode 1 src
 ```
 
-npm/npx after npm publication:
+npm/npx:
 
 ```bash
 npx jscpd-rs --threshold 5 --exitCode 1 src
@@ -178,7 +180,7 @@ Cargo-based `jscpd-rs` CI:
 - run: jscpd src --reporters console,json --threshold 5 --exitCode 1
 ```
 
-npm/npx-based `jscpd-rs` CI after npm publication:
+npm/npx-based `jscpd-rs` CI:
 
 ```yaml
 - uses: dtolnay/rust-toolchain@stable
@@ -189,5 +191,4 @@ npm/npx-based `jscpd-rs` CI after npm publication:
 ```
 
 The npm source-build package still needs Rust available during installation.
-Prebuilt npm platform packages are planned as a publication improvement.
-
+Prebuilt npm platform packages are planned as a follow-up.
