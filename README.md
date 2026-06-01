@@ -45,11 +45,10 @@ npx jscpd-rs --version
 npx jscpd-rs .
 ```
 
-Current npm packaging note: the published `jscpd-rs@0.1.0` package builds the
-native Rust binaries from source during install, so npm users need Cargo
-available today. This repository is configured to publish prebuilt Linux,
-macOS, and Windows packages from the next npm release; the source-build path
-will remain as a fallback. See
+Current npm packaging note: `jscpd-rs` installs prebuilt Linux, macOS, and
+Windows binaries where available, then falls back to building from source with
+Cargo for unsupported platforms. The original `0.1.0` npm package was
+source-build only; use `0.1.1+` for the prebuilt-first path. See
 [docs/prebuilt-binaries.md](docs/prebuilt-binaries.md).
 
 From this repository:
@@ -173,9 +172,8 @@ npx skills add vv-bogdanov/jscpd-rs --skill dry-refactoring
 
 - **Fast CI/CD gates:** duplicate detection should be cheap enough to run on
   every pull request.
-- **Low-friction rollout target:** the CLI is native today, and npm prebuilt
-  binary publishing is configured so Node users can install without a Rust
-  toolchain after the next npm release.
+- **Low-friction rollout:** npm installs use prebuilt binaries on supported
+  Linux, macOS, and Windows targets, with a Cargo fallback for other platforms.
 - **Actionable reports:** console, JSON, SARIF, HTML, XML, CSV, Markdown,
   badge, Xcode, threshold, and AI-oriented reports are implemented natively.
 - **Lower operating cost:** shorter scans reduce paid compute minutes and

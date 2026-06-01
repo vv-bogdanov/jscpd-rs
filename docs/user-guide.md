@@ -29,10 +29,9 @@ npm install -g jscpd-rs
 npx jscpd-rs --version
 ```
 
-The published `jscpd-rs@0.1.0` package builds the native binaries from source
-during `postinstall`, so a Rust toolchain must be available. The repository is
-configured to publish prebuilt npm platform packages from the next npm release;
-see the
+`jscpd-rs@0.1.1+` installs prebuilt Linux, macOS, and Windows binaries where
+available and falls back to building from source with Cargo for unsupported
+platforms. The original `0.1.0` npm package was source-build only. See the
 [prebuilt binary distribution plan](prebuilt-binaries.md).
 
 Install from a checkout:

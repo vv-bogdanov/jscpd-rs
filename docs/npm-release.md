@@ -19,15 +19,11 @@ The npm package is `jscpd-rs`. It exposes these bin commands:
 - `jscpd`: installed alias for the native `jscpd` CLI.
 - `jscpd-server`: installed alias for the native server binary.
 
-The published `jscpd-rs@0.1.0` package is source-build: `postinstall` runs
-`cargo build --release --locked --bin jscpd --bin jscpd-server` inside the
-installed npm package. Users installing that version from npm need Node, npm,
-and a Rust/Cargo toolchain.
-
-The repository is now configured for the next npm release to publish prebuilt
-platform packages before the main `jscpd-rs` package. The CLI behavior stays
-the same, and the source-build path remains the fallback for unsupported
-platforms; see the [prebuilt binary distribution plan](prebuilt-binaries.md).
+`jscpd-rs@0.1.1+` publishes prebuilt platform packages before the main
+`jscpd-rs` package. The CLI behavior stays the same, and the source-build path
+remains the fallback for unsupported platforms. The original `0.1.0` package
+was source-build only; see the
+[prebuilt binary distribution plan](prebuilt-binaries.md).
 
 Local verification:
 
@@ -64,9 +60,10 @@ scripts/npm-package-check.sh
 npm view jscpd-rs version
 ```
 
-`npm view` should return `E404` for the first publication, or the package must
-already be owned by this project. Do not run `npm publish` until explicit
-release approval.
+For a new version, `npm view jscpd-rs@X.Y.Z version` should fail before the
+release and return that version after publication. Do not run `npm publish`
+manually unless the GitHub Release workflow fails and explicit fallback
+approval is given.
 
 Do not use `scripts/prepublish-check.sh` as the npm-only gate after the Cargo
 crate and GitHub tag have already been published: that script is the full

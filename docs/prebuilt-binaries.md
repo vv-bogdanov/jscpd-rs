@@ -1,14 +1,11 @@
 # Prebuilt Binary Distribution
 
-`jscpd-rs` is a native Rust CLI. The published `jscpd-rs@0.1.0` npm package
-builds the native binaries from source during `postinstall`; that bootstrap
-path works, but it is too much friction for broad npm adoption because users
-need Cargo, native build tools, and extra install time before they can run a
-duplicate-code scan.
+`jscpd-rs` is a native Rust CLI. Starting with `jscpd-rs@0.1.1`, npm
+distribution uses a small main package plus platform-specific optional
+packages. The original `0.1.0` npm package was source-build only.
 
-The repository is now wired for the next npm release to use a small main
-package plus platform-specific optional packages. The main `jscpd-rs` package
-keeps the public bin names: `jscpd-rs`, `jscpd`, and `jscpd-server`.
+The main `jscpd-rs` package keeps the public bin names: `jscpd-rs`, `jscpd`,
+and `jscpd-server`.
 
 ## Runtime Behavior
 

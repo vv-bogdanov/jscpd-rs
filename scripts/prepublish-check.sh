@@ -2,13 +2,18 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-RELEASE_TAG="${RELEASE_TAG:-v0.1.0}"
 CRATE_NAME="${CRATE_NAME:-jscpd-rs}"
 NPM_PACKAGE_NAME="${NPM_PACKAGE_NAME:-jscpd-rs}"
 EXPECTED_JSCPD_SHA="${EXPECTED_JSCPD_SHA:-50290cfd1b60b8d0d4c2929a1367328a1dddd074}"
 RUN_RELEASE_CANDIDATE="${RUN_RELEASE_CANDIDATE:-1}"
 
 cd "$ROOT"
+
+PACKAGE_VERSION="$(
+  cargo metadata --no-deps --format-version 1 \
+    | node --input-type=module -e 'let data = ""; process.stdin.on("data", chunk => data += chunk); process.stdin.on("end", () => console.log(JSON.parse(data).packages[0].version));'
+)"
+RELEASE_TAG="${RELEASE_TAG:-v$PACKAGE_VERSION}"
 
 fail() {
   printf 'prepublish check failed: %s\n' "$*" >&2
@@ -48,27 +53,28 @@ if git ls-remote --tags origin "refs/tags/$RELEASE_TAG" | grep -q .; then
 fi
 printf 'tag %s is available locally and on origin\n' "$RELEASE_TAG"
 
-section "crate name availability"
-cargo_search_output="$(cargo search "$CRATE_NAME" --limit 5)"
-if grep -E "^${CRATE_NAME}[[:space:]=]" <<<"$cargo_search_output"; then
-  fail "crate $CRATE_NAME appears to exist in cargo search output"
+section "crate version availability"
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
+if (cd "$tmp" && cargo info "${CRATE_NAME}@${PACKAGE_VERSION}" >/dev/null 2>&1); then
+  fail "crate ${CRATE_NAME}@${PACKAGE_VERSION} is already published"
 fi
-printf 'cargo search found no exact %s crate\n' "$CRATE_NAME"
+printf 'crate %s@%s is not published yet\n' "$CRATE_NAME" "$PACKAGE_VERSION"
 
-section "npm package name availability"
+section "npm package version availability"
 set +e
-npm_view_output="$(npm view "$NPM_PACKAGE_NAME" version 2>&1)"
+npm_view_output="$(npm view "${NPM_PACKAGE_NAME}@${PACKAGE_VERSION}" version 2>&1)"
 npm_view_code=$?
 set -e
 if [[ "$npm_view_code" == "0" ]]; then
   printf '%s\n' "$npm_view_output" >&2
-  fail "npm package $NPM_PACKAGE_NAME appears to exist"
+  fail "npm package ${NPM_PACKAGE_NAME}@${PACKAGE_VERSION} is already published"
 fi
 if ! grep -Fq "E404" <<<"$npm_view_output"; then
   printf '%s\n' "$npm_view_output" >&2
-  fail "could not confirm npm package $NPM_PACKAGE_NAME availability"
+  fail "could not confirm npm package ${NPM_PACKAGE_NAME}@${PACKAGE_VERSION} availability"
 fi
-printf 'npm view found no exact %s package\n' "$NPM_PACKAGE_NAME"
+printf 'npm package %s@%s is not published yet\n' "$NPM_PACKAGE_NAME" "$PACKAGE_VERSION"
 
 section "benchmark docs consistency"
 benchmark_source="docs/compat-baseline.md"
