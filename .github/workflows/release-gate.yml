@@ -57,10 +57,10 @@ jobs:
     env:
       CI: "1"
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
-      FULL: ${{ (github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_call') && inputs.full && '1' || '0' }}
-      PUBLIC: ${{ (github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_call') && inputs.public && '1' || '0' }}
-      RELEASE_CANDIDATE: ${{ (github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_call') && inputs.release_candidate && '1' || '0' }}
-      PUBLIC_RUNS: ${{ (github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_call') && inputs.public_runs || '1' }}
+      FULL: ${{ inputs.full && '1' || '0' }}
+      PUBLIC: ${{ inputs.public && '1' || '0' }}
+      RELEASE_CANDIDATE: ${{ inputs.release_candidate && '1' || '0' }}
+      PUBLIC_RUNS: ${{ inputs.public_runs || '1' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
