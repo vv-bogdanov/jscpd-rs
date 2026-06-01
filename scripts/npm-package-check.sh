@@ -94,8 +94,14 @@ for (const path of files) {
 console.log(`npm package file count: ${files.length}`);
 NODE
 
-npm publish --dry-run --json >"$TMP_ROOT/npm-publish-dry-run.json"
-node --input-type=module - "$TMP_ROOT/npm-publish-dry-run.json" "$npm_version" <<'NODE'
+set +e
+npm publish --dry-run --json \
+  >"$TMP_ROOT/npm-publish-dry-run.json" \
+  2>"$TMP_ROOT/npm-publish-dry-run.err"
+npm_publish_dry_run_status=$?
+set -e
+if [[ "$npm_publish_dry_run_status" -eq 0 ]]; then
+  node --input-type=module - "$TMP_ROOT/npm-publish-dry-run.json" "$npm_version" <<'NODE'
 import fs from 'node:fs';
 
 const [file, expectedVersion] = process.argv.slice(2);
@@ -108,6 +114,13 @@ if (publish.name !== 'jscpd-rs' || publish.version !== expectedVersion) {
 }
 console.log(`npm publish dry-run: ${publish.name}@${publish.version}`);
 NODE
+elif grep -Fq "cannot publish over the previously published versions" \
+  "$TMP_ROOT/npm-publish-dry-run.err"; then
+  printf 'npm publish dry-run skipped: jscpd-rs@%s is already published\n' "$npm_version"
+else
+  cat "$TMP_ROOT/npm-publish-dry-run.err" >&2
+  fail "npm publish dry-run failed"
+fi
 
 (
   cd "$FAIL_DIR"

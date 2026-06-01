@@ -40,6 +40,8 @@ That script verifies:
 - forbidden paths such as `jscpd/`, `target/`, `report/`, `scripts/`, and
   `node_modules/` are not packed;
 - `npm publish --dry-run --json` succeeds without publishing;
+  if the current version is already published, this dry-run is skipped with an
+  explicit message;
 - installing the packed tarball without Cargo fails with the expected Rust
   toolchain hint;
 - a local npm install exposes working `jscpd-rs`, `jscpd`, and `jscpd-server`
@@ -84,11 +86,20 @@ specific GitHub Actions workflow through OIDC, so the workflow can publish
 without a long-lived npm token. For public packages published from public
 repositories, npm also generates provenance attestations automatically.
 
-This repository provides a manual publish workflow:
+This repository provides a publish workflow:
 
 ```text
 .github/workflows/npm-publish.yml
 ```
+
+The workflow runs automatically when a non-draft, non-prerelease GitHub Release
+is published. It checks out the release tag, verifies that the tag matches the
+`package.json` version, verifies that the exact npm version is not already
+published, runs `scripts/npm-package-check.sh`, and then runs
+`npm publish --access public`.
+
+It can also be run manually from GitHub Actions as a fallback by entering
+`jscpd-rs` in the confirmation input.
 
 Configure npm:
 
@@ -102,7 +113,14 @@ Configure npm:
    - Environment name: leave empty
    - Allowed actions: `npm publish`
 
-Then publish from GitHub:
+Then publish automatically from GitHub:
+
+1. Update `Cargo.toml` and `package.json` to the same version.
+2. Run the release gates.
+3. Create and publish a GitHub Release with tag `vX.Y.Z`.
+4. GitHub Actions will run `npm-publish` from that release tag.
+
+Manual fallback:
 
 1. Open GitHub Actions.
 2. Select the `npm-publish` workflow.
@@ -114,3 +132,6 @@ If npm does not allow Trusted Publishing configuration before the first package
 version exists, publish the first version with either interactive 2FA or a
 short-lived granular token with bypass 2FA enabled, then immediately configure
 Trusted Publishing for future releases.
+
+After Trusted Publishing is verified, revoke temporary npm tokens and consider
+setting the npm package publishing access to disallow traditional tokens.
