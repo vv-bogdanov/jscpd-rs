@@ -281,5 +281,7 @@ Keep this as part of the release plan:
 - Keep future release publishing on `release-publish.yml` so crates.io and npm
   reuse the same release-candidate result instead of running duplicate full
   gates.
+- Keep the pinned `cargo-llvm-cov` binary cache warm; on a cache hit the
+  release-candidate setup avoids recompiling the coverage tool.
 - If default CI remains above roughly three minutes after warm caches, split the
   package surface smoke from the compatibility gates into separate jobs.

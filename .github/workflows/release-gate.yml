@@ -57,6 +57,7 @@ jobs:
     env:
       CI: "1"
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+      CARGO_LLVM_COV_VERSION: "0.8.7"
       FULL: ${{ inputs.full && '1' || '0' }}
       PUBLIC: ${{ inputs.public && '1' || '0' }}
       RELEASE_CANDIDATE: ${{ inputs.release_candidate && '1' || '0' }}
@@ -87,9 +88,19 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-1.93.0-
 
+      - name: Cache cargo-llvm-cov binary
+        if: env.RELEASE_CANDIDATE == '1'
+        uses: actions/cache@v5
+        with:
+          path: ~/.cargo/bin/cargo-llvm-cov
+          key: ${{ runner.os }}-cargo-llvm-cov-${{ env.CARGO_LLVM_COV_VERSION }}
+
       - name: Install cargo-llvm-cov
         if: env.RELEASE_CANDIDATE == '1'
-        run: cargo install cargo-llvm-cov --locked
+        run: |
+          if ! command -v cargo-llvm-cov >/dev/null; then
+            cargo install cargo-llvm-cov --version "$CARGO_LLVM_COV_VERSION" --locked
+          fi
 
       - name: Install Node
         uses: actions/setup-node@v6
