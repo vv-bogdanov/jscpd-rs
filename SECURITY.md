@@ -8,9 +8,14 @@ may already be fixed.
 
 ## Reporting A Vulnerability
 
-Please report security issues privately by using GitHub Security Advisories for
-this repository when available. If that is not available, open a minimal public
-issue that asks for a private contact path without including exploit details.
+Please report security issues privately through GitHub Security Advisories:
+
+<https://github.com/vv-bogdanov/jscpd-rs/security/advisories/new>
+
+Do not include exploit details in public issues, pull requests, discussions, or
+social posts before coordinated disclosure. If GitHub private vulnerability
+reporting is unavailable, open a minimal public issue that asks for a private
+contact path and does not include reproduction details.
 
 Include:
 
@@ -18,6 +23,18 @@ Include:
 - operating system and architecture;
 - the command that triggered the issue;
 - whether the issue affects local CLI scans, report generation, or the server.
+
+Expected disclosure timeline:
+
+- acknowledgment within 7 days;
+- initial triage within 14 days;
+- coordinated fix and disclosure target within 90 days for confirmed
+  vulnerabilities, adjusted for severity and ecosystem impact.
+
+Security fixes are released through Cargo, npm, and GitHub Releases. When a
+vulnerability affects published packages, the advisory should include affected
+versions, patched versions, severity, impact, workaround status, and credit for
+the reporter when requested.
 
 ## Supply Chain Notes
 
