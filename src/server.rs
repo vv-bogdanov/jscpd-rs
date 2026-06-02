@@ -501,7 +501,7 @@ fn now_rfc3339() -> String {
 
 fn new_mcp_session_id() -> String {
     let mut bytes = [0u8; 16];
-    getrandom::fill(&mut bytes).expect("OS random unavailable for MCP session id");
+    getrandom::getrandom(&mut bytes).expect("OS random unavailable for MCP session id");
     bytes[6] = (bytes[6] & 0x0f) | 0x40;
     bytes[8] = (bytes[8] & 0x3f) | 0x80;
     let mut session_id = String::with_capacity(36);

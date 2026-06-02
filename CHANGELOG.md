@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.1.7 - 2026-06-02
+
+### Changed
+
+- Reduce the Rust supply-chain surface by reverting the direct `getrandom`
+  dependency from 0.4 to the stable 0.2 line used before 0.1.5. This removes
+  the extra WASI/WIT transitive dependency tail added by the major update while
+  keeping OS-backed MCP session IDs.
+- Configure Dependabot to keep grouped Cargo dependency updates to minor and
+  patch releases, and explicitly ignore future major `getrandom` bumps unless
+  a security advisory or concrete platform need justifies the larger dependency
+  graph.
+
 ## 0.1.6 - 2026-06-02
 
 ### Added
