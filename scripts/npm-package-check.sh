@@ -34,8 +34,8 @@ fi
 
 PACK_DIR="$TMP_ROOT/pack"
 INSTALL_DIR="$TMP_ROOT/install"
-FAIL_DIR="$TMP_ROOT/install-no-cargo"
-mkdir -p "$PACK_DIR" "$INSTALL_DIR" "$FAIL_DIR"
+NO_PREBUILT_DIR="$TMP_ROOT/install-no-prebuilt"
+mkdir -p "$PACK_DIR" "$INSTALL_DIR" "$NO_PREBUILT_DIR"
 
 npm pack --pack-destination "$PACK_DIR" --json >"$TMP_ROOT/npm-pack.json"
 tarball="$(node --input-type=module - "$TMP_ROOT/npm-pack.json" <<'NODE'
@@ -53,31 +53,29 @@ import fs from 'node:fs';
 const pack = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'))[0];
 const files = pack.files.map((file) => file.path).sort();
 const required = [
-  'Cargo.toml',
-  'Cargo.lock',
-  'docs/migrating-from-jscpd.md',
-  'docs/prebuilt-binaries.md',
-  'docs/user-guide.md',
-  'examples/library_api.rs',
+  'CHANGELOG.md',
+  'CONTRIBUTING.md',
   'LICENSE',
   'README.md',
+  'SECURITY.md',
   'npm/bin/jscpd-rs.js',
   'npm/bin/jscpd-server.js',
   'npm/lib/platform.js',
   'npm/lib/run-binary.js',
   'npm/prebuilt-targets.json',
-  'npm/scripts/postinstall.js',
   'package.json',
-  'skills/dry-refactoring/SKILL.md',
-  'skills/jscpd/SKILL.md',
-  'src/main.rs',
-  'src/bin/jscpd-server.rs',
 ];
 const forbidden = [
+  /^Cargo\.(toml|lock)$/,
+  /^docs\//,
+  /^examples\//,
   /^jscpd\//,
-  /^target\//,
+  /^npm\/scripts\//,
   /^report\//,
   /^scripts\//,
+  /^skills\//,
+  /^src\//,
+  /^target\//,
   /(^|\/)node_modules\//,
 ];
 
@@ -103,11 +101,25 @@ import fs from 'node:fs';
 const [expectedVersion] = process.argv.slice(2);
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 const targets = JSON.parse(fs.readFileSync('npm/prebuilt-targets.json', 'utf8'));
+const forbiddenLifecycleScripts = [
+  'preinstall',
+  'install',
+  'postinstall',
+  'prepublish',
+  'prepare',
+];
 const expectedPackages = Object.values(targets)
   .map((target) => target.packageName)
   .sort();
 const optionalDependencies = pkg.optionalDependencies ?? {};
 const actualPackages = Object.keys(optionalDependencies).sort();
+
+for (const script of forbiddenLifecycleScripts) {
+  if (pkg.scripts?.[script]) {
+    console.error(`package.json must not define lifecycle script: ${script}`);
+    process.exit(1);
+  }
+}
 
 if (JSON.stringify(actualPackages) !== JSON.stringify(expectedPackages)) {
   console.error(
@@ -155,34 +167,34 @@ else
 fi
 
 (
-  cd "$FAIL_DIR"
+  cd "$NO_PREBUILT_DIR"
   npm init -y >/dev/null
+  npm install --omit=optional --no-audit --no-fund "$tarball" \
+    >"$TMP_ROOT/npm-install-no-prebuilt.log" 2>&1
   set +e
-  CARGO="$TMP_ROOT/missing-cargo" npm install --omit=optional --no-audit --no-fund "$tarball" \
-    >"$TMP_ROOT/npm-install-no-cargo.log" 2>&1
+  "./node_modules/.bin/jscpd-rs" --version \
+    >"$TMP_ROOT/npm-run-no-prebuilt.log" 2>&1
   status=$?
   set -e
   if [[ "$status" -eq 0 ]]; then
-    fail "npm install unexpectedly succeeded without Cargo"
+    fail "jscpd-rs unexpectedly ran without a prebuilt package"
   fi
-  grep -Fq \
-    "jscpd-rs: Cargo was not found. Install Rust from https://rustup.rs/ and retry." \
-    "$TMP_ROOT/npm-install-no-cargo.log" \
-    || fail "npm install without Cargo did not print the expected Rust toolchain hint"
+  grep -Fq "Install jscpd-rs with optional dependencies enabled" \
+    "$TMP_ROOT/npm-run-no-prebuilt.log" \
+    || fail "running without a prebuilt package did not print the expected install hint"
 )
-
-if [[ "${NPM_PACKAGE_CHECK_REUSE_TARGET:-0}" == "1" ]]; then
-  export CARGO_TARGET_DIR="$ROOT/target"
-fi
 
 (
   cd "$INSTALL_DIR"
   npm init -y >/dev/null
-  JSCPD_RS_FORCE_BUILD=1 npm install --omit=optional --no-audit --no-fund "$tarball"
-  test "$("./node_modules/.bin/jscpd-rs" --version)" = "$cargo_version"
-  test "$("./node_modules/.bin/jscpd" --version)" = "$cargo_version"
-  test "$("./node_modules/.bin/jscpd-server" --version)" = "$cargo_version"
-  "./node_modules/.bin/jscpd" --help | grep -Fq 'Usage: jscpd [options] <path ...>'
+  npm install --ignore-scripts --omit=optional --no-audit --no-fund "$tarball"
+  set +e
+  "./node_modules/.bin/jscpd-rs" --version >/dev/null 2>&1
+  status=$?
+  set -e
+  if [[ "$status" -eq 0 ]]; then
+    fail "main npm package unexpectedly ran without a platform package"
+  fi
 )
 
 current_target="$(node -e 'process.stdout.write(require("./npm/lib/platform").currentTargetKey() || "")')"
@@ -215,17 +227,19 @@ NODE
     cd "$PREBUILT_INSTALL_DIR"
     npm init -y >/dev/null
     npm install --ignore-scripts --no-audit --no-fund "$prebuilt_tarball"
-    JSCPD_RS_SKIP_POSTINSTALL=1 CARGO="$TMP_ROOT/missing-cargo" \
-      npm install --no-audit --no-fund "$tarball"
-    export CARGO="$TMP_ROOT/missing-cargo"
+    npm install --no-audit --no-fund "$tarball"
     test "$("./node_modules/.bin/jscpd-rs" --version)" = "$cargo_version"
     test "$("./node_modules/.bin/jscpd" --version)" = "$cargo_version"
     test "$("./node_modules/.bin/jscpd-server" --version)" = "$cargo_version"
+    "./node_modules/.bin/jscpd" --help | grep -Fq 'Usage: jscpd [options] <path ...>'
   )
+
+  npx --yes \
+    --package "$prebuilt_tarball" \
+    --package "$tarball" \
+    jscpd-rs --version | grep -Fxq "$cargo_version"
 else
   printf 'npm prebuilt smoke skipped: no prebuilt target for this platform\n'
 fi
-
-npx --yes --package "$tarball" jscpd-rs --version | grep -Fxq "$cargo_version"
 
 printf 'npm package check complete: %s\n' "$tarball"

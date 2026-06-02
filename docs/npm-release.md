@@ -2,16 +2,16 @@
 
 Current npm readiness snapshot:
 
-- Date: 2026-06-01.
-- Current published version: `jscpd-rs@0.1.3`.
-- Latest npm publish workflow: `v0.1.3` GitHub Release workflow.
+- Date: 2026-06-02.
+- Current published version: `jscpd-rs@0.1.4`.
+- Latest npm publish workflow: `v0.1.4` GitHub Release workflow.
 - Published platform packages: `jscpd-rs-linux-x64-gnu`,
   `jscpd-rs-linux-arm64-gnu`, `jscpd-rs-darwin-x64`,
   `jscpd-rs-darwin-arm64`, and `jscpd-rs-win`.
 - Post-publication smoke passed from clean temporary directories:
-  `npm install jscpd-rs@0.1.3`, `jscpd-rs --version`, `jscpd --version`,
+  `npm install jscpd-rs@0.1.4`, `jscpd-rs --version`, `jscpd --version`,
   `jscpd-server --version`, and
-  `npx --package jscpd-rs@0.1.3 jscpd-rs --version`.
+  `npx --package jscpd-rs@0.1.4 jscpd-rs --version`.
 - Rerun `scripts/npm-package-check.sh` on the exact checkout before publishing
   any new npm version.
 
@@ -21,10 +21,10 @@ The npm package is `jscpd-rs`. It exposes these bin commands:
 - `jscpd`: installed alias for the native `jscpd` CLI.
 - `jscpd-server`: installed alias for the native server binary.
 
-`jscpd-rs@0.1.2+` publishes prebuilt platform packages before the main
-`jscpd-rs` package. The CLI behavior stays the same, and the source-build path
-remains the fallback for unsupported platforms. The original `0.1.0` package
-was source-build only; see the
+`jscpd-rs@0.1.4+` publishes prebuilt platform packages before the main
+`jscpd-rs` package. The CLI behavior stays the same, and the main npm package
+does not run install-time build scripts. Unsupported npm platforms should use
+Cargo. The original `0.1.0` package was source-build only; see the
 [prebuilt binary distribution plan](prebuilt-binaries.md).
 
 Local verification:
@@ -36,22 +36,20 @@ scripts/npm-package-check.sh
 That script verifies:
 
 - `package.json` version matches `Cargo.toml`;
-- `npm pack` includes the expected Rust source and npm shim files;
+- `npm pack` includes the expected runtime shim files and project metadata;
 - `optionalDependencies` match `npm/prebuilt-targets.json` and the current
   package version;
-- `npm pack` includes the advertised `skills/` files used by the terminal tip;
+- `package.json` does not declare install lifecycle scripts;
 - forbidden paths such as `jscpd/`, `target/`, `report/`, `scripts/`, and
   `node_modules/` are not packed;
 - `npm publish --dry-run --json` succeeds without publishing;
   if the current version is already published, this dry-run is skipped with an
   explicit message;
-- installing the packed tarball without Cargo and without optional prebuilt
-  packages fails with the expected Rust toolchain hint;
-- source-build fallback exposes working `jscpd-rs`, `jscpd`, and
-  `jscpd-server` bin commands;
+- installing the packed tarball without optional prebuilt packages does not run
+  build scripts, and the CLI fails with the expected install hint;
 - a locally generated platform package exposes the same bin commands without
   Cargo;
-- `npx --package <local-tarball> jscpd-rs --version` works.
+- `npx` works when local main and platform tarballs are installed together.
 
 Before actual publication, run:
 

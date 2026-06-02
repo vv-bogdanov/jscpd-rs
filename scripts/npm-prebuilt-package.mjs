@@ -76,14 +76,21 @@ fs.writeFileSync(
 
 ${target.description}.
 
-This package is an optional platform package for
-[jscpd-rs](https://www.npmjs.com/package/jscpd-rs). Install the main package
-instead:
+This is an optional native binary package for
+[jscpd-rs](https://www.npmjs.com/package/jscpd-rs), a fast Rust implementation
+of the common \`jscpd\` duplicate-code detection workflow.
+
+Do not install this package directly. Install the main package instead:
 
 \`\`\`bash
 npm install -g jscpd-rs
 npx jscpd-rs --version
 \`\`\`
+
+This package contains only the native \`jscpd\` and \`jscpd-server\` binaries
+for its target platform, plus package metadata and license/readme files. It has
+no runtime dependencies and no install scripts. Releases are published from the
+project GitHub Actions workflow with npm provenance enabled.
 
 `,
 );
@@ -96,6 +103,8 @@ const packageJson = {
   repository: rootPackage.repository,
   homepage: rootPackage.homepage,
   bugs: rootPackage.bugs,
+  keywords: rootPackage.keywords,
+  engines: rootPackage.engines,
   os: [target.os],
   cpu: [target.cpu],
   files: ['bin/**', 'LICENSE', 'README.md'],

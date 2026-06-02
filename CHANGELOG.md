@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.1.4 - 2026-06-02
+
+### Changed
+
+- Remove npm install-time builds: the main npm package no longer declares a
+  `postinstall` lifecycle script and no longer invokes Cargo during install.
+- Shrink the main npm package to runtime shim files, project metadata, README,
+  license, changelog, and security/contributing docs.
+- Keep npm runtime prebuilt-first: platform packages provide native binaries;
+  unsupported npm platforms should install through Cargo.
+- Add `SECURITY.md`, `CONTRIBUTING.md`, and Dependabot configuration for
+  clearer supply-chain and maintenance signals.
+- Update npm package checks to validate prebuilt-only behavior and local
+  platform-package smoke tests.
+
 ## 0.1.3 - 2026-06-01
 
 ### Changed

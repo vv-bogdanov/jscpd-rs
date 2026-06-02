@@ -59,9 +59,8 @@ Optimized default CI run `26710686373` on commit `71088f1` completed in
 The workflow now restores Cargo, pnpm, and upstream build caches, resolves the
 pnpm store with upstream's `pnpm@10.28.0`, validates restored pnpm
 `node_modules` symlinks before using upstream builds, skips `clippy`
-installation outside release-candidate runs, and uses a target-reuse npm
-package smoke. Keep the full cold npm source-build in
-`scripts/prepublish-check.sh` and release-candidate runs.
+installation outside release-candidate runs, and uses a local prebuilt npm
+package smoke without install-time Cargo builds.
 
 Recorded public benchmark baseline for this release candidate:
 
@@ -245,9 +244,8 @@ Keep this as part of the release plan:
   `server compatibility` as the CI bottleneck watchlist.
 - Compare future warm-cache GitHub Actions runs with optimized run
   `26710686373` and cold run `26710415211`.
-- Keep default push/PR CI as a fast confidence gate; keep cold npm source
-  install, `clippy`, full matrix, and public benchmark coverage in
-  `scripts/prepublish-check.sh` and manual release-candidate workflow runs.
+- Keep default push/PR CI as a fast confidence gate; keep `clippy`, full
+  matrix, and public benchmark coverage in `scripts/prepublish-check.sh` and
+  manual release-candidate workflow runs.
 - If default CI remains above roughly three minutes after warm caches, split the
-  package surface smoke from the compatibility gates into separate jobs or make
-  package source-build a release-candidate-only job.
+  package surface smoke from the compatibility gates into separate jobs.

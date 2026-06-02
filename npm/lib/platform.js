@@ -14,9 +14,7 @@ function exeName(name, platform = process.platform) {
 }
 
 function sourceBinaryPath(name) {
-  const targetDir =
-    process.env.CARGO_TARGET_DIR || path.join(packageRoot(), "target");
-  return path.join(targetDir, "release", exeName(name));
+  return path.join(packageRoot(), "target", "release", exeName(name));
 }
 
 function detectLinuxLibc() {
@@ -54,10 +52,6 @@ function currentTarget() {
 }
 
 function resolvePrebuiltBinary(name) {
-  if (process.env.JSCPD_RS_FORCE_BUILD === "1") {
-    return undefined;
-  }
-
   const target = currentTarget();
   if (!target) {
     return undefined;
@@ -72,12 +66,12 @@ function resolvePrebuiltBinary(name) {
     return undefined;
   }
 
-  const binary = path.join(path.dirname(packageJson), "bin", exeName(name, target.os));
+  const binary = path.join(
+    path.dirname(packageJson),
+    "bin",
+    exeName(name, target.os),
+  );
   return fs.existsSync(binary) ? binary : undefined;
-}
-
-function resolveBinary(name) {
-  return resolvePrebuiltBinary(name) || sourceBinaryPath(name);
 }
 
 module.exports = {
@@ -85,7 +79,6 @@ module.exports = {
   currentTargetKey,
   exeName,
   packageRoot,
-  resolveBinary,
   resolvePrebuiltBinary,
   sourceBinaryPath,
   targets,

@@ -1,8 +1,9 @@
 # Prebuilt Binary Distribution
 
-`jscpd-rs` is a native Rust CLI. Starting with `jscpd-rs@0.1.2`, npm
+`jscpd-rs` is a native Rust CLI. Starting with `jscpd-rs@0.1.4`, npm
 distribution uses a small main package plus platform-specific optional
-packages. The original `0.1.0` npm package was source-build only.
+packages without install-time build scripts. The original `0.1.0` npm package
+was source-build only.
 
 The main `jscpd-rs` package keeps the public bin names: `jscpd-rs`, `jscpd`,
 and `jscpd-server`.
@@ -11,15 +12,12 @@ and `jscpd-server`.
 
 - The JS shim first looks for a matching prebuilt optional package.
 - If a prebuilt package is installed, the shim runs its native binary directly.
-- If no prebuilt package exists for the platform, the existing source-build
-  path remains the fallback.
-- `JSCPD_RS_FORCE_BUILD=1` forces the fallback build path.
-- `JSCPD_RS_SKIP_POSTINSTALL=1` skips install-time builds for package tests and
-  advanced users who provide binaries another way.
+- If no prebuilt package exists for the platform, the shim exits with a clear
+  message that points users to `cargo install jscpd-rs --locked`.
 
-Avoid default postinstall downloads from GitHub Releases. Optional platform
-packages are more reproducible, work better with npm mirrors and lockfiles, and
-avoid surprising network access during install.
+Avoid default postinstall downloads or builds. Optional platform packages are
+more reproducible, work better with npm mirrors and lockfiles, and avoid
+surprising code execution during install.
 
 ## Platform Packages
 
@@ -43,11 +41,12 @@ show demand.
 - the root npm version matches `Cargo.toml`;
 - `optionalDependencies` exactly match `npm/prebuilt-targets.json`;
 - every optional platform dependency uses the same version as the main package;
+- the main package does not declare install lifecycle scripts;
 - the main npm package contains the runtime shim and target metadata;
-- no Cargo/no prebuilt install fails with the expected Rust toolchain hint;
-- source-build fallback works with optional dependencies omitted;
+- installing without optional prebuilt dependencies succeeds without running
+  build scripts, then the CLI fails with the expected install hint;
 - a locally generated platform package works without Cargo;
-- `npx --package <local-tarball> jscpd-rs --version` works.
+- `npx` works when local main and platform tarballs are installed together.
 
 ## Release Workflow
 
@@ -67,7 +66,7 @@ this order:
 The main npm package is intentionally blocked when any configured platform
 package fails or is missing. Manual target-only reruns must set
 `publish_main=false`; the main package should not be published with an
-accidental source-build fallback on a supported platform.
+unsupported platform-package set.
 
 The workflow publishes with npm provenance enabled. It is designed for Trusted
 Publishing, but `NPM_TOKEN` can be kept as a temporary bootstrap fallback for

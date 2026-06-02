@@ -293,7 +293,7 @@ jobs:
               console.log(`${key}: ${spec} is published`);
             } else {
               missing += 1;
-              console.log(`::error title=Missing prebuilt package::${spec} is not published; refusing to publish the main package with a source-build fallback on this platform`);
+              console.log(`::error title=Missing prebuilt package::${spec} is not published; refusing to publish the main package without the configured platform package set`);
             }
           }
           if (missing > 0) {
