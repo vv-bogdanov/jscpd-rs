@@ -110,9 +110,11 @@ jobs:
           );
           NODE
           )"
-          echo "version=${version}" >> "$GITHUB_OUTPUT"
-          echo "targets=${targets}" >> "$GITHUB_OUTPUT"
-          echo "publish_main=${PUBLISH_MAIN}" >> "$GITHUB_OUTPUT"
+          {
+            echo "version=${version}"
+            echo "targets=${targets}"
+            echo "publish_main=${PUBLISH_MAIN}"
+          } >> "$GITHUB_OUTPUT"
         env:
           PUBLISH_MAIN: ${{ github.event_name == 'release' || inputs.publish_main }}
           TARGET_FILTER: ${{ github.event_name == 'workflow_dispatch' && inputs.target || '' }}
@@ -275,7 +277,6 @@ jobs:
 
       - name: Report platform package availability
         run: |
-          version="${{ needs.prepare.outputs.version }}"
           node --input-type=module <<'NODE'
           import fs from 'node:fs';
           import { spawnSync } from 'node:child_process';
@@ -310,3 +311,18 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish --access public --provenance
+
+      - name: Verify npm registry provenance
+        env:
+          NPM_REGISTRY_REQUIRE_PUBLISHED: "1"
+          NPM_REGISTRY_RETRIES: "6"
+          NPM_REGISTRY_RETRY_DELAY_MS: "30000"
+        run: scripts/npm-registry-check.sh
+
+      - name: Verify Socket package score
+        env:
+          SOCKET_REQUIRE_PUBLISHED: "1"
+          SOCKET_RETRIES: "6"
+          SOCKET_RETRY_DELAY_MS: "30000"
+          SOCKET_SECURITY_API_TOKEN: ${{ secrets.SOCKET_SECURITY_API_TOKEN }}
+        run: node scripts/socket-package-check.mjs

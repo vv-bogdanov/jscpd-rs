@@ -59,6 +59,22 @@ public_benchmark_suite() {
   fi
 }
 
+rust_supply_chain_check() {
+  if [[ "${SUPPLY_CHAIN:-0}" == "1" ]]; then
+    scripts/cargo-deny-check.sh
+  else
+    printf 'Skipping Rust supply-chain check. Run SUPPLY_CHAIN=1 scripts/release-gate.sh before publication.\n'
+  fi
+}
+
+socket_package_score() {
+  if [[ "${SOCKET_PACKAGE_CHECK:-0}" == "1" ]]; then
+    node scripts/socket-package-check.mjs
+  else
+    printf 'Skipping Socket npm package score check. Run SOCKET_PACKAGE_CHECK=1 scripts/release-gate.sh after npm publication.\n'
+  fi
+}
+
 run_step "cargo fmt --check" cargo fmt --check
 
 run_step "cargo test" cargo test
@@ -67,7 +83,11 @@ run_step "bash -n scripts/*.sh" bash -n scripts/*.sh
 
 run_step "shellcheck scripts/*.sh" shellcheck scripts/*.sh
 
+run_step "actionlint" scripts/actionlint.sh
+
 run_step "package/install check" scripts/package-check.sh
+
+run_step "Rust supply-chain check" rust_supply_chain_check
 
 run_step "CLI compatibility" scripts/compat-cli.sh
 
@@ -86,3 +106,5 @@ run_step "upstream CI fixture compatibility" scripts/compat-upstream-ci.sh
 run_step "full compatibility matrix" full_compat_matrix
 
 run_step "public benchmark suite" public_benchmark_suite
+
+run_step "Socket npm package score" socket_package_score

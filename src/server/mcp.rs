@@ -530,6 +530,7 @@ fn tool_error(message: String) -> Value {
 mod tests {
     use std::fs;
     use std::path::{Path, PathBuf};
+    use std::sync::atomic::{AtomicU64, Ordering};
     use std::time::{SystemTime, UNIX_EPOCH};
 
     use axum::body::to_bytes;
@@ -539,13 +540,19 @@ mod tests {
 
     use super::*;
 
+    static TEMP_PROJECT_COUNTER: AtomicU64 = AtomicU64::new(0);
+
     fn fixture_project() -> PathBuf {
         let mut path = std::env::temp_dir();
         let stamp = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .expect("time")
             .as_nanos();
-        path.push(format!("jscpd-rs-mcp-{stamp}"));
+        let counter = TEMP_PROJECT_COUNTER.fetch_add(1, Ordering::Relaxed);
+        path.push(format!(
+            "jscpd-rs-mcp-{}-{stamp}-{counter}",
+            std::process::id()
+        ));
         fs::create_dir_all(&path).expect("create temp project");
         let content = "const alpha = 1;\nconst beta = 2;\nconst gamma = alpha + beta;\n";
         fs::write(path.join("a.js"), content).expect("write a.js");

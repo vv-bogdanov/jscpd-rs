@@ -1,15 +1,15 @@
 # Compatibility Baseline
 
-Baseline date: 2026-05-31.
+Baseline date: 2026-06-02.
 
 Latest full release gate:
 `FULL=1 PUBLIC=1 scripts/release-gate.sh`
-passed on 2026-05-31 at code commit `8c3da0e` as part of
+passed on 2026-06-02 at code commit `06c801c` as part of
 `scripts/prepublish-check.sh`.
 
 Latest public release gate:
 `PUBLIC=1 PUBLIC_RUNS=3 scripts/release-gate.sh`
-passed on 2026-05-31 at code commit `8c3da0e` as part of
+passed on 2026-06-02 at code commit `06c801c` as part of
 `scripts/prepublish-check.sh`.
 
 Default gate:
@@ -192,29 +192,36 @@ dispatch exposes
 pre-release full matrix, public benchmark, and release-candidate gates.
 
 Latest local prepublish check: `scripts/prepublish-check.sh` passed on
-2026-05-31 at code commit `8c3da0e`, covering
+2026-06-02 at code commit `06c801c`, covering
 `cargo clippy --all-targets -- -D warnings`, the default release gate, the full
 coverage matrix, the public benchmark/coverage suite, package/install
 verification, crate/tag availability checks, npm package/name/npx verification,
 and `cargo publish --dry-run --locked`.
 
-Documentation-only updates after `8c3da0e` may reuse the release-candidate
+Documentation-only updates after `06c801c` may reuse the release-candidate
 evidence if they do not change code, scripts, package metadata, or benchmark
 configuration. Rerun `RUN_RELEASE_CANDIDATE=0 scripts/prepublish-check.sh`
 after documentation edits so package/dry-run evidence matches the exact package
 contents being tagged.
 
 Latest GitHub Actions default release-gate check:
-`push` passed on 2026-05-31 at code commit `8c3da0e`:
-https://github.com/vv-bogdanov/jscpd-rs/actions/runs/26710762680
+`push` passed on 2026-06-02 at code commit `06c801c`:
+https://github.com/vv-bogdanov/jscpd-rs/actions/runs/26801569074
+
+Latest GitHub Actions publication gates:
+
+- crates.io release `v0.1.5` passed on 2026-06-02:
+  https://github.com/vv-bogdanov/jscpd-rs/actions/runs/26801588664
+- npm release `v0.1.5` passed on 2026-06-02:
+  https://github.com/vv-bogdanov/jscpd-rs/actions/runs/26801588666
 
 Recorded public benchmark baseline:
 
 | Case | Commit | Format | Rust avg | Upstream avg | Speedup | Compat |
 | --- | --- | --- | ---: | ---: | ---: | --- |
-| `react` | `f0dfee3` | `javascript` | 0.199097s | 10.079214s | 50.62x | pass |
-| `next` | `2bbb67b9` | `typescript` | 0.262433s | 14.715736s | 56.07x | pass |
-| `prometheus` | `a0524ee` | `go` | 0.085239s | 4.642435s | 54.46x | pass |
+| `react` | `f0dfee3` | `javascript` | 0.193443s | 9.979393s | 51.59x | pass |
+| `next` | `2bbb67b9` | `typescript` | 0.281938s | 14.182806s | 50.30x | pass |
+| `prometheus` | `a0524ee` | `go` | 0.086096s | 4.608737s | 53.53x | pass |
 
 ## Current Matrix
 
@@ -517,9 +524,9 @@ project tree:
 
 | Target | Commit | Format | Rust avg | Upstream avg | Approx speedup |
 | --- | --- | --- | ---: | ---: | ---: |
-| `facebook/react` | `f0dfee3` | `javascript` | `0.199097s` | `10.079214s` | `50.62x` |
-| `vercel/next.js` | `2bbb67b9` | `typescript` | `0.262433s` | `14.715736s` | `56.07x` |
-| `prometheus/prometheus` | `a0524ee` | `go` | `0.085239s` | `4.642435s` | `54.46x` |
+| `facebook/react` | `f0dfee3` | `javascript` | `0.193443s` | `9.979393s` | `51.59x` |
+| `vercel/next.js` | `2bbb67b9` | `typescript` | `0.281938s` | `14.182806s` | `50.30x` |
+| `prometheus/prometheus` | `a0524ee` | `go` | `0.086096s` | `4.608737s` | `53.53x` |
 
 ## Additional Mode Checks
 

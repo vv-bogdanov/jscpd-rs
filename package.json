@@ -1,7 +1,8 @@
 {
   "name": "jscpd-rs",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "50x+ faster duplicate-code detector for CI/CD; jscpd-compatible CLI, SARIF, JSON, HTML reports",
+  "author": "vvbogdanov",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -28,27 +29,26 @@
     "cli"
   ],
   "optionalDependencies": {
-    "jscpd-rs-darwin-arm64": "0.1.5",
-    "jscpd-rs-darwin-x64": "0.1.5",
-    "jscpd-rs-linux-arm64-gnu": "0.1.5",
-    "jscpd-rs-linux-x64-gnu": "0.1.5",
-    "jscpd-rs-win": "0.1.5"
+    "jscpd-rs-darwin-arm64": "0.1.6",
+    "jscpd-rs-darwin-x64": "0.1.6",
+    "jscpd-rs-linux-arm64-gnu": "0.1.6",
+    "jscpd-rs-linux-x64-gnu": "0.1.6",
+    "jscpd-rs-win": "0.1.6"
   },
   "bin": {
     "jscpd-rs": "npm/bin/jscpd-rs.js",
     "jscpd": "npm/bin/jscpd-rs.js",
     "jscpd-server": "npm/bin/jscpd-server.js"
   },
-  "scripts": {
-    "test:npm-package": "scripts/npm-package-check.sh"
-  },
   "files": [
     "CHANGELOG.md",
+    "CODE_OF_CONDUCT.md",
+    "CONTRIBUTING.md",
     "LICENSE",
     "README.md",
     "SECURITY.md",
     "npm/**",
-    "CONTRIBUTING.md"
+    "package.json"
   ],
   "engines": {
     "node": ">=18"

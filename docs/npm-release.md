@@ -3,17 +3,20 @@
 Current npm readiness snapshot:
 
 - Date: 2026-06-02.
-- Current published version: `jscpd-rs@0.1.5`.
-- Latest npm publish workflow: `v0.1.5` GitHub Release workflow.
+- Current published version: `jscpd-rs@0.1.6`.
+- Latest npm publish workflow: `v0.1.6` GitHub Release workflow.
 - Published platform packages: `jscpd-rs-linux-x64-gnu`,
   `jscpd-rs-linux-arm64-gnu`, `jscpd-rs-darwin-x64`,
   `jscpd-rs-darwin-arm64`, and `jscpd-rs-win`.
 - Post-publication smoke passed from clean temporary directories:
-  `npm install jscpd-rs@0.1.5`, `jscpd-rs --version`, `jscpd --version`,
+  `npm install jscpd-rs@0.1.6`, `jscpd-rs --version`, `jscpd --version`,
   `jscpd-server --version`, and
-  `npx --package jscpd-rs@0.1.5 jscpd-rs --version`.
+  `npx --package jscpd-rs@0.1.6 jscpd-rs --version`.
 - Rerun `scripts/npm-package-check.sh` on the exact checkout before publishing
   any new npm version.
+- After publication, run `NPM_REGISTRY_REQUIRE_PUBLISHED=1
+  scripts/npm-registry-check.sh` to verify npm registry integrity, signatures,
+  provenance attestations, and `npm audit signatures`.
 
 The npm package is `jscpd-rs`. It exposes these bin commands:
 

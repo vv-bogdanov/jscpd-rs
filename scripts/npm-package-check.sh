@@ -55,6 +55,7 @@ const files = pack.files.map((file) => file.path).sort();
 const required = [
   'CHANGELOG.md',
   'CONTRIBUTING.md',
+  'CODE_OF_CONDUCT.md',
   'LICENSE',
   'README.md',
   'SECURITY.md',
@@ -67,6 +68,7 @@ const required = [
 ];
 const forbidden = [
   /^Cargo\.(toml|lock)$/,
+  /^deny\.toml$/,
   /^docs\//,
   /^examples\//,
   /^jscpd\//,
@@ -119,6 +121,10 @@ for (const script of forbiddenLifecycleScripts) {
     console.error(`package.json must not define lifecycle script: ${script}`);
     process.exit(1);
   }
+}
+if (pkg.scripts && Object.keys(pkg.scripts).length > 0) {
+  console.error('package.json must not define npm scripts because repository scripts are not packed');
+  process.exit(1);
 }
 
 if (JSON.stringify(actualPackages) !== JSON.stringify(expectedPackages)) {

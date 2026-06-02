@@ -4,6 +4,8 @@
 [![crates.io](https://img.shields.io/crates/v/jscpd-rs.svg?style=flat-square)](https://crates.io/crates/jscpd-rs)
 [![docs.rs](https://img.shields.io/docsrs/jscpd-rs?style=flat-square)](https://docs.rs/jscpd-rs)
 [![npm](https://img.shields.io/npm/v/jscpd-rs.svg?style=flat-square)](https://www.npmjs.com/package/jscpd-rs)
+[![Socket.dev](https://badge.socket.dev/npm/package/jscpd-rs)](https://socket.dev/npm/package/jscpd-rs)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/vv-bogdanov/jscpd-rs/badge)](https://scorecard.dev/viewer/?uri=github.com/vv-bogdanov/jscpd-rs)
 [![license](https://img.shields.io/github/license/vv-bogdanov/jscpd-rs.svg?style=flat-square)](LICENSE)
 [![rust](https://img.shields.io/badge/rust-1.93%2B-dea584?style=flat-square)](https://www.rust-lang.org/)
 
@@ -227,9 +229,9 @@ Latest recorded public benchmark baseline for duplicate-code detection:
 
 | Repo | Format | Rust avg | Upstream avg | Speedup |
 | --- | --- | ---: | ---: | ---: |
-| React | JavaScript | 0.199097s | 10.079214s | 50.62x |
-| Next.js | TypeScript | 0.262433s | 14.715736s | 56.07x |
-| Prometheus | Go | 0.085239s | 4.642435s | 54.46x |
+| React | JavaScript | 0.193443s | 9.979393s | 51.59x |
+| Next.js | TypeScript | 0.281938s | 14.182806s | 50.30x |
+| Prometheus | Go | 0.086096s | 4.608737s | 53.53x |
 
 Reproduce the public benchmark and coverage suite:
 
@@ -372,12 +374,6 @@ Full compatibility matrix:
 
 ```bash
 FULL=1 scripts/release-gate.sh
-```
-
-Public benchmark and coverage gate:
-
-```bash
-scripts/release-candidate.sh
 ```
 
 Release candidate gate:

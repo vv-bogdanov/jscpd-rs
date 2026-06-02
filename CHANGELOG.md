@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.1.6 - 2026-06-02
+
+### Added
+
+- Add repo ownership and supply-chain maintenance signals: `CODEOWNERS`,
+  OpenSSF Scorecard workflow and badge, root `.editorconfig`, and a project
+  code of conduct.
+- Add release-gate checks for GitHub Actions syntax through `actionlint` and
+  Rust dependency policy through `cargo-deny`.
+- Add post-publication npm registry checks for package integrity, registry
+  signatures, SLSA provenance attestations, and `npm audit signatures`.
+- Add Socket package score regression checks for the main npm package and
+  prebuilt platform packages.
+
+### Changed
+
+- Improve prebuilt npm platform package metadata and README supply-chain notes.
+- Remove the npm `test:npm-package` script from published package metadata; the
+  script referenced repository-only files that are intentionally excluded from
+  npm tarballs.
+
 ## 0.1.5 - 2026-06-02
 
 ### Changed
@@ -7,6 +28,18 @@
 - Update GitHub Actions dependencies used by CI and release automation.
 - Update `getrandom` to 0.4 and adapt MCP session ID generation to the new
   `getrandom::fill` API.
+
+### Validation
+
+- Passed local `scripts/prepublish-check.sh` and GitHub release-candidate
+  publish gates on commit `06c801c`.
+- Recorded public benchmark baseline for this release:
+
+| Case | Commit | Format | Rust avg | Upstream avg | Speedup | Compat |
+| --- | --- | --- | ---: | ---: | ---: | --- |
+| React | `f0dfee3` | JavaScript | 0.193443s | 9.979393s | 51.59x | pass |
+| Next.js | `2bbb67b9` | TypeScript | 0.281938s | 14.182806s | 50.30x | pass |
+| Prometheus | `a0524ee` | Go | 0.086096s | 4.608737s | 53.53x | pass |
 
 ## 0.1.4 - 2026-06-02
 

@@ -88,9 +88,18 @@ npx jscpd-rs --version
 \`\`\`
 
 This package contains only the native \`jscpd\` and \`jscpd-server\` binaries
-for its target platform, plus package metadata and license/readme files. It has
-no runtime dependencies and no install scripts. Releases are published from the
-project GitHub Actions workflow with npm provenance enabled.
+for its target platform, plus package metadata and license/readme files.
+
+Supply-chain notes:
+
+- no runtime dependencies;
+- no install scripts or postinstall downloads;
+- published from the project GitHub Actions workflow with npm provenance
+  enabled;
+- npm registry signatures and SLSA provenance can be checked with
+  \`npm audit signatures\` from an installed project;
+- source, release workflow, and security policy are maintained in
+  ${rootPackage.repository.url.replace(/^git\+/, '').replace(/\.git$/, '')}.
 
 `,
 );
@@ -99,6 +108,7 @@ const packageJson = {
   name: target.packageName,
   version: rootPackage.version,
   description: target.description,
+  author: rootPackage.author,
   license: rootPackage.license,
   repository: rootPackage.repository,
   homepage: rootPackage.homepage,

@@ -1,6 +1,6 @@
 # Release Checklist
 
-This checklist is the publication runbook for the first Rust release candidate.
+This checklist is the publication runbook for Rust releases.
 Policy decisions live in `docs/release-decisions.md`; current evidence lives in
 `docs/compat-baseline.md` and `docs/release-readiness.md`.
 
@@ -12,7 +12,7 @@ Latest full local prepublish gate:
 scripts/prepublish-check.sh
 ```
 
-Passed on 2026-05-31 at code commit `8c3da0e`. This includes
+Passed on 2026-06-02 at code commit `06c801c`. This includes
 `scripts/release-candidate.sh`, package/install verification, crate/tag
 availability checks, npm package/name/npx verification, and
 `cargo publish --dry-run --locked`. Later documentation-only commits may reuse
@@ -31,8 +31,8 @@ Latest GitHub Actions default release-gate:
 push
 ```
 
-Passed on 2026-05-31 at code commit `8c3da0e`:
-https://github.com/vv-bogdanov/jscpd-rs/actions/runs/26710762680
+Passed on 2026-06-02 at code commit `06c801c`:
+https://github.com/vv-bogdanov/jscpd-rs/actions/runs/26801569074
 
 CI timing snapshot after the first cache/timing pass, from cold GitHub Actions
 run `26710415211` on commit `7bdf12f`:
@@ -62,13 +62,13 @@ pnpm store with upstream's `pnpm@10.28.0`, validates restored pnpm
 installation outside release-candidate runs, and uses a local prebuilt npm
 package smoke without install-time Cargo builds.
 
-Recorded public benchmark baseline for this release candidate:
+Recorded public benchmark baseline for the current release evidence:
 
 | Case | Commit | Format | Rust avg | Upstream avg | Speedup | Compat |
 | --- | --- | --- | ---: | ---: | ---: | --- |
-| `react` | `f0dfee3` | `javascript` | 0.199097s | 10.079214s | 50.62x | pass |
-| `next` | `2bbb67b9` | `typescript` | 0.262433s | 14.715736s | 56.07x | pass |
-| `prometheus` | `a0524ee` | `go` | 0.085239s | 4.642435s | 54.46x | pass |
+| `react` | `f0dfee3` | `javascript` | 0.193443s | 9.979393s | 51.59x | pass |
+| `next` | `2bbb67b9` | `typescript` | 0.281938s | 14.182806s | 50.30x | pass |
+| `prometheus` | `a0524ee` | `go` | 0.086096s | 4.608737s | 53.53x | pass |
 
 ## Publish Blockers
 
@@ -85,11 +85,21 @@ Before publishing, all of these must be true:
 - `scripts/npm-package-check.sh` passes, including `npm pack`,
   `npm publish --dry-run --json`, local install smoke checks for `jscpd-rs`,
   `jscpd`, and `jscpd-server`, and an `npx --package <tarball>` smoke run.
+- `scripts/cargo-deny-check.sh` passes, covering Rust advisories, yanked
+  crates, license allowlist, and source registry policy.
+- `scripts/actionlint.sh` passes for GitHub Actions workflow syntax.
 - `cargo publish --dry-run --locked` passes for the exact package manifest and
   include list being published.
 - `README.md`, `docs/compat-baseline.md`, and
   `docs/public-benchmark-suite.md` contain the same recorded public benchmark
   numbers.
+- After npm publication, `node scripts/socket-package-check.mjs` passes against
+  the main npm package and every optional prebuilt platform package. The current
+  baseline intentionally checks for score regressions rather than requiring
+  100% because Socket penalizes newly published native binary packages.
+- After npm publication, `NPM_REGISTRY_REQUIRE_PUBLISHED=1
+  scripts/npm-registry-check.sh` passes, verifying registry integrity,
+  signatures, SLSA provenance attestations, and `npm audit signatures`.
 - For a new publication, the target crate version, npm package versions, and
   `vX.Y.Z` Git tag are not already published, unless an explicitly documented
   target-only npm rerun is being used for a prebuilt package.
@@ -181,7 +191,7 @@ two explicit commands above are a manual smoke equivalent for post-tag checks.
 
 ## Next Release Themes
 
-Track these after the first release candidate:
+Track these after the current release:
 
 - Reduce noisy extra Rust findings where they are user-visible false positives.
 - Monitor npm prebuilt install behavior and add Linux musl or Windows arm64
