@@ -1,15 +1,32 @@
 name: crates-publish
 
 on:
-  release:
-    types:
-      - published
+  workflow_call:
+    inputs:
+      release_tag:
+        required: false
+        default: ""
+        type: string
+      run_release_candidate:
+        required: false
+        default: true
+        type: boolean
   workflow_dispatch:
     inputs:
       package_name:
         description: "Type jscpd-rs to confirm crates.io publication"
         required: true
         type: string
+      release_tag:
+        description: "Optional release tag/ref to publish"
+        required: false
+        default: ""
+        type: string
+      run_release_candidate:
+        description: "Run the full release-candidate gate before publishing"
+        required: false
+        default: true
+        type: boolean
 
 permissions:
   contents: read
@@ -20,11 +37,7 @@ env:
 
 jobs:
   release-candidate:
-    if: >-
-      ${{
-        github.event_name == 'workflow_dispatch' ||
-        (github.event_name == 'release' && !github.event.release.draft && !github.event.release.prerelease)
-      }}
+    if: ${{ inputs.run_release_candidate }}
     uses: ./.github/workflows/release-gate.yml
     with:
       release_candidate: true
@@ -35,11 +48,7 @@ jobs:
   publish:
     name: publish crates.io package
     needs: release-candidate
-    if: >-
-      ${{
-        github.event_name == 'workflow_dispatch' ||
-        (github.event_name == 'release' && !github.event.release.draft && !github.event.release.prerelease)
-      }}
+    if: ${{ always() && (!inputs.run_release_candidate || needs.release-candidate.result == 'success') }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -54,7 +63,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
         with:
-          ref: ${{ github.event_name == 'release' && github.event.release.tag_name || github.ref }}
+          ref: ${{ inputs.release_tag || github.ref }}
           submodules: recursive
 
       - name: Install Rust
@@ -76,10 +85,10 @@ jobs:
             ${{ runner.os }}-cargo-1.93.0-
 
       - name: Check release tag matches crate version
-        if: github.event_name == 'release'
+        if: inputs.release_tag != ''
         run: |
           version="$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[0].version')"
-          tag="${{ github.event.release.tag_name }}"
+          tag="${{ inputs.release_tag }}"
           if [[ "$tag" != "v${version}" ]]; then
             echo "release tag ${tag} does not match crate version ${version}" >&2
             exit 1

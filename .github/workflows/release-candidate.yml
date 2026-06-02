@@ -1,0 +1,233 @@
+name: release-candidate
+
+on:
+  workflow_call:
+    inputs:
+      public_runs:
+        required: false
+        default: "3"
+        type: string
+  workflow_dispatch:
+    inputs:
+      public_runs:
+        description: "Number of public benchmark timing runs"
+        required: false
+        default: "3"
+        type: string
+
+permissions:
+  contents: read
+
+env:
+  CI: "1"
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  core:
+    name: core release gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Install Rust
+        run: |
+          rustup toolchain install 1.93.0 --profile minimal
+          rustup component add clippy --toolchain 1.93.0
+          rustup component add rustfmt --toolchain 1.93.0
+          rustup default 1.93.0
+
+      - name: Cache Cargo registry and target
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-1.93.0-${{ hashFiles('Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-1.93.0-
+
+      - name: Install cargo-llvm-cov
+        run: cargo install cargo-llvm-cov --locked
+
+      - name: Install Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+
+      - name: Enable pnpm through corepack
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.28.0 --activate
+
+      - name: Resolve pnpm store path
+        run: echo "PNPM_STORE_PATH=$(pnpm --dir jscpd store path --silent)" >> "$GITHUB_ENV"
+
+      - name: Cache pnpm store
+        uses: actions/cache@v5
+        with:
+          path: ${{ env.PNPM_STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('jscpd/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+
+      - name: Cache upstream jscpd install and build
+        uses: actions/cache@v5
+        with:
+          path: |
+            jscpd/node_modules
+            jscpd/apps/**/dist
+            jscpd/packages/**/dist
+          key: ${{ runner.os }}-jscpd-upstream-${{ hashFiles('jscpd/pnpm-lock.yaml', 'jscpd/apps/**', 'jscpd/packages/**') }}
+          restore-keys: |
+            ${{ runner.os }}-jscpd-upstream-
+
+      - name: Core release gate
+        run: FULL=0 PUBLIC=0 SUPPLY_CHAIN=1 scripts/release-candidate.sh
+
+  compat-matrix:
+    name: compat matrix shard ${{ matrix.shard }}
+    needs: core
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Install Rust
+        run: |
+          rustup toolchain install 1.93.0 --profile minimal
+          rustup default 1.93.0
+
+      - name: Cache Cargo registry and target
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-compat-${{ matrix.shard }}-cargo-1.93.0-${{ hashFiles('Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-compat-${{ matrix.shard }}-cargo-1.93.0-
+            ${{ runner.os }}-cargo-1.93.0-
+
+      - name: Install Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+
+      - name: Enable pnpm through corepack
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.28.0 --activate
+
+      - name: Resolve pnpm store path
+        run: echo "PNPM_STORE_PATH=$(pnpm --dir jscpd store path --silent)" >> "$GITHUB_ENV"
+
+      - name: Cache pnpm store
+        uses: actions/cache@v5
+        with:
+          path: ${{ env.PNPM_STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('jscpd/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+
+      - name: Cache upstream jscpd install and build
+        uses: actions/cache@v5
+        with:
+          path: |
+            jscpd/node_modules
+            jscpd/apps/**/dist
+            jscpd/packages/**/dist
+          key: ${{ runner.os }}-jscpd-upstream-${{ hashFiles('jscpd/pnpm-lock.yaml', 'jscpd/apps/**', 'jscpd/packages/**') }}
+          restore-keys: |
+            ${{ runner.os }}-jscpd-upstream-
+
+      - name: Run compatibility matrix shard
+        env:
+          COMPAT_SHARD_INDEX: ${{ matrix.shard }}
+          COMPAT_SHARD_TOTAL: "4"
+          STRICT: coverage
+        run: scripts/compat-matrix.sh
+
+  public-benchmark:
+    name: public benchmark ${{ matrix.case }}
+    needs: core
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        case: [react, next, prometheus]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Install Rust
+        run: |
+          rustup toolchain install 1.93.0 --profile minimal
+          rustup default 1.93.0
+
+      - name: Cache Cargo registry and target
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-bench-${{ matrix.case }}-cargo-1.93.0-${{ hashFiles('Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bench-${{ matrix.case }}-cargo-1.93.0-
+            ${{ runner.os }}-cargo-1.93.0-
+
+      - name: Install Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+
+      - name: Enable pnpm through corepack
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.28.0 --activate
+
+      - name: Resolve pnpm store path
+        run: echo "PNPM_STORE_PATH=$(pnpm --dir jscpd store path --silent)" >> "$GITHUB_ENV"
+
+      - name: Cache pnpm store
+        uses: actions/cache@v5
+        with:
+          path: ${{ env.PNPM_STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('jscpd/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+
+      - name: Cache upstream jscpd install and build
+        uses: actions/cache@v5
+        with:
+          path: |
+            jscpd/node_modules
+            jscpd/apps/**/dist
+            jscpd/packages/**/dist
+          key: ${{ runner.os }}-jscpd-upstream-${{ hashFiles('jscpd/pnpm-lock.yaml', 'jscpd/apps/**', 'jscpd/packages/**') }}
+          restore-keys: |
+            ${{ runner.os }}-jscpd-upstream-
+
+      - name: Run public benchmark case
+        env:
+          CASES: ${{ matrix.case }}
+          RUNS: ${{ inputs.public_runs }}
+          CHECK_COMPAT: "1"
+          MIN_SPEEDUP: "45"
+        run: scripts/public-bench-suite.sh

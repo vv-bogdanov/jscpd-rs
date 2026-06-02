@@ -1,14 +1,34 @@
 name: npm-publish
 
 on:
-  release:
-    types:
-      - published
+  workflow_call:
+    inputs:
+      release_tag:
+        required: false
+        default: ""
+        type: string
+      run_release_candidate:
+        required: false
+        default: true
+        type: boolean
+      target:
+        required: false
+        default: ""
+        type: string
+      publish_main:
+        required: false
+        default: true
+        type: boolean
   workflow_dispatch:
     inputs:
       package_name:
         description: "Type jscpd-rs to confirm npm publication"
         required: true
+        type: string
+      release_tag:
+        description: "Optional release tag/ref to publish"
+        required: false
+        default: ""
         type: string
       target:
         description: "Optional prebuilt target key to publish only one platform package"
@@ -17,6 +37,11 @@ on:
         type: string
       publish_main:
         description: "Publish the main jscpd-rs npm package after platform packages"
+        required: false
+        default: true
+        type: boolean
+      run_release_candidate:
+        description: "Run the full release-candidate gate before publishing"
         required: false
         default: true
         type: boolean
@@ -34,11 +59,7 @@ defaults:
 
 jobs:
   release-candidate:
-    if: >-
-      ${{
-        github.event_name == 'workflow_dispatch' ||
-        (github.event_name == 'release' && !github.event.release.draft && !github.event.release.prerelease)
-      }}
+    if: ${{ inputs.run_release_candidate }}
     uses: ./.github/workflows/release-gate.yml
     with:
       release_candidate: true
@@ -49,11 +70,7 @@ jobs:
   prepare:
     name: prepare npm release
     needs: release-candidate
-    if: >-
-      ${{
-        github.event_name == 'workflow_dispatch' ||
-        (github.event_name == 'release' && !github.event.release.draft && !github.event.release.prerelease)
-      }}
+    if: ${{ always() && (!inputs.run_release_candidate || needs.release-candidate.result == 'success') }}
     runs-on: ubuntu-24.04
     outputs:
       publish_main: ${{ steps.metadata.outputs.publish_main }}
@@ -71,7 +88,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
         with:
-          ref: ${{ github.event_name == 'release' && github.event.release.tag_name || github.ref }}
+          ref: ${{ inputs.release_tag || github.ref }}
 
       - name: Install Node
         uses: actions/setup-node@v6
@@ -116,14 +133,14 @@ jobs:
             echo "publish_main=${PUBLISH_MAIN}"
           } >> "$GITHUB_OUTPUT"
         env:
-          PUBLISH_MAIN: ${{ github.event_name == 'release' || inputs.publish_main }}
-          TARGET_FILTER: ${{ github.event_name == 'workflow_dispatch' && inputs.target || '' }}
+          PUBLISH_MAIN: ${{ inputs.release_tag != '' || inputs.publish_main }}
+          TARGET_FILTER: ${{ inputs.target || '' }}
 
       - name: Check release tag matches package version
-        if: github.event_name == 'release'
+        if: inputs.release_tag != ''
         run: |
           version="${{ steps.metadata.outputs.version }}"
-          tag="${{ github.event.release.tag_name }}"
+          tag="${{ inputs.release_tag }}"
           if [[ "$tag" != "v${version}" ]]; then
             echo "release tag ${tag} does not match package version ${version}" >&2
             exit 1
@@ -152,7 +169,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
         with:
-          ref: ${{ github.event_name == 'release' && github.event.release.tag_name || github.ref }}
+          ref: ${{ inputs.release_tag || github.ref }}
 
       - name: Install Node
         uses: actions/setup-node@v6
@@ -249,7 +266,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
         with:
-          ref: ${{ github.event_name == 'release' && github.event.release.tag_name || github.ref }}
+          ref: ${{ inputs.release_tag || github.ref }}
 
       - name: Install Rust
         run: |

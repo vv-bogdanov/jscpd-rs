@@ -1,0 +1,42 @@
+name: release-publish
+
+on:
+  release:
+    types:
+      - published
+
+permissions:
+  contents: read
+
+jobs:
+  release-candidate:
+    if: ${{ !github.event.release.draft && !github.event.release.prerelease }}
+    uses: ./.github/workflows/release-candidate.yml
+    with:
+      public_runs: "3"
+
+  crates:
+    name: publish crates.io
+    needs: release-candidate
+    if: ${{ !github.event.release.draft && !github.event.release.prerelease }}
+    uses: ./.github/workflows/crates-publish.yml
+    permissions:
+      contents: read
+      id-token: write
+    with:
+      release_tag: ${{ github.event.release.tag_name }}
+      run_release_candidate: false
+    secrets: inherit
+
+  npm:
+    name: publish npm
+    needs: release-candidate
+    if: ${{ !github.event.release.draft && !github.event.release.prerelease }}
+    uses: ./.github/workflows/npm-publish.yml
+    permissions:
+      contents: read
+      id-token: write
+    with:
+      release_tag: ${{ github.event.release.tag_name }}
+      run_release_candidate: false
+    secrets: inherit

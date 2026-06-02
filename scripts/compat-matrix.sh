@@ -4,6 +4,20 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 STRICT_MODE="${STRICT:-coverage}"
 DEFAULT_MAX_SIZE="${MAX_SIZE:-1mb}"
+CASE_INDEX=0
+COMPAT_SHARD_INDEX="${COMPAT_SHARD_INDEX:-}"
+COMPAT_SHARD_TOTAL="${COMPAT_SHARD_TOTAL:-}"
+
+if [[ -n "$COMPAT_SHARD_INDEX" || -n "$COMPAT_SHARD_TOTAL" ]]; then
+  if [[ ! "$COMPAT_SHARD_INDEX" =~ ^[0-9]+$ || ! "$COMPAT_SHARD_TOTAL" =~ ^[1-9][0-9]*$ ]]; then
+    printf 'COMPAT_SHARD_INDEX and COMPAT_SHARD_TOTAL must be numeric\n' >&2
+    exit 1
+  fi
+  if ((COMPAT_SHARD_INDEX >= COMPAT_SHARD_TOTAL)); then
+    printf 'COMPAT_SHARD_INDEX must be lower than COMPAT_SHARD_TOTAL\n' >&2
+    exit 1
+  fi
+fi
 
 run_case() {
   local name="$1"
@@ -18,6 +32,16 @@ run_case() {
   local extra_args=()
   if (($# > 9)); then
     extra_args=("${@:10}")
+  fi
+  CASE_INDEX=$((CASE_INDEX + 1))
+
+  if [[ -n "$COMPAT_SHARD_TOTAL" ]]; then
+    local shard
+    shard=$(((CASE_INDEX - 1) % COMPAT_SHARD_TOTAL))
+    if ((shard != COMPAT_SHARD_INDEX)); then
+      printf 'skip %-28s shard %s/%s\n' "$name" "$COMPAT_SHARD_INDEX" "$COMPAT_SHARD_TOTAL"
+      return 0
+    fi
   fi
 
   if [[ ! -e "$target" ]]; then

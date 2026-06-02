@@ -45,6 +45,7 @@ const purls = packages.map((pkg) => `pkg:npm/${pkg.name}@${pkg.version}`);
 let response;
 let lastOutput = '';
 let lastStatus = 1;
+let unavailableIssues = [];
 
 for (let attempt = 1; attempt <= attempts; attempt += 1) {
   const result = spawnSync(
@@ -61,6 +62,22 @@ for (let attempt = 1; attempt <= attempts; attempt += 1) {
   response = parseSocketJson(lastOutput);
 
   if (lastStatus === 0 && response?.ok === true) {
+    const unavailable = unavailablePackageResults(response);
+    unavailableIssues = unavailable;
+    if (unavailable.length === 0) {
+      break;
+    }
+    lastOutput = unavailable.join('\n');
+    if (attempt < attempts) {
+      console.error(
+        `Socket package score unavailable, retrying in ${retryDelayMs}ms (${attempt}/${attempts})`,
+      );
+      for (const issue of unavailable) {
+        console.error(issue);
+      }
+      await sleep(retryDelayMs);
+      continue;
+    }
     break;
   }
 
@@ -80,6 +97,17 @@ if (lastStatus !== 0 || response?.ok !== true) {
     process.exit(0);
   }
   console.error(lastOutput.trim());
+  process.exit(1);
+}
+
+if (unavailableIssues.length > 0) {
+  if (!requirePublished) {
+    console.log('Socket package score check skipped: package score is not available yet.');
+    process.exit(0);
+  }
+  for (const issue of unavailableIssues) {
+    console.error(issue);
+  }
   process.exit(1);
 }
 
@@ -181,13 +209,55 @@ function isSkippableUnavailable(payload, output) {
     code === 401 ||
     code === 404 ||
     code === 429 ||
-    /not found|not published|too many requests|unauthorized/i.test(output)
+    /not found|not published|pending scan|score unavailable|too many requests|unauthorized/i.test(output)
   );
 }
 
 function shouldRetry(payload, output) {
   const code = payload?.data?.code;
-  return code === 404 || code === 429 || /not found|not published|too many requests/i.test(output);
+  return code === 404 || code === 429 || /not found|not published|pending scan|score unavailable|too many requests/i.test(output);
+}
+
+function unavailablePackageResults(payload) {
+  const results = new Map((payload.data ?? []).map((item) => [item.inputPurl, item]));
+  const issues = [];
+
+  for (const pkg of packages) {
+    const purl = `pkg:npm/${pkg.name}@${pkg.version}`;
+    const item = results.get(purl);
+    if (!item) {
+      issues.push(`${pkg.name}@${pkg.version} is missing from Socket package results`);
+      continue;
+    }
+
+    const retryableAlert = (item.alerts ?? []).find((alert) => {
+      const text = [
+        alert.type,
+        alert.key,
+        alert.name,
+        alert.title,
+        alert.message,
+        alert.description,
+      ]
+        .filter(Boolean)
+        .join(' ');
+      return /not.?found|not.?published|pending.?scan|score.?unavailable|package.?unavailable/i.test(text);
+    });
+    if (retryableAlert) {
+      issues.push(
+        `${pkg.name}@${pkg.version} Socket score is not indexed yet: ` +
+          `${retryableAlert.type ?? retryableAlert.key ?? retryableAlert.message ?? 'unavailable'}`,
+      );
+      continue;
+    }
+
+    const score = item.score ?? {};
+    if (!Number.isFinite(Number(score.supplyChain)) || !Number.isFinite(Number(score.maintenance))) {
+      issues.push(`${pkg.name}@${pkg.version} Socket score is not available yet`);
+    }
+  }
+
+  return issues;
 }
 
 function sleep(ms) {

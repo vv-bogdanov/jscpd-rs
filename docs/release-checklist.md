@@ -78,8 +78,10 @@ Before publishing, all of these must be true:
 - `git submodule status jscpd` points at the reviewed upstream reference.
 - `scripts/release-candidate.sh` passes on the exact code commit being tagged.
 - GitHub Actions `release-gate` passes on the pushed commit.
-- GitHub Actions `crates-publish` and `npm-publish` release jobs are allowed to
-  run their own release-candidate preflight before publishing.
+- GitHub Actions `release-publish` runs one release-candidate preflight before
+  publishing crates.io and npm packages. Manual `crates-publish` and
+  `npm-publish` reruns keep `run_release_candidate=true` unless the exact same
+  commit already has fresh release-candidate evidence.
 - `scripts/package-check.sh` passes and the package file list excludes
   `jscpd/`, `target/`, `node_modules/`, and `scripts/`.
 - `scripts/npm-package-check.sh` passes, including `npm pack`,
@@ -210,15 +212,29 @@ Release publication as the single publish trigger.
 
 Configured workflows:
 
+- `.github/workflows/release-publish.yml`
+- `.github/workflows/release-candidate.yml`
 - `.github/workflows/crates-publish.yml`
 - `.github/workflows/npm-publish.yml`
 
-Both workflows run on `release.published` for non-draft, non-prerelease GitHub
-Releases. Both check out the release tag and verify that `vX.Y.Z` matches the
-package version before publishing. `crates-publish` publishes the Rust crate to
-crates.io; docs.rs builds documentation automatically after crates.io accepts
-the crate. `npm-publish` builds and publishes prebuilt npm platform packages
-before publishing the main npm package.
+`release-publish` runs on `release.published` for non-draft, non-prerelease
+GitHub Releases. It calls `release-candidate` once, then calls `crates-publish`
+and `npm-publish` with `run_release_candidate=false` so the expensive gate is
+not duplicated.
+
+`release-candidate` splits expensive release checks into parallel jobs:
+
+- one core release gate without the full compatibility matrix or public
+  benchmarks,
+- four compatibility-matrix shards,
+- one public-benchmark job per benchmark case.
+
+`crates-publish` and `npm-publish` are reusable/manual workflows. Both check out
+the requested release tag and verify that `vX.Y.Z` matches the package version
+before publishing. `crates-publish` publishes the Rust crate to crates.io;
+docs.rs builds documentation automatically after crates.io accepts the crate.
+`npm-publish` builds and publishes prebuilt npm platform packages before
+publishing the main npm package.
 
 Release flow for future versions:
 
@@ -229,7 +245,8 @@ Release flow for future versions:
 4. Run the release gates, including `scripts/package-check.sh`.
 5. Commit and push `main`.
 6. Create and publish a GitHub Release with tag `vX.Y.Z`.
-7. Confirm `crates-publish` completed successfully.
+7. Confirm `release-publish` completed its `release-candidate` job and both
+   publish jobs successfully.
 8. Confirm `npm-publish` built and published all platform packages before the
    main `jscpd-rs` package.
 9. Check crates.io, docs.rs, and npm package pages.
@@ -237,10 +254,14 @@ Release flow for future versions:
 Trusted Publishing setup:
 
 - crates.io: configure a trusted publisher for repository
-  `vv-bogdanov/jscpd-rs` and workflow `crates-publish.yml`.
+  `vv-bogdanov/jscpd-rs` and workflow `crates-publish.yml`; keep
+  `CARGO_REGISTRY_TOKEN` as the fallback until one full release succeeds
+  without it.
 - npm: configure a trusted publisher for repository `vv-bogdanov/jscpd-rs` and
-  workflow `npm-publish.yml` on `jscpd-rs` and every platform package listed in
-  `docs/prebuilt-binaries.md`.
+  workflow `release-publish.yml` on `jscpd-rs` and every platform package
+  listed in `docs/prebuilt-binaries.md`. npm validates the calling workflow when
+  `workflow_call` is used, so manual `npm-publish.yml` reruns should keep using
+  the token fallback.
 
 Use no GitHub environment name unless the workflow is updated to declare one.
 After Trusted Publishing works, revoke temporary npm/crates tokens and keep
@@ -256,6 +277,9 @@ Keep this as part of the release plan:
   `26710686373` and cold run `26710415211`.
 - Keep default push/PR CI as a fast confidence gate; keep `clippy`, full
   matrix, and public benchmark coverage in `scripts/prepublish-check.sh` and
-  manual release-candidate workflow runs.
+  the sharded `release-candidate` workflow.
+- Keep future release publishing on `release-publish.yml` so crates.io and npm
+  reuse the same release-candidate result instead of running duplicate full
+  gates.
 - If default CI remains above roughly three minutes after warm caches, split the
   package surface smoke from the compatibility gates into separate jobs.
