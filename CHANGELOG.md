@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.5 - 2026-06-02
+
+### Changed
+
+- Update GitHub Actions dependencies used by CI and release automation.
+- Update `getrandom` to 0.4 and adapt MCP session ID generation to the new
+  `getrandom::fill` API.
+
 ## 0.1.4 - 2026-06-02
 
 ### Changed
