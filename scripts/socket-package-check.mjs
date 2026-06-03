@@ -18,14 +18,21 @@ const failOnAlertSeverities = new Set(
 
 const thresholds = {
   main: {
-    maintenance: numberEnv('SOCKET_MIN_MAIN_MAINTENANCE', 100),
-    supplyChain: numberEnv('SOCKET_MIN_MAIN_SUPPLY_CHAIN', 100),
+    license: numberEnv('SOCKET_MIN_MAIN_LICENSE', 100),
+    maintenance: numberEnv('SOCKET_MIN_MAIN_MAINTENANCE', 90),
+    quality: numberEnv('SOCKET_MIN_MAIN_QUALITY', 95),
+    supplyChain: numberEnv('SOCKET_MIN_MAIN_SUPPLY_CHAIN', 70),
+    vulnerability: numberEnv('SOCKET_MIN_MAIN_VULNERABILITY', 100),
   },
   platform: {
+    license: numberEnv('SOCKET_MIN_PLATFORM_LICENSE', 100),
     maintenance: numberEnv('SOCKET_MIN_PLATFORM_MAINTENANCE', 88),
+    quality: numberEnv('SOCKET_MIN_PLATFORM_QUALITY', 50),
     supplyChain: numberEnv('SOCKET_MIN_PLATFORM_SUPPLY_CHAIN', 50),
+    vulnerability: numberEnv('SOCKET_MIN_PLATFORM_VULNERABILITY', 100),
   },
 };
+const scoreKeys = ['supplyChain', 'quality', 'maintenance', 'vulnerability', 'license'];
 
 const packages = [
   {
@@ -116,28 +123,25 @@ for (const item of response.data ?? []) {
   }
 
   const score = item.score ?? {};
-  const supplyChain = scorePercent(score.supplyChain);
-  const maintenance = scorePercent(score.maintenance);
+  const scores = Object.fromEntries(
+    scoreKeys.map((key) => [key, scorePercent(score[key])]),
+  );
   const min = thresholds[pkg.kind];
 
   console.log(
-    `${pkg.name}@${pkg.version}: supplyChain=${supplyChain.toFixed(0)} ` +
-      `maintenance=${maintenance.toFixed(0)} kind=${pkg.kind}`,
+    `${pkg.name}@${pkg.version}: ` +
+      scoreKeys.map((key) => `${key}=${scores[key].toFixed(0)}`).join(' ') +
+      ` kind=${pkg.kind}`,
   );
 
-  if (supplyChain < min.supplyChain) {
-    console.error(
-      `${pkg.name}@${pkg.version} Socket supplyChain ${supplyChain.toFixed(0)} ` +
-        `is below required ${min.supplyChain}`,
-    );
-    failures += 1;
-  }
-  if (maintenance < min.maintenance) {
-    console.error(
-      `${pkg.name}@${pkg.version} Socket maintenance ${maintenance.toFixed(0)} ` +
-        `is below required ${min.maintenance}`,
-    );
-    failures += 1;
+  for (const key of scoreKeys) {
+    if (scores[key] < min[key]) {
+      console.error(
+        `${pkg.name}@${pkg.version} Socket ${key} ${scores[key].toFixed(0)} ` +
+          `is below required ${min[key]}`,
+      );
+      failures += 1;
+    }
   }
 
   for (const alert of item.alerts ?? []) {
@@ -284,7 +288,8 @@ function unavailablePackageResults(payload) {
     }
 
     const score = item.score ?? {};
-    if (!Number.isFinite(Number(score.supplyChain)) || !Number.isFinite(Number(score.maintenance))) {
+    const hasScores = scoreKeys.every((key) => Number.isFinite(Number(score[key])));
+    if (!hasScores) {
       issues.push(`${pkg.name}@${pkg.version} Socket score is not available yet`);
     }
   }

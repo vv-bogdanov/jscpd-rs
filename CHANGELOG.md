@@ -1,11 +1,14 @@
 # Changelog
 
-## Unreleased
+## 0.1.12 - 2026-06-03
 
 ### Changed
 
 - Strip release binaries and abort on panic in release builds to reduce native
   npm prebuilt package size without changing runtime behavior.
+- Use explicit Socket score floors for native prebuilt npm packages while still
+  requiring 100% Vulnerability and License scores and failing on critical/high
+  Socket alerts.
 
 ## 0.1.11 - 2026-06-03
 

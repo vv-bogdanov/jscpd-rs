@@ -99,10 +99,11 @@ Before publishing, all of these must be true:
   `docs/public-benchmark-suite.md` contain the same recorded public benchmark
   numbers.
 - After npm publication, `node scripts/socket-package-check.mjs` passes against
-  the main npm package and every optional prebuilt platform package. The main
-  package must keep 100% Supply Chain Security and 100% Maintenance on Socket;
-  optional native platform packages use lower explicit thresholds because Socket
-  can score binary-only packages differently.
+  the main npm package and every optional prebuilt platform package. The gate
+  fails on critical/high Socket alerts, keeps Vulnerability and License at 100%,
+  and uses explicit Supply Chain, Quality, and Maintenance score floors because
+  Socket penalizes new native binary platform packages for size and low download
+  history even when they have no visible alerts.
 - After npm publication, `NPM_REGISTRY_REQUIRE_PUBLISHED=1
   scripts/npm-registry-check.sh` passes, verifying registry integrity,
   signatures, SLSA provenance attestations, and `npm audit signatures`.
