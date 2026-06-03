@@ -43,6 +43,20 @@ fn public_tokenizer_uses_configured_options() {
 }
 
 #[test]
+fn oxc_tokenizer_falls_back_on_nul_input() {
+    let tokens = tokenize_for_detection("\0", "typescript", &Options::default());
+
+    assert_eq!(tokens.len(), 1);
+}
+
+#[test]
+fn oxc_tokenizer_falls_back_on_non_whitespace_control_input() {
+    let tokens = tokenize_for_detection("\u{15}", "json", &Options::default());
+
+    assert_eq!(tokens.len(), 1);
+}
+
+#[test]
 fn skips_ignore_regions() {
     let content = "keep\n// jscpd:ignore-start\nskip\n// jscpd:ignore-end\nkeep2\n";
     let tokens = tokenize_for_detection(content, "javascript", &Options::default());

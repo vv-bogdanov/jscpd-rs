@@ -1,0 +1,53 @@
+name: fuzz
+
+on:
+  schedule:
+    - cron: "18 5 * * 3"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CARGO_FUZZ_VERSION: "0.13.1"
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  cargo-fuzz:
+    name: cargo-fuzz smoke
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Install Rust
+        run: |
+          rustup toolchain install nightly --profile minimal
+          rustup default nightly
+
+      - name: Cache Cargo registry and target
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+            fuzz/target
+          key: ${{ runner.os }}-cargo-fuzz-${{ env.CARGO_FUZZ_VERSION }}-${{ hashFiles('Cargo.lock', 'fuzz/Cargo.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-fuzz-${{ env.CARGO_FUZZ_VERSION }}-
+
+      - name: Install cargo-fuzz
+        run: |
+          if ! command -v cargo-fuzz >/dev/null; then
+            cargo install cargo-fuzz --version "$CARGO_FUZZ_VERSION" --locked
+          fi
+
+      - name: Fuzz detector smoke
+        run: |
+          cd fuzz
+          RUSTUP_TOOLCHAIN=nightly cargo fuzz run detect_source -- -max_total_time=30 -rss_limit_mb=2048

@@ -1,0 +1,20 @@
+[package]
+name = "jscpd-rs-fuzz"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.93"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+jscpd-rs = { path = ".." }
+libfuzzer-sys = "0.4"
+
+[[bin]]
+name = "detect_source"
+path = "fuzz_targets/detect_source.rs"
+test = false
+doc = false
+bench = false

@@ -18,8 +18,8 @@ const failOnAlertSeverities = new Set(
 
 const thresholds = {
   main: {
-    maintenance: numberEnv('SOCKET_MIN_MAIN_MAINTENANCE', 90),
-    supplyChain: numberEnv('SOCKET_MIN_MAIN_SUPPLY_CHAIN', 70),
+    maintenance: numberEnv('SOCKET_MIN_MAIN_MAINTENANCE', 100),
+    supplyChain: numberEnv('SOCKET_MIN_MAIN_SUPPLY_CHAIN', 100),
   },
   platform: {
     maintenance: numberEnv('SOCKET_MIN_PLATFORM_MAINTENANCE', 88),

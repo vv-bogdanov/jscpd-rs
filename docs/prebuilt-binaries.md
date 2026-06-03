@@ -29,7 +29,7 @@ The target matrix is defined in `npm/prebuilt-targets.json`.
 | `jscpd-rs-linux-arm64-gnu` | `aarch64-unknown-linux-gnu` | `ubuntu-22.04-arm` |
 | `jscpd-rs-darwin-x64` | `x86_64-apple-darwin` | `macos-15-intel` |
 | `jscpd-rs-darwin-arm64` | `aarch64-apple-darwin` | `macos-15` |
-| `jscpd-rs-win` | `x86_64-pc-windows-msvc` | `windows-2025` |
+| `jscpd-rs-win` | `x86_64-pc-windows-msvc` | `windows-2025-vs2026` |
 
 Consider Linux musl and Windows arm64 only after install data or user reports
 show demand.
