@@ -6,6 +6,12 @@ Security fixes are released for the latest published `jscpd-rs` version.
 Upgrade to the newest npm package or Cargo crate before reporting an issue that
 may already be fixed.
 
+`jscpd-rs` is a local duplicate-code detector and optional local REST/MCP
+server. It does not implement authentication, password storage, transport
+cryptography, or a custom cryptographic protocol. Network transport security for
+package download and project hosting is provided by Cargo, npm, GitHub, and
+docs.rs over HTTPS.
+
 ## Reporting A Vulnerability
 
 Please report security issues privately through GitHub Security Advisories:
@@ -35,6 +41,18 @@ Security fixes are released through Cargo, npm, and GitHub Releases. When a
 vulnerability affects published packages, the advisory should include affected
 versions, patched versions, severity, impact, workaround status, and credit for
 the reporter when requested.
+
+Known vulnerabilities are expected to be fixed promptly. Critical
+vulnerabilities should be prioritized immediately and released as soon as a
+validated fix and package publication path are available.
+
+The release gate includes static and dynamic analysis relevant to this project:
+
+- CodeQL runs as the SAST workflow for Rust code.
+- `cargo clippy --all-targets -- -D warnings` runs in release-candidate flows.
+- `cargo-fuzz` has a weekly/manual detector/tokenizer smoke target.
+- GitHub, Cargo, npm, Socket, and cargo-deny checks cover dependency and
+  published package risk.
 
 ## Supply Chain Notes
 

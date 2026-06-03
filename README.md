@@ -112,6 +112,17 @@ For full CLI, configuration, reporter, server, MCP, and Rust API examples, see
 If you already use upstream `jscpd`, see
 [docs/migrating-from-jscpd.md](https://github.com/vv-bogdanov/jscpd-rs/blob/main/docs/migrating-from-jscpd.md).
 
+## Feedback and Contributions
+
+Use GitHub Issues for bug reports, compatibility gaps, installation problems,
+and feature requests:
+<https://github.com/vv-bogdanov/jscpd-rs/issues>.
+
+Security issues should be reported privately through the process in
+[SECURITY.md](https://github.com/vv-bogdanov/jscpd-rs/blob/main/SECURITY.md).
+Pull request expectations and local verification commands are documented in
+[CONTRIBUTING.md](https://github.com/vv-bogdanov/jscpd-rs/blob/main/CONTRIBUTING.md).
+
 ## GitHub Actions
 
 Install from crates.io:
