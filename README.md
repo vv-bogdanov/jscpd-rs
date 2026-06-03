@@ -1,13 +1,8 @@
 # jscpd-rs
 
-[![release-gate](https://github.com/vv-bogdanov/jscpd-rs/actions/workflows/release-gate.yml/badge.svg)](https://github.com/vv-bogdanov/jscpd-rs/actions/workflows/release-gate.yml)
-[![crates.io](https://img.shields.io/crates/v/jscpd-rs.svg?style=flat-square)](https://crates.io/crates/jscpd-rs)
-[![docs.rs](https://img.shields.io/docsrs/jscpd-rs?style=flat-square)](https://docs.rs/jscpd-rs)
-[![npm](https://img.shields.io/npm/v/jscpd-rs.svg?style=flat-square)](https://www.npmjs.com/package/jscpd-rs)
-[![Socket.dev](https://badge.socket.dev/npm/package/jscpd-rs)](https://socket.dev/npm/package/jscpd-rs)
-[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/vv-bogdanov/jscpd-rs/badge)](https://scorecard.dev/viewer/?uri=github.com/vv-bogdanov/jscpd-rs)
-[![license](https://img.shields.io/github/license/vv-bogdanov/jscpd-rs.svg?style=flat-square)](LICENSE)
-[![rust](https://img.shields.io/badge/rust-1.93%2B-dea584?style=flat-square)](https://www.rust-lang.org/)
+[![crates.io](https://img.shields.io/crates/v/jscpd-rs.svg?style=flat-square)](https://crates.io/crates/jscpd-rs) [![npm](https://img.shields.io/npm/v/jscpd-rs.svg?style=flat-square)](https://www.npmjs.com/package/jscpd-rs) [![license](https://img.shields.io/github/license/vv-bogdanov/jscpd-rs.svg?style=flat-square)](LICENSE) [![rust](https://img.shields.io/badge/rust-1.93%2B-dea584?style=flat-square)](https://www.rust-lang.org/)
+
+[![release-gate](https://github.com/vv-bogdanov/jscpd-rs/actions/workflows/release-gate.yml/badge.svg)](https://github.com/vv-bogdanov/jscpd-rs/actions/workflows/release-gate.yml) [![docs.rs](https://img.shields.io/docsrs/jscpd-rs?style=flat-square)](https://docs.rs/jscpd-rs) [![Socket.dev](https://badge.socket.dev/npm/package/jscpd-rs)](https://socket.dev/npm/package/jscpd-rs) [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/vv-bogdanov/jscpd-rs/badge)](https://scorecard.dev/viewer/?uri=github.com/vv-bogdanov/jscpd-rs)
 
 50x+ faster duplicate-code detector for local development, CI/CD, and code
 quality gates.
