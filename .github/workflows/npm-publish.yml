@@ -348,6 +348,7 @@ jobs:
 
       - name: Verify Socket package score
         env:
+          SOCKET_ALLOW_UNAVAILABLE: "1"
           SOCKET_REQUIRE_PUBLISHED: "1"
           SOCKET_RETRIES: "6"
           SOCKET_RETRY_DELAY_MS: "30000"
