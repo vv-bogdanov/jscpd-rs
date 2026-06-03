@@ -1,6 +1,6 @@
 # Release Readiness
 
-Last updated: 2026-06-02.
+Last updated: 2026-06-03.
 
 This is the working component checklist for the current release line. The
 authoritative policy decisions are still in `docs/release-decisions.md`; this
@@ -34,19 +34,19 @@ file tracks the current implementation status.
 | Long-tail tokenization | coverage-first | Keep generic tokenization by default. Promote formats only when fixtures or public repos show missed upstream coverage. |
 | Exact pair parity | diagnostic | Do not block release while every upstream duplicated line is covered. Reduce noisy extras after user-facing reports become annoying. |
 | Token totals | diagnostic | Native token streams may differ from Prism. Keep report-visible clone coverage as the gate. |
-| HTML reporter polish | practical parity | Keep self-contained HTML stable. Do not chase pixel-perfect upstream parity for the first release. |
+| HTML reporter polish | practical parity | Keep self-contained HTML stable. Do not chase pixel-perfect upstream parity for the current 0.x line. |
 | Terminal cosmetics | practical parity | Important messages are gated; exact wrapping/order remains lower priority. |
 | Upstream JavaScript API parity | follow-up | Native Rust helpers cover the practical app/tokenizer/detector/statistics/store concepts, including an embeddable argv runner and tokenizer map generation; exact JS package export shape is not implemented in the Rust crate. See `docs/api-parity.md`. |
 | Server snippet matching | optimized baseline | Native `/api/check` and MCP `check_duplication` are functional and reuse project token maps from the last scan; use `scripts/bench-server.sh` before adding a dedicated window index. |
-| Npm prebuilt binaries | ready | Platform-specific optional package metadata, runtime prebuilt resolution, prebuilt-only package checks, and GitHub Release publishing automation are wired for `jscpd-rs@0.1.4+`. The main npm package is blocked if any configured platform package fails or is missing. See the [prebuilt binary distribution plan](prebuilt-binaries.md). |
-| Latest full publication gate | ready | `scripts/prepublish-check.sh` passed locally on code commit `06c801c`, including `scripts/release-candidate.sh`, package/install verification, crate/tag availability checks, npm package/name/npx verification, and `cargo publish --dry-run --locked`. GitHub Actions default `release-gate` passed on code commit `06c801c` in run `26801569074`; crates.io and npm publish workflows for `v0.1.5` also passed their release-candidate preflights before publishing. After benchmark documentation updates, `RUN_RELEASE_CANDIDATE=0 scripts/prepublish-check.sh` is the package/dry-run refresh gate for the exact package contents being tagged. |
+| Npm prebuilt binaries | ready | Platform-specific optional package metadata, runtime prebuilt resolution, prebuilt-only package checks, and GitHub Release publishing automation are wired for the current npm package. The main npm package is blocked if any configured platform package fails or is missing. See the [prebuilt binary distribution plan](prebuilt-binaries.md). |
+| Latest full publication gate | ready | GitHub Release `v0.1.9` passed the sharded `release-publish` workflow on commit `68eb0ba` in run `26866531012`, including the release-candidate gate, crates.io publication, npm prebuilt platform packages, main npm package publication, and npm registry provenance checks. Before each new publication, rerun `scripts/prepublish-check.sh` or the GitHub Release automation on the exact package contents being tagged. |
 
 ## Later Scope
 
 | Component | Decision |
 | --- | --- |
-| Dynamic npm reporters | Do not implement for the first release; keep upstream-style missing-package warnings. |
-| Dynamic npm stores | Do not implement for the first release; default in-memory store is the release path. |
+| Dynamic npm reporters | Do not implement for the current 0.x line; keep upstream-style missing-package warnings. |
+| Dynamic npm stores | Do not implement for the current 0.x line; default in-memory store is the release path. |
 | Listeners/plugins runtime | Option-surface compatibility only unless a real workflow requires native support. |
 | MCP endpoint polish | Core native endpoint exists; tighten exact SDK edge cases only when MCP client compatibility demands it. |
 | Persistent cache/store backends | Add only if public benchmark data proves the in-memory path is insufficient. |

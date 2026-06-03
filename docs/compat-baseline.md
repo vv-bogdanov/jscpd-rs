@@ -1,15 +1,15 @@
 # Compatibility Baseline
 
-Baseline date: 2026-06-02.
+Baseline date: 2026-06-03.
 
-Latest full release gate:
+Latest known-good full release gate:
 `FULL=1 PUBLIC=1 scripts/release-gate.sh`
-passed on 2026-06-02 at code commit `06c801c` as part of
+passed on 2026-06-03 as part of
 `scripts/prepublish-check.sh`.
 
-Latest public release gate:
+Latest known-good public release gate:
 `PUBLIC=1 PUBLIC_RUNS=3 scripts/release-gate.sh`
-passed on 2026-06-02 at code commit `06c801c` as part of
+passed on 2026-06-03 as part of
 `scripts/prepublish-check.sh`.
 
 Default gate:
@@ -192,36 +192,33 @@ dispatch exposes
 pre-release full matrix, public benchmark, and release-candidate gates.
 
 Latest local prepublish check: `scripts/prepublish-check.sh` passed on
-2026-06-02 at code commit `06c801c`, covering
+2026-06-03, covering
 `cargo clippy --all-targets -- -D warnings`, the default release gate, the full
 coverage matrix, the public benchmark/coverage suite, package/install
 verification, crate/tag availability checks, npm package/name/npx verification,
 and `cargo publish --dry-run --locked`.
 
-Documentation-only updates after `06c801c` may reuse the release-candidate
-evidence if they do not change code, scripts, package metadata, or benchmark
-configuration. Rerun `RUN_RELEASE_CANDIDATE=0 scripts/prepublish-check.sh`
-after documentation edits so package/dry-run evidence matches the exact package
-contents being tagged.
+Documentation-only updates may reuse fresh release-candidate evidence only when
+they do not change code, scripts, package metadata, or benchmark configuration.
+Rerun `RUN_RELEASE_CANDIDATE=0 scripts/prepublish-check.sh` after documentation
+edits so package/dry-run evidence matches the exact package contents being
+tagged.
 
-Latest GitHub Actions default release-gate check:
-`push` passed on 2026-06-02 at code commit `06c801c`:
-https://github.com/vv-bogdanov/jscpd-rs/actions/runs/26801569074
+Latest GitHub Actions publication gate:
+GitHub Release `v0.1.9` passed on 2026-06-03 at commit `68eb0ba`:
+https://github.com/vv-bogdanov/jscpd-rs/actions/runs/26866531012
 
-Latest GitHub Actions publication gates:
-
-- crates.io release `v0.1.5` passed on 2026-06-02:
-  https://github.com/vv-bogdanov/jscpd-rs/actions/runs/26801588664
-- npm release `v0.1.5` passed on 2026-06-02:
-  https://github.com/vv-bogdanov/jscpd-rs/actions/runs/26801588666
+That workflow ran the sharded release-candidate gate, then published crates.io,
+all configured npm prebuilt platform packages, and the main npm package through
+the GitHub Release automation.
 
 Recorded public benchmark baseline:
 
 | Case | Commit | Format | Rust avg | Upstream avg | Speedup | Compat |
 | --- | --- | --- | ---: | ---: | ---: | --- |
-| `react` | `f0dfee3` | `javascript` | 0.193443s | 9.979393s | 51.59x | pass |
-| `next` | `2bbb67b9` | `typescript` | 0.281938s | 14.182806s | 50.30x | pass |
-| `prometheus` | `a0524ee` | `go` | 0.086096s | 4.608737s | 53.53x | pass |
+| `react` | `f0dfee3` | `javascript` | 0.197325s | 10.413453s | 52.77x | pass |
+| `next` | `2bbb67b9` | `typescript` | 0.270786s | 14.983243s | 55.33x | pass |
+| `prometheus` | `a0524ee` | `go` | 0.083162s | 4.842499s | 58.23x | pass |
 
 ## Current Matrix
 
@@ -524,9 +521,9 @@ project tree:
 
 | Target | Commit | Format | Rust avg | Upstream avg | Approx speedup |
 | --- | --- | --- | ---: | ---: | ---: |
-| `facebook/react` | `f0dfee3` | `javascript` | `0.193443s` | `9.979393s` | `51.59x` |
-| `vercel/next.js` | `2bbb67b9` | `typescript` | `0.281938s` | `14.182806s` | `50.30x` |
-| `prometheus/prometheus` | `a0524ee` | `go` | `0.086096s` | `4.608737s` | `53.53x` |
+| `facebook/react` | `f0dfee3` | `javascript` | `0.197325s` | `10.413453s` | `52.77x` |
+| `vercel/next.js` | `2bbb67b9` | `typescript` | `0.270786s` | `14.983243s` | `55.33x` |
+| `prometheus/prometheus` | `a0524ee` | `go` | `0.083162s` | `4.842499s` | `58.23x` |
 
 ## Additional Mode Checks
 

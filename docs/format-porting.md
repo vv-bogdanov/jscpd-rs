@@ -1,6 +1,6 @@
 # Format Porting Guide
 
-The first-release policy is coverage-first for hot JS/TS formats and smoke-only
+The 0.x release policy is coverage-first for hot JS/TS formats and smoke-only
 for long-tail generic formats. A format can find more than upstream while
 compatibility converges, but release-compatible formats must not miss upstream
 duplicate fragments on their fixtures.

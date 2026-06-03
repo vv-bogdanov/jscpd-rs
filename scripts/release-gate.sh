@@ -79,6 +79,8 @@ run_step "cargo fmt --check" cargo fmt --check
 
 run_step "cargo test" cargo test
 
+run_step "cargo rustdoc missing docs" cargo rustdoc --lib -- -D missing_docs
+
 run_step "bash -n scripts/*.sh" bash -n scripts/*.sh
 
 run_step "shellcheck scripts/*.sh" shellcheck scripts/*.sh

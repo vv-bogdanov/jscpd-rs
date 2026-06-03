@@ -1,4 +1,4 @@
-#![doc(html_root_url = "https://docs.rs/jscpd-rs/0.1.2")]
+#![doc(html_root_url = "https://docs.rs/jscpd-rs/0.1.10")]
 
 //! Native Rust API for `jscpd-rs`, a 50x+ faster duplicate-code detector for
 //! local development and CI/CD.
@@ -77,6 +77,8 @@
 //!   upstream core classes.
 //! - [`jscpd`] and [`jscpd_with_exit_callback`] provide an embeddable argv
 //!   runner similar to upstream `jscpd(argv, exitCallback?)`.
+//! - [`serve`] and [`serve_with_working_directory`] start the native REST/MCP
+//!   server used by the `jscpd-server` binary.
 //!
 //! # Compatibility Model
 //!
@@ -85,7 +87,7 @@
 //! Extra Rust findings remain visible in compatibility reports while the
 //! implementation converges on exact parity.
 //!
-//! The first release intentionally keeps the detector native-only. Dynamic npm
+//! The current 0.x line intentionally keeps the detector native-only. Dynamic npm
 //! reporters, stores, listeners, and plugins are not loaded by this crate.
 //!
 //! See the
@@ -100,7 +102,7 @@ mod detector;
 mod files;
 mod formats;
 mod report;
-pub mod server;
+mod server;
 mod tokenizer;
 mod verbose;
 
@@ -119,6 +121,7 @@ pub use detector::{
 };
 pub use files::SourceFile;
 pub use report::ThresholdExceeded;
+pub use server::{serve, serve_with_working_directory, server_working_directory};
 pub use tokenizer::{DetectionToken, Location, SourceTokenMap, TokenMap, Tokenizer};
 
 /// Return the upstream-compatible default option set.
@@ -146,7 +149,7 @@ where
 
 /// Return the names of all formats known to the synchronized format registry.
 ///
-/// The first release keeps the registry aligned with upstream `jscpd`; high
+/// The current 0.x line keeps the registry aligned with upstream `jscpd`; high
 /// volume JS/TS formats use native Oxc-backed tokenization and long-tail
 /// formats use the generic native tokenizer unless promoted by compatibility
 /// evidence.

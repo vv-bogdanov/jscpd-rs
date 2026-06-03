@@ -29,6 +29,7 @@ const BARE_EXIT_CODE_VALUE: &str = "__jscpd_rs_bare_exit_code_true__";
 const BARE_CONFIG_VALUE: &str = "__jscpd_rs_bare_config_true__";
 const BARE_STRING_VALUE: &str = "__jscpd_rs_bare_string_true__";
 
+#[doc(hidden)]
 #[derive(Debug, Parser)]
 #[command(
     name = "jscpd",
@@ -299,17 +300,28 @@ pub struct Cli {
     pub formats_names: Option<String>,
 }
 
+/// Duplicate-detection token filtering mode.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Mode {
+    /// Keep all parser tokens, including whitespace-like tokens where available.
     Strict,
+    /// Upstream default mode: skip comments while preserving code tokens.
     Mild,
+    /// Weak mode, used by `--skipComments`, with broader comment skipping.
     Weak,
 }
 
+/// Node-compatible exit-code value preserved from CLI/config input.
+///
+/// Upstream accepts values that are not plain integers and only resolves them
+/// when a duplicate-triggered exit is needed.
 #[derive(Clone, Debug, PartialEq)]
 pub enum ExitCode {
+    /// Numeric exit code value.
     Number(f64),
+    /// String value to parse with Node-like exit-code semantics.
     String(String),
+    /// Boolean value produced by bare optional CLI flags.
     Boolean(bool),
 }
 
@@ -331,41 +343,77 @@ impl ExitCode {
 /// parsing.
 #[derive(Debug, Clone)]
 pub struct Options {
+    /// Upstream-style execution identifier used in reports.
     pub execution_id: Option<String>,
+    /// Loaded configuration file path, when one was used.
     pub config: Option<PathBuf>,
+    /// Paths to scan.
     pub paths: Vec<PathBuf>,
+    /// Glob pattern used during discovery.
     pub pattern: String,
+    /// Explicit ignore globs.
     pub ignore: Vec<String>,
+    /// Reporter names to run.
     pub reporters: Vec<String>,
+    /// Listener names preserved for option-surface compatibility.
     pub listeners: Vec<String>,
+    /// Reporter-specific option map from config.
     pub reporters_options: serde_json::Map<String, serde_json::Value>,
+    /// Report output directory.
     pub output: PathBuf,
+    /// True when `--output` was passed without a value.
     pub output_is_bare: bool,
+    /// Optional allowlist of source formats.
     pub formats: Option<HashSet<String>>,
+    /// User-provided format order for debug/report compatibility.
     pub format_order: Option<Vec<String>>,
+    /// Custom extension-to-format mappings.
     pub formats_exts: FormatMappings,
+    /// Custom filename-to-format mappings.
     pub formats_names: FormatMappings,
+    /// Regular expressions for skipping matched code blocks.
     pub ignore_pattern: Vec<Regex>,
+    /// Minimum duplicated fragment size in lines.
     pub min_lines: usize,
+    /// Minimum duplicated fragment size in detection tokens.
     pub min_tokens: usize,
+    /// Maximum source line count to scan.
     pub max_lines: usize,
+    /// Maximum source byte size to scan.
     pub max_size_bytes: u64,
+    /// Duplicated-line percentage threshold.
     pub threshold: Option<f64>,
+    /// Token filtering mode.
     pub mode: Mode,
+    /// Optional external store name, currently preserved for compatibility.
     pub store: Option<String>,
+    /// Optional external store path, currently preserved for compatibility.
     pub store_path: Option<PathBuf>,
+    /// Populate duplicate fragments with `git blame -w` metadata.
     pub blame: bool,
+    /// Cache option preserved for upstream option-surface compatibility.
     pub cache: bool,
+    /// Suppress reporter output where upstream does.
     pub silent: bool,
+    /// Write absolute source paths in reports.
     pub absolute: bool,
+    /// Do not follow symlinks during discovery.
     pub no_symlinks: bool,
+    /// Detect duplicates case-insensitively.
     pub ignore_case: bool,
+    /// Respect Git ignore files during discovery.
     pub gitignore: bool,
+    /// Print debug discovery/config output and skip detection.
     pub debug: bool,
+    /// Print verbose detector events and skip reasons.
     pub verbose: bool,
+    /// Skip clones local to the same configured scan root.
     pub skip_local: bool,
+    /// Exit code to use when duplicates are found.
     pub exit_code: ExitCode,
+    /// Suppress post-run tips.
     pub no_tips: bool,
+    /// Token names preserved for upstream option-surface compatibility.
     pub tokens_to_skip: Vec<String>,
 }
 
@@ -466,6 +514,9 @@ fn default_execution_id() -> String {
 }
 
 impl Options {
+    /// Parse upstream-style command-line arguments into normalized options.
+    ///
+    /// The first argument should be the binary name.
     pub fn from_args<I, T>(args: I) -> Result<Self>
     where
         I: IntoIterator<Item = T>,
@@ -475,6 +526,10 @@ impl Options {
         Self::from_cli(cli)
     }
 
+    /// Convert the raw clap parser output into normalized detector options.
+    ///
+    /// Prefer [`Options::from_args`] or [`crate::get_options_from_args`] unless
+    /// you already have a `Cli` value.
     pub fn from_cli(cli: Cli) -> Result<Self> {
         let mut options = Self::default();
 

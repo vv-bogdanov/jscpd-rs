@@ -30,7 +30,7 @@ async fn run() -> Result<()> {
     }
     let working_directory = server_cli_working_directory(&cli);
     let options = Options::from_cli(cli)?;
-    jscpd_rs::server::serve_with_working_directory(
+    jscpd_rs::serve_with_working_directory(
         options,
         working_directory,
         &server_args.host,

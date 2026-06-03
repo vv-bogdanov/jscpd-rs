@@ -20,6 +20,7 @@ pub(super) fn write(result: &DetectionResult, options: &Options) -> Result<()> {
     Ok(())
 }
 
+/// Error returned when the threshold reporter rejects a duplication result.
 #[derive(Debug)]
 pub struct ThresholdExceeded {
     message: String,
@@ -30,6 +31,7 @@ impl ThresholdExceeded {
         Self { message }
     }
 
+    /// Human-readable threshold failure message.
     pub fn message(&self) -> &str {
         &self.message
     }

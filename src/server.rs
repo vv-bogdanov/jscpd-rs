@@ -225,11 +225,17 @@ pub fn create_router(service: ServerService) -> Router {
         .with_state(service)
 }
 
+/// Start the native REST/MCP server using the working directory derived from
+/// the first configured scan path.
 pub async fn serve(options: Options, host: &str, port: u16) -> Result<()> {
     let working_directory = server_working_directory(&options);
     serve_with_working_directory(options, working_directory, host, port).await
 }
 
+/// Start the native REST/MCP server with an explicit working directory.
+///
+/// This is the entry point used by the `jscpd-server` binary after parsing its
+/// upstream-style CLI options.
 pub async fn serve_with_working_directory(
     options: Options,
     working_directory: PathBuf,
@@ -263,6 +269,10 @@ fn server_display_url(host: &str, port: u16) -> String {
     format!("http://{host}:{port}")
 }
 
+/// Return the server working directory implied by CLI options.
+///
+/// Upstream `jscpd-server` treats the first scan path as the server project
+/// root and falls back to the current directory when no path is provided.
 pub fn server_working_directory(options: &Options) -> PathBuf {
     options
         .paths
