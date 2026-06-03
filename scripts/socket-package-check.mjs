@@ -6,6 +6,7 @@ const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 
 const cliSpec = process.env.SOCKET_CLI_SPEC || 'socket@1.1.112';
 const requirePublished = process.env.SOCKET_REQUIRE_PUBLISHED === '1';
+const allowUnavailable = process.env.SOCKET_ALLOW_UNAVAILABLE === '1';
 const attempts = numberEnv('SOCKET_RETRIES', requirePublished ? 3 : 1);
 const retryDelayMs = numberEnv('SOCKET_RETRY_DELAY_MS', 15000);
 const failOnAlertSeverities = new Set(
@@ -48,15 +49,7 @@ let lastStatus = 1;
 let unavailableIssues = [];
 
 for (let attempt = 1; attempt <= attempts; attempt += 1) {
-  const result = spawnSync(
-    'npx',
-    ['--yes', cliSpec, 'package', 'shallow', ...purls, '--json'],
-    {
-      encoding: 'utf8',
-      env: process.env,
-      stdio: ['ignore', 'pipe', 'pipe'],
-    },
-  );
+  const result = runSocketCheck(process.env);
   lastStatus = result.status ?? 1;
   lastOutput = `${result.stdout ?? ''}${result.stderr ?? ''}`;
   response = parseSocketJson(lastOutput);
@@ -102,7 +95,7 @@ if (response?.ok !== true) {
 }
 
 if (unavailableIssues.length > 0) {
-  if (!requirePublished) {
+  if (!requirePublished || allowUnavailable) {
     console.log('Socket package score check skipped: package score is not available yet.');
     process.exit(0);
   }
@@ -189,11 +182,49 @@ function parseSocketJson(output) {
   if (start < 0) {
     return undefined;
   }
-  try {
-    return JSON.parse(output.slice(start));
-  } catch {
-    return undefined;
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  for (let index = start; index < output.length; index += 1) {
+    const char = output[index];
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+      } else if (char === '\\') {
+        escaped = true;
+      } else if (char === '"') {
+        inString = false;
+      }
+      continue;
+    }
+    if (char === '"') {
+      inString = true;
+    } else if (char === '{') {
+      depth += 1;
+    } else if (char === '}') {
+      depth -= 1;
+      if (depth === 0) {
+        try {
+          return JSON.parse(output.slice(start, index + 1));
+        } catch {
+          return undefined;
+        }
+      }
+    }
   }
+  return undefined;
+}
+
+function runSocketCheck(env) {
+  return spawnSync(
+    'npx',
+    ['--yes', cliSpec, 'package', 'shallow', ...purls, '--json'],
+    {
+      encoding: 'utf8',
+      env,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    },
+  );
 }
 
 function scorePercent(value) {
