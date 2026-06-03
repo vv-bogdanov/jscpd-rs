@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.1.9 - 2026-06-03
+
+### Changed
+
+- Refresh the npm README with the self-updating Socket `/latest` badge URL.
+- Keep npm publication strict on registry integrity, signatures, and
+  provenance, while treating fresh Socket `pendingScan` results as
+  non-blocking during the post-publish window.
+- Add a dedicated scheduled/manual Socket score workflow for strict
+  post-indexing score enforcement.
+- Make the server compatibility harness allocate free ports dynamically instead
+  of relying on fixed local ports.
+
 ## 0.1.8 - 2026-06-03
 
 ### Changed
