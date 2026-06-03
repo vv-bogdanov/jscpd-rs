@@ -17,6 +17,24 @@ The most valuable issues include:
 Please include the command, `jscpd-rs --version`, OS/architecture, and a small
 repro fixture when possible.
 
+## Contribution Requirements
+
+Pull requests should be small, focused, and covered by the narrowest useful
+tests. Changes that add or alter user-visible behavior should include
+behavioral tests or compatibility fixtures. Changes in hot paths should keep
+the public benchmark suite from regressing.
+
+Before sending a pull request:
+
+- run `cargo fmt`;
+- run `cargo test` or a narrower test command that covers the change;
+- run `cargo clippy --all-targets -- -D warnings` when changing Rust logic;
+- update docs when CLI flags, reports, install behavior, or public APIs change.
+
+New functionality should include automated tests in the same change unless the
+feature is intentionally experimental and the risk is documented. Compatibility
+work should prefer fixtures that compare against upstream `jscpd`.
+
 ## Development Checks
 
 Before sending a change, run the narrowest check that covers it:
@@ -36,6 +54,12 @@ For release-level confidence:
 ```bash
 scripts/release-candidate.sh
 ```
+
+`scripts/release-gate.sh` is the default CI gate. It runs formatting checks,
+tests, missing public-doc checks, shell/action linting, package/install smoke,
+and upstream compatibility checks. Release-candidate flows also run clippy with
+warnings denied, coverage, supply-chain checks, the full compatibility matrix,
+and public benchmarks.
 
 ## Compatibility Rule
 
