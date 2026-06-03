@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.8 - 2026-06-03
+
+### Changed
+
+- Publish a clean patch release through the GitHub Release automation so npm
+  provenance for the latest package version points at a retained release source.
+- Include the README badge grouping and npm publish rerun fixes that landed
+  after the `0.1.7` publication.
+
 ## 0.1.7 - 2026-06-02
 
 ### Changed
