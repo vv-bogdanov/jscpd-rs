@@ -61,14 +61,16 @@ for (let attempt = 1; attempt <= attempts; attempt += 1) {
   lastOutput = `${result.stdout ?? ''}${result.stderr ?? ''}`;
   response = parseSocketJson(lastOutput);
 
-  if (lastStatus === 0 && response?.ok === true) {
+  if (response?.ok === true) {
     const unavailable = unavailablePackageResults(response);
     unavailableIssues = unavailable;
     if (unavailable.length === 0) {
       break;
     }
-    lastOutput = unavailable.join('\n');
-    if (attempt < attempts) {
+    if (unavailable.length > 0) {
+      lastOutput = unavailable.join('\n');
+    }
+    if (unavailable.length > 0 && attempt < attempts) {
       console.error(
         `Socket package score unavailable, retrying in ${retryDelayMs}ms (${attempt}/${attempts})`,
       );
@@ -78,7 +80,6 @@ for (let attempt = 1; attempt <= attempts; attempt += 1) {
       await sleep(retryDelayMs);
       continue;
     }
-    break;
   }
 
   if (attempt < attempts && shouldRetry(response, lastOutput)) {
@@ -91,7 +92,7 @@ for (let attempt = 1; attempt <= attempts; attempt += 1) {
   }
 }
 
-if (lastStatus !== 0 || response?.ok !== true) {
+if (response?.ok !== true) {
   if (!requirePublished && isSkippableUnavailable(response, lastOutput)) {
     console.log('Socket package score check skipped: package score is not available yet.');
     process.exit(0);
