@@ -39,6 +39,6 @@
     "os": "win32",
     "cpu": "x64",
     "rustTarget": "x86_64-pc-windows-msvc",
-    "runner": "windows-2025"
+    "runner": "windows-2025-vs2026"
   }
 }

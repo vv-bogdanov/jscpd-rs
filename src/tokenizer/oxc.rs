@@ -1,3 +1,4 @@
+use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::path::Path;
 
 use oxc_allocator::Allocator;
@@ -37,6 +38,10 @@ pub(super) fn tokenize_oxc_maps(
     options: &Options,
     ignore_regions: &[[usize; 2]],
 ) -> Vec<TokenMap> {
+    if contains_unsupported_control(content) {
+        return fallback_oxc_maps(content, format, options, ignore_regions);
+    }
+
     let context = TokenContext {
         content,
         options,
@@ -44,9 +49,14 @@ pub(super) fn tokenize_oxc_maps(
     };
     let allocator = Allocator::new();
     let source_type = source_type_for_format(format);
-    let parser_return = Parser::new(&allocator, content, source_type)
-        .with_config(TokensParserConfig)
-        .parse();
+    let parser_return = match catch_unwind(AssertUnwindSafe(|| {
+        Parser::new(&allocator, content, source_type)
+            .with_config(TokensParserConfig)
+            .parse()
+    })) {
+        Ok(parser_return) => parser_return,
+        Err(_) => return fallback_oxc_maps(content, format, options, ignore_regions),
+    };
     let line_index = LineIndex::new(content);
     let mut tokens = Vec::with_capacity(content.len().saturating_div(6));
     let mut previous_end = 0usize;
@@ -178,6 +188,34 @@ pub(super) fn tokenize_oxc_maps(
         }
     }
     maps
+}
+
+fn fallback_oxc_maps(
+    content: &str,
+    format: &str,
+    options: &Options,
+    ignore_regions: &[[usize; 2]],
+) -> Vec<TokenMap> {
+    let context = TokenContext {
+        content,
+        options,
+        ignore_regions,
+    };
+    let line_index = LineIndex::new(content);
+    let mut tokens = Vec::with_capacity(content.len().saturating_div(6));
+    tokenize_js_like_range(&mut tokens, &context, 0, content.len(), &line_index);
+    vec![TokenMap {
+        format: format.to_string(),
+        tokens,
+        positions_assigned: false,
+    }]
+}
+
+fn contains_unsupported_control(content: &str) -> bool {
+    content
+        .as_bytes()
+        .iter()
+        .any(|byte| *byte < 0x20 && !matches!(*byte, b'\n' | b'\r' | b'\t'))
 }
 
 fn raw_oxc_token(token: &OxcToken, content_len: usize) -> RawOxcToken {

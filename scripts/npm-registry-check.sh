@@ -90,8 +90,10 @@ done
 install_dir="$TMP_ROOT/install"
 mkdir -p "$install_dir"
 (
+  node scripts/npm-ci-install.mjs \
+    --dir "$install_dir" \
+    --registry "jscpd-rs@${version}" \
+    >/dev/null
   cd "$install_dir"
-  npm init -y >/dev/null
-  npm install --ignore-scripts --no-audit --no-fund "jscpd-rs@${version}" >/dev/null
   npm audit signatures
 )

@@ -173,10 +173,12 @@ else
 fi
 
 (
-  cd "$NO_PREBUILT_DIR"
-  npm init -y >/dev/null
-  npm install --omit=optional --no-audit --no-fund "$tarball" \
+  node scripts/npm-ci-install.mjs \
+    --dir "$NO_PREBUILT_DIR" \
+    --main-tarball "$tarball" \
+    --omit-optional \
     >"$TMP_ROOT/npm-install-no-prebuilt.log" 2>&1
+  cd "$NO_PREBUILT_DIR"
   set +e
   "./node_modules/.bin/jscpd-rs" --version \
     >"$TMP_ROOT/npm-run-no-prebuilt.log" 2>&1
@@ -191,9 +193,11 @@ fi
 )
 
 (
+  node scripts/npm-ci-install.mjs \
+    --dir "$INSTALL_DIR" \
+    --main-tarball "$tarball" \
+    --omit-optional
   cd "$INSTALL_DIR"
-  npm init -y >/dev/null
-  npm install --ignore-scripts --omit=optional --no-audit --no-fund "$tarball"
   set +e
   "./node_modules/.bin/jscpd-rs" --version >/dev/null 2>&1
   status=$?
@@ -230,10 +234,11 @@ NODE
   prebuilt_tarball="$PREBUILT_PACK_DIR/$prebuilt_tarball"
 
   (
+    node scripts/npm-ci-install.mjs \
+      --dir "$PREBUILT_INSTALL_DIR" \
+      --main-tarball "$tarball" \
+      --prebuilt-tarball "$prebuilt_tarball"
     cd "$PREBUILT_INSTALL_DIR"
-    npm init -y >/dev/null
-    npm install --ignore-scripts --no-audit --no-fund "$prebuilt_tarball"
-    npm install --no-audit --no-fund "$tarball"
     test "$("./node_modules/.bin/jscpd-rs" --version)" = "$cargo_version"
     test "$("./node_modules/.bin/jscpd" --version)" = "$cargo_version"
     test "$("./node_modules/.bin/jscpd-server" --version)" = "$cargo_version"
