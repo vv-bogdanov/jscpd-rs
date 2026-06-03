@@ -93,7 +93,7 @@ for (let attempt = 1; attempt <= attempts; attempt += 1) {
 }
 
 if (response?.ok !== true) {
-  if (!requirePublished && isSkippableUnavailable(response, lastOutput)) {
+  if ((!requirePublished || allowUnavailable) && isSkippableUnavailable(response, lastOutput)) {
     console.log('Socket package score check skipped: package score is not available yet.');
     process.exit(0);
   }

@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- Treat Socket API quota and fresh-indexing failures as non-blocking only when
+  the release workflow explicitly enables unavailable-score tolerance.
+
 ## 0.1.12 - 2026-06-03
 
 ### Changed
