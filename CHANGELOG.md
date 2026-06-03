@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- Strip release binaries and abort on panic in release builds to reduce native
+  npm prebuilt package size without changing runtime behavior.
+
 ## 0.1.11 - 2026-06-03
 
 ### Changed
