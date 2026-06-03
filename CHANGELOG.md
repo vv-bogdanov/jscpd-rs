@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.1.11 - 2026-06-03
+
+### Changed
+
+- Add the OpenSSF Best Practices Passing badge to the README after the project
+  reached Passing level.
+- Remove internal helper-agent workflow notes, historical cloning notes, and
+  duplicate upstream issue drafts from the public repository documentation.
+- Update OpenSSF Best Practices evidence documentation to reflect the Passing
+  status and the honest `N/A` handling for cryptography and memory-unsafe
+  dynamic-analysis criteria.
+
 ## 0.1.10 - 2026-06-03
 
 ### Changed

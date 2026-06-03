@@ -3,11 +3,11 @@
 `jscpd-rs` is registered in the OpenSSF Best Practices Badge service:
 <https://www.bestpractices.dev/projects/13086>.
 
-The OpenSSF Scorecard `CII-Best-Practices` check is not satisfied by a local
-README claim. It queries the OpenSSF Best Practices Badge service for the
-repository URL, so the remaining work is a maintainer-owned registration step.
-Do not add the OpenSSF Best Practices badge to `README.md` until the project
-entry reaches at least the passing level.
+The project reached the OpenSSF Best Practices Passing level on 2026-06-03:
+<https://www.bestpractices.dev/en/projects/13086/passing>.
+
+The README badge is intentionally not shown yet. Add it only after a maintainer
+decides the public badge should be displayed.
 
 Use this evidence when filling the project profile:
 
@@ -21,11 +21,9 @@ Use this evidence when filling the project profile:
 - Contribution process: `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, and
   `.github/CODEOWNERS`.
 
-## Fast Passing Checklist
+## Passing Evidence
 
-The public project page was 19% complete immediately after registration because
-most fields were still `?`. The following fields can be marked in the OpenSSF
-web UI using current repository evidence.
+The following Passing-level fields are backed by current repository evidence.
 
 Mark `Met`:
 
@@ -48,8 +46,8 @@ Mark `Met`:
   `vulnerabilities_critical_fixed`, `no_leaked_credentials`
 - `static_analysis`, `static_analysis_common_vulnerabilities`,
   `static_analysis_fixed`, `static_analysis_often`
-- `dynamic_analysis`, `dynamic_analysis_unsafe`,
-  `dynamic_analysis_enable_assertions`, `dynamic_analysis_fixed`
+- `dynamic_analysis`, `dynamic_analysis_enable_assertions`,
+  `dynamic_analysis_fixed`
 
 Mark `N/A` for the cryptographic criteria unless the project later adds
 security-sensitive cryptographic functionality:
@@ -57,6 +55,9 @@ security-sensitive cryptographic functionality:
 - `crypto_published`, `crypto_call`, `crypto_floss`, `crypto_keylength`,
   `crypto_working`, `crypto_weaknesses`, `crypto_pfs`,
   `crypto_password_storage`, `crypto_random`
+
+Mark `N/A` for `dynamic_analysis_unsafe` while the detector remains implemented
+in Rust without memory-unsafe core components.
 
 Recommended evidence URLs:
 

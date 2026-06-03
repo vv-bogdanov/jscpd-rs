@@ -2,7 +2,7 @@
 
 [![crates.io](https://img.shields.io/crates/v/jscpd-rs.svg?style=flat-square)](https://crates.io/crates/jscpd-rs) [![npm](https://img.shields.io/npm/v/jscpd-rs.svg?style=flat-square)](https://www.npmjs.com/package/jscpd-rs) [![license](https://img.shields.io/github/license/vv-bogdanov/jscpd-rs.svg?style=flat-square)](LICENSE) [![rust](https://img.shields.io/badge/rust-1.93%2B-dea584?style=flat-square)](https://www.rust-lang.org/)
 
-[![release-gate](https://github.com/vv-bogdanov/jscpd-rs/actions/workflows/release-gate.yml/badge.svg)](https://github.com/vv-bogdanov/jscpd-rs/actions/workflows/release-gate.yml) [![docs.rs](https://img.shields.io/docsrs/jscpd-rs?style=flat-square)](https://docs.rs/jscpd-rs) [![Socket.dev](https://badge.socket.dev/npm/package/jscpd-rs/latest)](https://socket.dev/npm/package/jscpd-rs/overview/latest) [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/vv-bogdanov/jscpd-rs/badge)](https://scorecard.dev/viewer/?uri=github.com/vv-bogdanov/jscpd-rs)
+[![release-gate](https://github.com/vv-bogdanov/jscpd-rs/actions/workflows/release-gate.yml/badge.svg)](https://github.com/vv-bogdanov/jscpd-rs/actions/workflows/release-gate.yml) [![docs.rs](https://img.shields.io/docsrs/jscpd-rs?style=flat-square)](https://docs.rs/jscpd-rs) [![Socket.dev](https://badge.socket.dev/npm/package/jscpd-rs/latest)](https://socket.dev/npm/package/jscpd-rs/overview/latest) [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/vv-bogdanov/jscpd-rs/badge)](https://scorecard.dev/viewer/?uri=github.com/vv-bogdanov/jscpd-rs) [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/13086/badge)](https://www.bestpractices.dev/projects/13086)
 
 50x+ faster duplicate-code detector for local development, CI/CD, and code
 quality gates.
@@ -351,9 +351,7 @@ Black-box behavior tests that exercise the public API live in `tests/`. Small
 private-helper tests stay next to the module they protect.
 
 Known upstream bug candidates and intentional compatibility exceptions are
-tracked in [docs/upstream-bugs.md](https://github.com/vv-bogdanov/jscpd-rs/blob/main/docs/upstream-bugs.md). GitHub-ready issue
-drafts are prepared in
-[docs/upstream-issue-drafts.md](https://github.com/vv-bogdanov/jscpd-rs/blob/main/docs/upstream-issue-drafts.md).
+tracked in [docs/upstream-bugs.md](https://github.com/vv-bogdanov/jscpd-rs/blob/main/docs/upstream-bugs.md).
 
 ## Release Gates
 
