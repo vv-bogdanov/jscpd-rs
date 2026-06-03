@@ -114,8 +114,6 @@ Before publishing, all of these must be true:
   `publish_main=false`.
 - `docs/upstream-bugs.md` contains concrete repro commands for upstream issues
   we plan to file.
-- `docs/upstream-issue-drafts.md` contains reviewed issue drafts ready to
-  verify against current upstream and post.
 - `CHANGELOG.md` contains the exact release notes for the version being tagged.
 
 ## First-Release Scope
@@ -207,7 +205,7 @@ Track these after the current release:
   it.
 - Tighten MCP Streamable HTTP SDK edge cases if real MCP clients require them.
 - Promote long-tail tokenizers only from concrete missed-coverage evidence.
-- File upstream bug reports from `docs/upstream-issue-drafts.md`.
+- File upstream bug reports from `docs/upstream-bugs.md`.
 
 ## Automated GitHub Release Publishing
 

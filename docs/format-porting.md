@@ -70,14 +70,7 @@ Expected shape:
 - No detector changes unless there is a proven cross-format contract issue.
 - No JavaScript runtime fallback.
 
-## Junior-Safe Format Tasks
-
-- Add a smoke test for a format already handled by generic tokenization.
-- Add one comment-style test and no production code.
-- Add one small production helper by copying an existing tokenizer pattern.
-- Run `scripts/check-format.sh` and report exact `sources`/`clones` output.
-
-## Main-Agent-Only Decisions
+## Maintainer Decisions
 
 - Promoting a format to `coverage` or `release`.
 - Adding dependencies.
