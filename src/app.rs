@@ -9,12 +9,18 @@ use crate::detector::CloneMatch;
 use crate::files::SourceFile;
 use crate::{cli, files, formats, report, verbose};
 
+/// Result of running the native CLI pipeline through the Rust API.
 #[derive(Clone, Debug, Default)]
 pub struct JscpdOutcome {
+    /// Clone pairs reported by the run.
     pub clones: Vec<CloneMatch>,
+    /// Exit code that the process runner would use when duplicates are found.
     pub exit_code: Option<i32>,
 }
 
+/// Run `jscpd` with upstream-style argv and return reported clone pairs.
+///
+/// The first argument should be the binary name, matching `std::env::args`.
 pub fn jscpd<I, T>(args: I) -> Result<Vec<CloneMatch>>
 where
     I: IntoIterator<Item = T>,
@@ -23,6 +29,10 @@ where
     Ok(run_cli_args(args)?.clones)
 }
 
+/// Run `jscpd` with upstream-style argv and call back with the duplicate exit code.
+///
+/// This mirrors upstream's `jscpd(argv, exitCallback?)` integration shape for
+/// native Rust callers.
 pub fn jscpd_with_exit_callback<I, T, F>(args: I, mut exit_callback: F) -> Result<Vec<CloneMatch>>
 where
     I: IntoIterator<Item = T>,
@@ -36,6 +46,7 @@ where
     Ok(outcome.clones)
 }
 
+/// Run the full CLI pipeline and return clones plus the process exit decision.
 pub fn run_cli_args<I, T>(args: I) -> Result<JscpdOutcome>
 where
     I: IntoIterator<Item = T>,
@@ -44,6 +55,7 @@ where
     run_cli(Cli::try_parse_from(args)?)
 }
 
+/// Run the full CLI pipeline from the current process arguments.
 pub fn run_current_process() -> Result<JscpdOutcome> {
     run_cli(Cli::parse())
 }
@@ -98,6 +110,7 @@ fn run_cli(cli: Cli) -> Result<JscpdOutcome> {
     Ok(JscpdOutcome { clones, exit_code })
 }
 
+/// Convert selected internal errors to upstream-style stdout error messages.
 pub fn upstream_stdout_error(message: &str) -> Option<String> {
     if message.starts_with("TypeError [ERR_INVALID_ARG_TYPE]")
         || message.starts_with("TypeError:")

@@ -25,13 +25,6 @@ by upstream `jscpd`.
 
 ## Install
 
-Cargo:
-
-```bash
-cargo install jscpd-rs --locked
-jscpd --version
-```
-
 npm/npx:
 
 ```bash
@@ -42,10 +35,18 @@ npx jscpd-rs --version
 npx jscpd-rs .
 ```
 
-Current npm packaging note: `jscpd-rs` installs prebuilt Linux, macOS, and
-Windows binaries through optional platform packages and does not run
-install-time build scripts. Unsupported npm platforms should use Cargo. See
-[docs/prebuilt-binaries.md](docs/prebuilt-binaries.md).
+No Rust toolchain is required on supported npm platforms. `jscpd-rs` installs
+prebuilt Linux, macOS, and Windows binaries through optional platform packages
+and does not run install-time build scripts. Unsupported npm platforms should
+use Cargo. See
+[docs/prebuilt-binaries.md](https://github.com/vv-bogdanov/jscpd-rs/blob/main/docs/prebuilt-binaries.md).
+
+Cargo:
+
+```bash
+cargo install jscpd-rs --locked
+jscpd --version
+```
 
 From this repository:
 
@@ -107,9 +108,9 @@ The current server exposes `/`, `/api/health`, `/api/stats`, `/api/check`,
 by `/api/recheck`.
 
 For full CLI, configuration, reporter, server, MCP, and Rust API examples, see
-[docs/user-guide.md](docs/user-guide.md).
+[docs/user-guide.md](https://github.com/vv-bogdanov/jscpd-rs/blob/main/docs/user-guide.md).
 If you already use upstream `jscpd`, see
-[docs/migrating-from-jscpd.md](docs/migrating-from-jscpd.md).
+[docs/migrating-from-jscpd.md](https://github.com/vv-bogdanov/jscpd-rs/blob/main/docs/migrating-from-jscpd.md).
 
 ## GitHub Actions
 
@@ -200,8 +201,9 @@ The current release is a coverage-first compatible CLI replacement for common
   sources.
 
 Dynamic npm reporters, stores, listeners, and plugins are intentionally out of
-scope for the first release. Unknown external reporters/stores keep
-upstream-style warnings and continue where upstream continues.
+scope for the current 0.x compatibility policy. Unknown external
+reporters/stores keep upstream-style warnings and continue where upstream
+continues.
 
 ## Compatibility Contract
 
@@ -224,9 +226,9 @@ Latest recorded public benchmark baseline for duplicate-code detection:
 
 | Repo | Format | Rust avg | Upstream avg | Speedup |
 | --- | --- | ---: | ---: | ---: |
-| React | JavaScript | 0.193443s | 9.979393s | 51.59x |
-| Next.js | TypeScript | 0.281938s | 14.182806s | 50.30x |
-| Prometheus | Go | 0.086096s | 4.608737s | 53.53x |
+| React | JavaScript | 0.197325s | 10.413453s | 52.77x |
+| Next.js | TypeScript | 0.270786s | 14.983243s | 55.33x |
+| Prometheus | Go | 0.083162s | 4.842499s | 58.23x |
 
 Reproduce the public benchmark and coverage suite:
 
@@ -293,10 +295,10 @@ Core crates and libraries:
 - native reporters for JSON, SARIF, XML, CSV, Markdown, HTML, console, badge,
   Xcode, threshold, silent, and AI refactoring output.
 
-## Known First-Release Deviations
+## Known 0.x Deviations
 
-The first release is native-only and coverage-first. These differences from the
-JavaScript package are intentional unless a real workflow proves otherwise:
+The current 0.x line is native-only and coverage-first. These differences from
+the JavaScript package are intentional unless a real workflow proves otherwise:
 
 - dynamic npm reporters, stores, listeners, and plugins are not loaded;
 - token totals and exact clone pair ordering may differ from Prism-based
@@ -338,9 +340,9 @@ Black-box behavior tests that exercise the public API live in `tests/`. Small
 private-helper tests stay next to the module they protect.
 
 Known upstream bug candidates and intentional compatibility exceptions are
-tracked in [docs/upstream-bugs.md](docs/upstream-bugs.md). GitHub-ready issue
+tracked in [docs/upstream-bugs.md](https://github.com/vv-bogdanov/jscpd-rs/blob/main/docs/upstream-bugs.md). GitHub-ready issue
 drafts are prepared in
-[docs/upstream-issue-drafts.md](docs/upstream-issue-drafts.md).
+[docs/upstream-issue-drafts.md](https://github.com/vv-bogdanov/jscpd-rs/blob/main/docs/upstream-issue-drafts.md).
 
 ## Release Gates
 
@@ -382,12 +384,15 @@ Manual workflow runs can enable the full compatibility matrix and public
 benchmark suite before a release, or set `release_candidate=true` to run the
 full release-candidate gate in CI.
 
-See [docs/compat-baseline.md](docs/compat-baseline.md) for the current gate
-baseline, [docs/release-readiness.md](docs/release-readiness.md) for component
-status, [docs/release-checklist.md](docs/release-checklist.md) for the
-publication checklist, [CHANGELOG.md](CHANGELOG.md) for release notes, and
-[docs/release-decisions.md](docs/release-decisions.md) for approved
-first-release compatibility decisions.
+See
+[docs/compat-baseline.md](https://github.com/vv-bogdanov/jscpd-rs/blob/main/docs/compat-baseline.md)
+for the current gate baseline,
+[docs/release-readiness.md](https://github.com/vv-bogdanov/jscpd-rs/blob/main/docs/release-readiness.md)
+for component status, and
+[docs/release-checklist.md](https://github.com/vv-bogdanov/jscpd-rs/blob/main/docs/release-checklist.md)
+for the publication checklist. Release notes are in
+[CHANGELOG.md](CHANGELOG.md), and approved 0.x compatibility decisions are in
+[docs/release-decisions.md](https://github.com/vv-bogdanov/jscpd-rs/blob/main/docs/release-decisions.md).
 
 ## License
 

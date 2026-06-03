@@ -2,7 +2,7 @@
 
 Approved on 2026-05-30.
 
-These decisions define the first-release direction. They can change only when a
+These decisions define the 0.x release direction. They can change only when a
 compatibility gate, public benchmark, or real user workflow proves the current
 choice insufficient.
 
@@ -27,19 +27,19 @@ choice insufficient.
 
 ## Reporters
 
-- Built-in reporters are first-release scope and should be implemented natively:
+- Built-in reporters are 0.x release scope and should be implemented natively:
   `ai`, `console`, `consoleFull`, `csv`, `html`, `json`, `markdown`, `silent`,
   `sarif`, `threshold`, `xcode`, `xml`, and the commonly used badge reporter.
 - Machine-readable reporter contracts are strict release scope: JSON, XML,
   SARIF, CSV, and Markdown should stay structurally compatible with upstream.
 - HTML must remain practically compatible and self-contained. Pixel-perfect
-  upstream parity is not a first-release blocker.
+  upstream parity is not a 0.x release blocker.
 - Dynamic npm reporter loading is post-MVP. Unknown reporter names should keep
   the upstream-style warning and continue where upstream continues.
 
 ## Stores And Cache
 
-- The default in-memory store is the first-release store path.
+- The default in-memory store is the 0.x release store path.
 - `--store <name>` should keep the upstream missing-store fallback shape unless
   a native store backend is deliberately added.
 - Dynamic npm store loading is post-MVP.
@@ -92,7 +92,7 @@ These are the current choices for features that are expensive to clone exactly:
 the user explicitly approved these tradeoffs on 2026-05-30.
 
 - Dynamic npm reporters, stores, listeners, and plugins: do not implement for
-  the first release. Keep option-surface compatibility, native built-ins, and
+  the current 0.x line. Keep option-surface compatibility, native built-ins, and
   upstream-style missing-package warnings.
 - Long-tail Prism tokenizer parity: do not port all grammars eagerly. Keep the
   upstream-synchronized format registry plus generic tokenization, then promote
@@ -102,7 +102,7 @@ the user explicitly approved these tradeoffs on 2026-05-30.
 - Node/Commander quirks: mirror visible behavior only when covered by gates.
   Document crash-only or incidental quirks in `docs/upstream-bugs.md`.
 - HTML reporter: keep self-contained and practically compatible. Pixel-perfect
-  parity is not a first-release blocker.
+  parity is not a 0.x release blocker.
 - Persistent cache/store backends: postpone until benchmark data shows the
   in-memory detector is insufficient on release-scale repositories.
 - Blame failures: prefer native per-file isolation instead of inheriting

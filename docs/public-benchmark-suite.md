@@ -58,7 +58,7 @@ narrow allowlists for upstream overextended ranges documented in
 exceptions in the comparison output. New public benchmark misses should be fixed
 or documented before they are added to this allowlist.
 
-Recorded release-candidate measurements on June 2, 2026:
+Recorded release-candidate measurements on June 3, 2026:
 
 ```bash
 scripts/release-candidate.sh
@@ -66,9 +66,9 @@ scripts/release-candidate.sh
 
 | Case | Commit | Format | Rust avg | Upstream avg | Speedup | Compat |
 | --- | --- | --- | ---: | ---: | ---: | --- |
-| `react` | `f0dfee3` | `javascript` | 0.193443s | 9.979393s | 51.59x | pass |
-| `next` | `2bbb67b9` | `typescript` | 0.281938s | 14.182806s | 50.30x | pass |
-| `prometheus` | `a0524ee` | `go` | 0.086096s | 4.608737s | 53.53x | pass |
+| `react` | `f0dfee3` | `javascript` | 0.197325s | 10.413453s | 52.77x | pass |
+| `next` | `2bbb67b9` | `typescript` | 0.270786s | 14.983243s | 55.33x | pass |
+| `prometheus` | `a0524ee` | `go` | 0.083162s | 4.842499s | 58.23x | pass |
 
 `kubernetes` was also checked as a Go stress case, but upstream `jscpd` ran out
 of memory with the default Node heap, so it is intentionally not part of the

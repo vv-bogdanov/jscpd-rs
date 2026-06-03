@@ -12,11 +12,11 @@ Latest full local prepublish gate:
 scripts/prepublish-check.sh
 ```
 
-Passed on 2026-06-02 at code commit `06c801c`. This includes
+Run on the exact release-candidate checkout before tagging. This includes
 `scripts/release-candidate.sh`, package/install verification, crate/tag
 availability checks, npm package/name/npx verification, and
-`cargo publish --dry-run --locked`. Later documentation-only commits may reuse
-the release-candidate evidence if they do not change code, scripts, package
+`cargo publish --dry-run --locked`. Documentation-only commits may reuse fresh
+release-candidate evidence only if they do not change code, scripts, package
 metadata, or benchmark configuration; rerun
 `RUN_RELEASE_CANDIDATE=0 scripts/prepublish-check.sh` after documentation edits
 so package/dry-run evidence matches the exact package contents being tagged.
@@ -31,8 +31,9 @@ Latest GitHub Actions default release-gate:
 push
 ```
 
-Passed on 2026-06-02 at code commit `06c801c`:
-https://github.com/vv-bogdanov/jscpd-rs/actions/runs/26801569074
+Latest known-good release-publish workflow before this checklist refresh:
+GitHub Release `v0.1.9` passed on 2026-06-03 at commit `68eb0ba`:
+https://github.com/vv-bogdanov/jscpd-rs/actions/runs/26866531012
 
 CI timing snapshot after the first cache/timing pass, from cold GitHub Actions
 run `26710415211` on commit `7bdf12f`:
@@ -66,9 +67,9 @@ Recorded public benchmark baseline for the current release evidence:
 
 | Case | Commit | Format | Rust avg | Upstream avg | Speedup | Compat |
 | --- | --- | --- | ---: | ---: | ---: | --- |
-| `react` | `f0dfee3` | `javascript` | 0.193443s | 9.979393s | 51.59x | pass |
-| `next` | `2bbb67b9` | `typescript` | 0.281938s | 14.182806s | 50.30x | pass |
-| `prometheus` | `a0524ee` | `go` | 0.086096s | 4.608737s | 53.53x | pass |
+| `react` | `f0dfee3` | `javascript` | 0.197325s | 10.413453s | 52.77x | pass |
+| `next` | `2bbb67b9` | `typescript` | 0.270786s | 14.983243s | 55.33x | pass |
+| `prometheus` | `a0524ee` | `go` | 0.083162s | 4.842499s | 58.23x | pass |
 
 ## Publish Blockers
 
@@ -90,6 +91,8 @@ Before publishing, all of these must be true:
 - `scripts/cargo-deny-check.sh` passes, covering Rust advisories, yanked
   crates, license allowlist, and source registry policy.
 - `scripts/actionlint.sh` passes for GitHub Actions workflow syntax.
+- `cargo rustdoc --lib -- -D missing_docs` passes, so docs.rs public API
+  documentation cannot silently regress.
 - `cargo publish --dry-run --locked` passes for the exact package manifest and
   include list being published.
 - `README.md`, `docs/compat-baseline.md`, and
@@ -130,9 +133,9 @@ Treat these as release scope:
   long-tail tokenization, blame, native API, and native server endpoints listed
   in `docs/release-readiness.md`.
 
-## Intentional First-Release Deviations
+## Intentional 0.x Deviations
 
-These are not publication blockers for the first release:
+These are not publication blockers for the current 0.x line:
 
 - Dynamic npm reporters, stores, listeners, and plugins are not loaded. The
   compatible option surface and upstream-style missing-package warnings are the

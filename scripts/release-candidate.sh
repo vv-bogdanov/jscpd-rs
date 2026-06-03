@@ -35,6 +35,7 @@ release candidate gate:
 commands:
   cargo clippy --all-targets -- -D warnings
   SCOPE=core FAIL_UNDER_LINES=$CORE_COVERAGE_FAIL_UNDER_LINES scripts/coverage.sh
+  cargo rustdoc --lib -- -D missing_docs
   SUPPLY_CHAIN=$SUPPLY_CHAIN FULL=$FULL STRICT=$STRICT PUBLIC=$PUBLIC PUBLIC_CASES=$PUBLIC_CASES PUBLIC_RUNS=$PUBLIC_RUNS PUBLIC_CHECK_COMPAT=$PUBLIC_CHECK_COMPAT PUBLIC_MIN_SPEEDUP=$PUBLIC_MIN_SPEEDUP scripts/release-gate.sh
 EOF
 }

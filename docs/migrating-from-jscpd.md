@@ -6,7 +6,7 @@ reports copy-paste fragments across files, writes console, JSON, SARIF, HTML,
 XML, CSV, Markdown, badge, and Xcode reports, and can fail CI when duplication
 crosses a configured threshold.
 
-The migration goal for the first release is practical CLI/reporting
+The migration goal for the current 0.x line is practical CLI/reporting
 compatibility for CI and local scans, not exact JavaScript package API parity.
 
 ## Quick Command Mapping
@@ -70,7 +70,7 @@ override project defaults.
 
 ## Commonly Compatible Workflows
 
-The first release targets these upstream-style workflows:
+The current 0.x line targets these upstream-style workflows:
 
 - local duplicate scan with `jscpd .`;
 - threshold-based CI failure with `--threshold` and `--exitCode`;
@@ -115,7 +115,7 @@ different clone pairs while still covering the same duplicated source ranges.
 
 ## Known First-Release Limits
 
-These are intentional first-release limits:
+These are intentional 0.x limits:
 
 - dynamic npm reporters, stores, listeners, and plugins are not loaded;
 - unknown external reporter/store names keep upstream-style warnings where
@@ -127,7 +127,7 @@ These are intentional first-release limits:
   tokenizer is needed;
 - the Rust crate exposes a native Rust API, not the upstream JavaScript package
   API;
-- `jscpd-rs@0.1.4+` npm packaging uses prebuilt binaries on supported Linux,
+- current npm packaging uses prebuilt binaries on supported Linux,
   macOS, and Windows targets without install-time build scripts. Unsupported
   npm platforms should use Cargo. The original `0.1.0` npm package was
   source-build only.
@@ -185,14 +185,12 @@ Cargo-based `jscpd-rs` CI:
 npm/npx-based `jscpd-rs` CI:
 
 ```yaml
-- uses: dtolnay/rust-toolchain@stable
 - uses: actions/setup-node@v5
   with:
     node-version: 22
 - run: npx jscpd-rs src --reporters console,json --threshold 5 --exitCode 1
 ```
 
-`jscpd-rs@0.1.4+` npm installs use prebuilt binaries where available and do not
-run install-time build scripts. Unsupported npm platforms should use Cargo; see
-the
+The npm package installs prebuilt binaries where available and does not run
+install-time build scripts. Unsupported npm platforms should use Cargo; see the
 [prebuilt binary distribution plan](prebuilt-binaries.md).

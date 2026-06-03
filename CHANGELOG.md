@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.1.10 - 2026-06-03
+
+### Changed
+
+- Refresh public npm/GitHub README onboarding with npm-first install guidance,
+  absolute documentation links that work from npm, and the current public
+  benchmark baseline.
+- Update release and benchmark documentation so current evidence points at the
+  GitHub Release automation path instead of stale pre-0.1.9 commits.
+- Narrow generated npm platform-package keywords so prebuilt binary packages
+  do not compete with the main `jscpd-rs` package in package search.
+- Update the docs.rs crate root metadata for the current release line.
+
+### Validation
+
+- Recorded public benchmark baseline for this release:
+
+| Case | Commit | Format | Rust avg | Upstream avg | Speedup | Compat |
+| --- | --- | --- | ---: | ---: | ---: | --- |
+| React | `f0dfee3` | JavaScript | 0.197325s | 10.413453s | 52.77x | pass |
+| Next.js | `2bbb67b9` | TypeScript | 0.270786s | 14.983243s | 55.33x | pass |
+| Prometheus | `a0524ee` | Go | 0.083162s | 4.842499s | 58.23x | pass |
+
 ## 0.1.9 - 2026-06-03
 
 ### Changed

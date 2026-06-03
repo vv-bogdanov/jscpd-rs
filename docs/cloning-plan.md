@@ -182,7 +182,7 @@ orientation.
 These choices are part of the current cloning direction until a compatibility
 gate proves they are insufficient:
 
-- Dynamic npm reporters, stores, and plugins are post-MVP. The first release
+- Dynamic npm reporters, stores, and plugins are post-MVP. The 0.x line
   should implement popular built-in reporters and stores natively instead of
   embedding or casually spawning JavaScript from Rust.
 - Reporter compatibility should be strict for machine-readable contracts such as

@@ -1,23 +1,28 @@
 use super::model::{CloneMatch, StatisticRow, Statistics};
 
+/// Mutable helper for accumulating upstream-style duplication statistics.
 #[derive(Clone, Debug, Default)]
 pub struct Statistic {
     statistics: Statistics,
 }
 
 impl Statistic {
+    /// Create an empty statistics accumulator.
     pub fn new() -> Self {
         Self::default()
     }
 
+    /// Return the accumulated statistics.
     pub fn get_statistic(&self) -> &Statistics {
         &self.statistics
     }
 
+    /// Consume the accumulator and return the statistics.
     pub fn into_statistics(self) -> Statistics {
         self.statistics
     }
 
+    /// Record a scanned source and its line/token counts.
     pub fn match_source(
         &mut self,
         source_id: impl AsRef<str>,
@@ -35,12 +40,14 @@ impl Statistic {
         finalize_percentages(&mut self.statistics);
     }
 
+    /// Record a clone and update duplicated line/token counters.
     pub fn clone_found(&mut self, clone: &CloneMatch) {
         update_clone_statistics(&mut self.statistics, clone);
         finalize_percentages(&mut self.statistics);
     }
 }
 
+/// Return the user-visible line span of a clone fragment.
 pub fn clone_lines(clone: &CloneMatch) -> usize {
     clone
         .duplication_a

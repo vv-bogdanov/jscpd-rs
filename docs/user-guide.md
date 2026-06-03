@@ -29,7 +29,7 @@ npm install -g jscpd-rs
 npx jscpd-rs --version
 ```
 
-`jscpd-rs@0.1.4+` installs prebuilt Linux, macOS, and Windows binaries through
+The npm package installs prebuilt Linux, macOS, and Windows binaries through
 optional platform packages and does not run install-time build scripts.
 Unsupported npm platforms should use Cargo. See the
 [prebuilt binary distribution plan](prebuilt-binaries.md).
@@ -170,7 +170,7 @@ Built-in native reporters:
 | `badge` | `jscpd-badge.svg` |
 | `silent` | suppress report output |
 
-Dynamic npm reporters are intentionally not loaded in the first release. Unknown
+Dynamic npm reporters are intentionally not loaded in the current 0.x line. Unknown
 external reporter names keep upstream-style warnings and continue where upstream
 continues.
 
@@ -300,12 +300,12 @@ jscpd --reporters ai src
 
 ## Compatibility Notes
 
-The first release target is practical, coverage-first upstream compatibility.
+The current 0.x target is practical, coverage-first upstream compatibility.
 For the same inputs and options, `jscpd-rs` must not miss duplicated source
 lines reported by upstream `jscpd`. Extra Rust findings are allowed while
 compatibility converges and remain visible in compatibility reports.
 
-Intentional first-release limits:
+Intentional 0.x limits:
 
 - dynamic npm reporters, stores, listeners, and plugins are not loaded;
 - exact token totals and pair ordering may differ from upstream while
