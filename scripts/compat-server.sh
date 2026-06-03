@@ -4,16 +4,22 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TARGET="${TARGET:-$ROOT/jscpd/fixtures/javascript}"
 TMP_ROOT="${TMP_ROOT:-$(mktemp -d "${TMPDIR:-/tmp}/jscpd-rs-server.XXXXXX")}"
-RUST_PORT="${RUST_PORT:-39981}"
-UPSTREAM_PORT="${UPSTREAM_PORT:-39982}"
-RUST_STORE_WARNING_PORT="${RUST_STORE_WARNING_PORT:-39983}"
-UPSTREAM_STORE_WARNING_PORT="${UPSTREAM_STORE_WARNING_PORT:-39984}"
-RUST_BARE_HOST_PORT="${RUST_BARE_HOST_PORT:-39986}"
-UPSTREAM_BARE_HOST_PORT="${UPSTREAM_BARE_HOST_PORT:-39987}"
-RUST_LOCALHOST_PORT="${RUST_LOCALHOST_PORT:-39988}"
-UPSTREAM_LOCALHOST_PORT="${UPSTREAM_LOCALHOST_PORT:-39989}"
-RUST_CONFIG_PORT="${RUST_CONFIG_PORT:-39990}"
-UPSTREAM_CONFIG_PORT="${UPSTREAM_CONFIG_PORT:-39991}"
+
+pick_unused_port() {
+  node -e 'const net = require("node:net"); const server = net.createServer(); server.listen(0, "0.0.0.0", () => { console.log(server.address().port); server.close(); });'
+}
+
+RUST_PORT="${RUST_PORT:-$(pick_unused_port)}"
+UPSTREAM_PORT="${UPSTREAM_PORT:-$(pick_unused_port)}"
+RUST_STORE_WARNING_PORT="${RUST_STORE_WARNING_PORT:-$(pick_unused_port)}"
+UPSTREAM_STORE_WARNING_PORT="${UPSTREAM_STORE_WARNING_PORT:-$(pick_unused_port)}"
+RUST_BARE_HOST_PORT="${RUST_BARE_HOST_PORT:-$(pick_unused_port)}"
+UPSTREAM_BARE_HOST_PORT="${UPSTREAM_BARE_HOST_PORT:-$(pick_unused_port)}"
+RUST_LOCALHOST_PORT="${RUST_LOCALHOST_PORT:-$(pick_unused_port)}"
+UPSTREAM_LOCALHOST_PORT="${UPSTREAM_LOCALHOST_PORT:-$(pick_unused_port)}"
+RUST_CONFIG_PORT="${RUST_CONFIG_PORT:-$(pick_unused_port)}"
+UPSTREAM_CONFIG_PORT="${UPSTREAM_CONFIG_PORT:-$(pick_unused_port)}"
+UNSUPPORTED_OPTION_PORT="${UNSUPPORTED_OPTION_PORT:-$(pick_unused_port)}"
 MIN_TOKENS="${MIN_TOKENS:-40}"
 MIN_LINES="${MIN_LINES:-5}"
 MAX_SIZE="${MAX_SIZE:-1mb}"
@@ -233,7 +239,7 @@ check_server_cli_contract() {
     local expected="${option_error#*|}"
     local slug="${option//-/}"
     run_command "$dir/bare-$slug.code" "$dir/bare-$slug.stdout" "$dir/bare-$slug.stderr" \
-      timeout 3 "${cmd[@]}" --port 39985 "$TARGET" "$option"
+      timeout 3 "${cmd[@]}" --port "$UNSUPPORTED_OPTION_PORT" "$TARGET" "$option"
     check_exit_code "$dir/bare-$slug.code" 1 "$label bare $option"
     require_contains "$dir/bare-$slug.stderr" "$expected" "$label bare $option stderr"
   done
