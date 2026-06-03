@@ -38,5 +38,6 @@ jobs:
       id-token: write
     with:
       release_tag: ${{ github.event.release.tag_name }}
+      publish_main: true
       run_release_candidate: false
     secrets: inherit

@@ -73,6 +73,7 @@ jobs:
     if: ${{ always() && (!inputs.run_release_candidate || needs.release-candidate.result == 'success') }}
     runs-on: ubuntu-24.04
     outputs:
+      main_published: ${{ steps.main-package.outputs.published || 'false' }}
       publish_main: ${{ steps.metadata.outputs.publish_main }}
       targets: ${{ steps.metadata.outputs.targets }}
       version: ${{ steps.metadata.outputs.version }}
@@ -146,18 +147,26 @@ jobs:
             exit 1
           fi
 
-      - name: Check main package version is not published
+      - name: Check main package publication state
+        id: main-package
         if: steps.metadata.outputs.publish_main == 'true'
         run: |
           version="${{ steps.metadata.outputs.version }}"
           if npm view "jscpd-rs@${version}" version >/dev/null 2>&1; then
-            echo "jscpd-rs@${version} is already published" >&2
-            exit 1
+            echo "published=true" >> "$GITHUB_OUTPUT"
+            if [[ "$GITHUB_EVENT_NAME" != "workflow_dispatch" ]]; then
+              echo "jscpd-rs@${version} is already published" >&2
+              exit 1
+            fi
+            echo "jscpd-rs@${version} is already published; skipping publish and running verification"
+          else
+            echo "published=false" >> "$GITHUB_OUTPUT"
           fi
 
   build-platform-packages:
     name: build ${{ matrix.target.key }}
     needs: prepare
+    if: ${{ always() && needs.prepare.result == 'success' }}
     runs-on: ${{ matrix.target.runner }}
     timeout-minutes: 30
     strategy:
@@ -259,7 +268,7 @@ jobs:
     needs:
       - prepare
       - build-platform-packages
-    if: ${{ needs.prepare.result == 'success' && needs.build-platform-packages.result == 'success' && needs.prepare.outputs.publish_main == 'true' }}
+    if: ${{ always() && needs.prepare.result == 'success' && needs.build-platform-packages.result == 'success' && needs.prepare.outputs.publish_main == 'true' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
@@ -325,6 +334,7 @@ jobs:
         run: scripts/npm-package-check.sh
 
       - name: Publish main package
+        if: needs.prepare.outputs.main_published != 'true'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish --access public --provenance
